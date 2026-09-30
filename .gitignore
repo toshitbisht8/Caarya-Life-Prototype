@@ -1,0 +1,5 @@
+# Source files for data.js (kept local; regenerate with python data/build_data.py)
+data/
+
+# Local-only tooling
+.claude/settings.local.json

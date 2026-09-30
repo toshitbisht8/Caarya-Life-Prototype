@@ -1,0 +1,275 @@
+/* ---------- Tokens (from Figma variables) ---------- */
+:root {
+  --shades-50: #ffffff;
+  --shades-900: #000000;
+  --neutral-50: #fafafa;
+  --neutral-100: #f3f2f2;
+  --neutral-200: #e7e6e5;
+  --neutral-300: #cfcdc9;
+  --neutral-500: #696763;
+  --neutral-800: #363430;
+  --neutral-900: #282724;
+  --caarya-red-300: #ff7e6e;
+  --caarya-red-500: #ed4c41;
+  --caarya-primary-100: #fed6d2;
+  --error-500: #e72113;
+  --peddle-100: #a5f2f2;
+  --peddle-300: #33d6e1;
+  --peddle-500: #0497ae;
+  --peddle-50: #f7ffff;
+
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+
+  --font-lato: "Lato", sans-serif;
+  --font-satoshi: "Satoshi", sans-serif;
+  --font-poppins: "Poppins", sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--shades-50);
+  color: var(--neutral-800);
+  font-family: var(--font-satoshi);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+p { margin: 0; }
+button { font: inherit; cursor: pointer; }
+fieldset { margin: 0; min-width: 0; }
+
+.screen { display: none; }
+.screen.is-active { display: flex; }
+
+/* ---------- Shared: headings ---------- */
+.heading { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.heading__title {
+  font-family: var(--font-lato); font-weight: 700;
+  font-size: 24px; letter-spacing: 0.48px; color: var(--neutral-900);
+}
+.heading__title--red { color: var(--error-500); }
+.heading__sub { font-size: 14px; letter-spacing: 0.28px; color: var(--neutral-500); }
+
+/* ---------- Shared: fields ---------- */
+.fields { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+.field { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 520px; }
+.field__label { font-weight: 700; font-size: 12px; letter-spacing: 0.3px; color: var(--neutral-800); }
+
+.input, .select select {
+  width: 100%;
+  background: var(--shades-50);
+  border: 1px solid var(--neutral-200);
+  border-radius: 8px;
+  padding: 11px 16px; /* 12px in Figma minus the 1px border */
+  font-family: var(--font-satoshi); font-size: 14px; letter-spacing: 0.35px; line-height: 1.5;
+  color: var(--neutral-800);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.input::placeholder { color: var(--neutral-300); opacity: 1; }
+.input:focus, .input:focus-within, .select select:focus { border-color: var(--neutral-500); }
+.input:disabled { color: var(--neutral-500); -webkit-text-fill-color: var(--neutral-500); opacity: 1; }
+.field.has-error .input, .field.has-error select { border-color: var(--error-500); }
+
+.input--prefixed { display: flex; align-items: center; gap: 16px; }
+.input__prefix { font-weight: 700; color: var(--neutral-800); }
+.input--prefixed input {
+  flex: 1; min-width: 0; border: 0; padding: 0; outline: none; background: none;
+  font: inherit; letter-spacing: inherit; color: var(--neutral-800);
+}
+.input--prefixed input::placeholder { color: var(--neutral-300); }
+
+.select { position: relative; display: block; }
+.select select { appearance: none; -webkit-appearance: none; padding-right: 52px; cursor: pointer; }
+.select img { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+
+.error { font-size: 12px; letter-spacing: 0.3px; color: var(--error-500); min-height: 0; }
+.error:empty { display: none; }
+
+/* ---------- Shared: buttons ---------- */
+.btn {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: 0; border-radius: 64px;
+  font-family: var(--font-satoshi); font-weight: 700; text-transform: uppercase;
+  font-size: 12px; letter-spacing: 0.36px; line-height: 1.5;
+  white-space: nowrap;
+  transition: transform 0.1s, filter 0.15s;
+}
+.btn:active { transform: translateY(1px); }
+.btn--primary {
+  color: var(--shades-50);
+  background: linear-gradient(to bottom, #282724, #0f0f0f);
+  padding: 16px 32px 16px 40px;
+  box-shadow: inset 0 2px 8px 0 rgba(255, 255, 255, 0.25);
+  filter: drop-shadow(0 10px 7.5px rgba(0, 0, 0, 0.1)) drop-shadow(0 4px 3px rgba(0, 0, 0, 0.1));
+}
+.btn--primary:hover { background: linear-gradient(to bottom, #363430, #1a1a1a); }
+.btn--secondary {
+  color: var(--neutral-800);
+  background: var(--neutral-100);
+  border-radius: 176px;
+  padding: 12px 32px;
+}
+.btn--secondary:hover { background: var(--neutral-200); }
+.btn--lg { font-size: 14px; letter-spacing: 0.42px; }
+.btn--block { width: 100%; }
+
+.text-btn {
+  background: none; border: 0; padding: 8px;
+  font-weight: 700; font-size: 12px; letter-spacing: 0.36px; text-transform: uppercase;
+  color: var(--neutral-800); text-decoration: underline; text-underline-offset: 3px;
+}
+.text-btn:disabled { cursor: default; }
+
+/* ================= AUTH ================= */
+.auth { min-height: 100vh; }
+.hero, .auth__panel { flex: 1 1 0; min-width: 0; padding: 40px 120px; }
+
+.hero {
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; gap: 8px;
+  background: linear-gradient(137deg, #edffff 20%, #fed6d2 100%);
+}
+.brand { display: flex; align-items: center; gap: 8px; position: relative; z-index: 1; }
+.brand__mark { width: 32px; height: 32px; border-radius: 200px; object-fit: cover; }
+.brand__name { font-family: var(--font-poppins); font-weight: 600; font-size: 24px; letter-spacing: 0.6px; color: var(--shades-900); line-height: 1; }
+.brand__tag { font-family: var(--font-poppins); font-weight: 300; font-size: 20px; letter-spacing: 2px; color: var(--caarya-red-500); line-height: 1; }
+.hero__copy {
+  flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: flex-end;
+  gap: 8px; text-align: right; color: var(--neutral-900); position: relative; z-index: 1;
+}
+/* 570 not 560: browser Lato measures ~2px wider than Figma's, which would wrap the line */
+.hero__title { max-width: 570px; width: 100%; font-family: var(--font-lato); font-weight: 700; font-size: 28px; letter-spacing: 0.56px; text-transform: capitalize; }
+.hero__body { max-width: 560px; width: 100%; font-weight: 300; font-size: 18px; letter-spacing: 0.36px; line-height: 1.8; }
+.hero__particles { position: absolute; left: 0; top: 160px; width: 100%; height: 217px; display: block; pointer-events: none; }
+
+.auth__panel { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.auth__column { flex: 1; width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 80px; }
+.auth__main { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 40px; }
+
+.tabs { display: flex; gap: 16px; padding: 8px; background: var(--neutral-100); border-radius: 176px; }
+.tabs__tab {
+  flex: 1; border: 0; background: transparent; border-radius: 64px; padding: 12px 32px;
+  font-weight: 700; font-size: 14px; letter-spacing: 0.42px; text-transform: uppercase; color: var(--neutral-800);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.tabs__tab.is-active { background: var(--shades-50); box-shadow: var(--shadow); }
+
+.auth__form { display: none; flex-direction: column; gap: 40px; }
+.auth__form.is-active { display: flex; }
+
+.field--otp { max-width: 520px; }
+.otp { width: 312px; display: flex; flex-direction: column; gap: 12px; }
+.otp__boxes { display: flex; gap: 12px; padding-top: 7px; }
+.otp__box {
+  flex: 1; min-width: 0; height: 45px; text-align: center;
+  border: 1px solid var(--neutral-200); border-radius: 8px; background: var(--shades-50);
+  font-family: var(--font-satoshi); font-weight: 700; font-size: 14px; letter-spacing: 0.35px; color: var(--neutral-800);
+  outline: none;
+}
+.otp__box::placeholder { color: var(--neutral-300); }
+.otp__box:focus { border-color: var(--neutral-500); }
+.otp__note { font-family: var(--font-lato); font-size: 10px; letter-spacing: 0.4px; color: var(--neutral-800); }
+.otp__actions { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 16px; min-height: 146px; }
+
+.byline { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 24px; }
+.byline__text { font-family: var(--font-lato); font-size: 10px; letter-spacing: 0.25px; color: var(--shades-900); }
+.logo { display: inline-flex; align-items: center; gap: 4px; }
+.logo__mark { display: flex; width: 16px; height: 16px; padding: 2.361px; border-radius: 26.23px; background: var(--caarya-primary-100); }
+.logo__name { font-family: var(--font-poppins); font-weight: 600; font-size: 10px; letter-spacing: 0.25px; color: var(--shades-900); line-height: 1; }
+
+/* ================= ONBOARDING ================= */
+.onboarding { flex-direction: column; align-items: center; gap: 56px; padding: 40px 80px; min-height: 100vh; }
+
+.progress { display: flex; gap: 8px; width: 100%; max-width: 540px; height: 6px; }
+.progress__bar { flex: 1; border-radius: 248px; background: var(--neutral-200); transition: background 0.25s; }
+.progress__bar.is-filled { background: var(--neutral-800); }
+
+.step { display: none; width: 100%; max-width: 1400px; }
+.step.is-active { display: block; }
+.step__card { display: flex; flex-direction: column; align-items: center; gap: 48px; padding: 24px 16px; }
+
+.groups { display: flex; flex-direction: column; gap: 24px; width: 100%; }
+.group {
+  display: flex; flex-direction: column; gap: 16px;
+  border: 0; padding: 32px; border-radius: 24px; background: var(--neutral-50);
+}
+.group__title {
+  float: left; /* keeps legend inside the flex flow */
+  padding: 0; font-family: var(--font-lato); font-weight: 700; font-style: italic;
+  font-size: 14px; letter-spacing: 0.56px; color: var(--caarya-red-300);
+}
+
+/* Roles */
+.niche__head {
+  display: flex; align-items: center; justify-content: space-between; width: 100%;
+  background: none; border: 0; padding: 0; text-align: left;
+}
+.niche__head img { transition: transform 0.2s; }
+.niche.is-collapsed .niche__head img { transform: rotate(180deg); }
+.niche.is-collapsed .chips { display: none; }
+/* 3 × auto grid from Figma. Figma fixes 2 rows; auto rows let domains with more roles grow. */
+.chips {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: fit-content(100%);
+  grid-auto-flow: row;
+  gap: 16px;
+  align-self: stretch;
+}
+.chip {
+  display: flex; align-items: flex-start; gap: 8px; padding: 13px; /* 14 minus border */
+  background: var(--shades-50); border: 1px solid var(--neutral-200); border-radius: 8px;
+  font-family: var(--font-satoshi); font-size: 16px; letter-spacing: 0.32px; text-align: left; text-transform: capitalize;
+  color: var(--neutral-900);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.chip span { flex: 1; min-width: 0; }
+.chip img { transition: transform 0.2s; }
+.chip:hover { border-color: var(--neutral-300); }
+.chip.is-selected { background: var(--peddle-50); border-color: var(--peddle-100); color: var(--peddle-500); font-weight: 700; }
+.chip.is-selected img { transform: rotate(45deg); }
+.chip.is-capped { opacity: 0.5; cursor: not-allowed; }
+.chip.is-capped:hover { border-color: var(--neutral-200); }
+
+/* Industries */
+.industries {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 128px;
+  gap: 16px; padding: 32px; width: 100%; border-radius: 24px; background: var(--neutral-50);
+}
+/* Figma component "Industry Option": Default, Hover, Selected, Hover + Selected */
+.industry {
+  --icon-fill: var(--peddle-300);
+  --icon-opacity: 0.4;
+  min-width: 144px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+  padding: 15px; background: var(--shades-50); border: 1px solid var(--neutral-200); border-radius: 16px;
+  font-family: var(--font-satoshi); font-weight: 500; font-size: 12px; line-height: 1.5; text-align: center; color: var(--neutral-800);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.industry:hover { border-color: var(--peddle-100); --icon-opacity: 0.8; }
+.industry.is-selected {
+  background: var(--peddle-50); border-color: var(--peddle-100); color: var(--peddle-500); font-weight: 700;
+  --icon-fill: var(--peddle-500); --icon-opacity: 1;
+}
+.industry.is-selected:hover { border-color: var(--peddle-300); }
+.industry__icon { position: relative; width: 40px; height: 40px; flex-shrink: 0; overflow: hidden; }
+.industry__icon > span { position: absolute; }
+.industry__icon svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.industry__icon [fill^="#"] { fill: var(--icon-fill); fill-opacity: var(--icon-opacity); transition: fill 0.15s, fill-opacity 0.15s; }
+
+/* Step nav */
+.step-nav { width: 100%; max-width: 1400px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 24px; }
+.step-nav__buttons { display: flex; gap: 16px; justify-content: center; width: 100%; }
+.step-nav__buttons .btn { flex: 1; max-width: 200px; }
+
+/* Back to top */
+.to-top {
+  position: fixed; right: 88px; bottom: 48px; width: 64px; height: 64px; padding: 0;
+  border: 1px solid var(--neutral-100); border-radius: 100px; background: var(--shades-50); box-shadow: var(--shadow-lg);
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.to-top.is-visible { opacity: 1; pointer-events: auto; }
+.to-top__icon { position: absolute; inset: calc(27.78% - 0.44px); }
+.to-top__icon img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }

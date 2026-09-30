@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Caarya Life — Sign up</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Lato:ital,wght@0,400;0,700;1,700&family=Mr+De+Haviland&family=Poppins:wght@300;600&display=swap" rel="stylesheet" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,701&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="workspace.css" />
+  <link rel="stylesheet" href="growth.css" />
+  <link rel="stylesheet" href="desk.css" />
+  <link rel="stylesheet" href="session.css" />
+  <link rel="stylesheet" href="impact.css" />
+  <link rel="stylesheet" href="identity.css" />
+</head>
+<body>
+
+  <!-- ============ AUTH (Login / Signup / OTP) ============ -->
+  <section class="screen auth" data-screen="auth">
+    <aside class="hero">
+      <div class="brand">
+        <img class="brand__mark" src="assets/brand-mark.jpg" alt="" />
+        <p class="brand__name">caarya</p>
+        <p class="brand__tag">LIFE</p>
+      </div>
+      <div class="hero__copy">
+        <p class="hero__title">Turn real work into proof of your growth.</p>
+        <p class="hero__body">Pick up client work orders, run focused sessions, and watch your achievements and knowledge cards build up as you go.</p>
+      </div>
+      <canvas class="hero__particles" aria-hidden="true"></canvas>
+    </aside>
+
+    <div class="auth__panel">
+      <div class="auth__column">
+        <div class="auth__main">
+          <div class="heading">
+            <p class="heading__title heading__title--red">Welcome Back!</p>
+            <p class="heading__sub">Sign in to your student workspace</p>
+          </div>
+
+          <div class="tabs" role="tablist">
+            <button class="tabs__tab" role="tab" data-tab="login">Login</button>
+            <button class="tabs__tab" role="tab" data-tab="signup">Signup</button>
+          </div>
+
+          <!-- Login -->
+          <form class="auth__form" data-view="login" novalidate>
+            <div class="fields">
+              <label class="field">
+                <span class="field__label">Username</span>
+                <input class="input" name="username" placeholder="your username" autocomplete="username" />
+              </label>
+              <label class="field">
+                <span class="field__label">Password</span>
+                <input class="input" name="password" type="password" placeholder="***************" autocomplete="current-password" />
+              </label>
+              <p class="error" data-error></p>
+            </div>
+            <button class="btn btn--primary btn--lg btn--block" type="submit">
+              Login <img src="assets/icons/next-link-20.svg" alt="" />
+            </button>
+          </form>
+
+          <!-- Signup (not in Figma: collects the details the OTP + About screens rely on) -->
+          <form class="auth__form" data-view="signup" novalidate>
+            <div class="fields">
+              <label class="field">
+                <span class="field__label">Full Name</span>
+                <input class="input" name="name" placeholder="your full name" autocomplete="name" />
+              </label>
+              <label class="field">
+                <span class="field__label">Email</span>
+                <input class="input" name="email" type="email" placeholder="email@domain.com" autocomplete="email" />
+              </label>
+              <p class="error" data-error></p>
+            </div>
+            <button class="btn btn--primary btn--lg btn--block" type="submit">
+              Send OTP <img src="assets/icons/next-link-20.svg" alt="" />
+            </button>
+          </form>
+
+          <!-- OTP -->
+          <form class="auth__form auth__form--otp" data-view="otp" novalidate>
+            <div class="field field--otp">
+              <span class="field__label">Enter Verification Code</span>
+              <div class="otp">
+                <div class="otp__boxes">
+                  <input class="otp__box" inputmode="numeric" autocomplete="one-time-code" placeholder="0" aria-label="Digit 1" />
+                  <input class="otp__box" inputmode="numeric" placeholder="0" aria-label="Digit 2" />
+                  <input class="otp__box" inputmode="numeric" placeholder="0" aria-label="Digit 3" />
+                  <input class="otp__box" inputmode="numeric" placeholder="0" aria-label="Digit 4" />
+                  <input class="otp__box" inputmode="numeric" placeholder="0" aria-label="Digit 5" />
+                  <input class="otp__box" inputmode="numeric" placeholder="0" aria-label="Digit 6" />
+                </div>
+                <p class="otp__note">OTP sent to <span data-otp-email></span></p>
+              </div>
+              <p class="error" data-error></p>
+            </div>
+            <div class="otp__actions">
+              <button class="btn btn--primary btn--lg btn--block" type="submit">
+                Verify OTP <img src="assets/icons/next-link-20.svg" alt="" />
+              </button>
+              <button class="text-btn" type="button" data-resend>Resend OTP in 0:59</button>
+            </div>
+          </form>
+        </div>
+
+        <footer class="byline">
+          <p class="byline__text">a product by</p>
+          <span class="logo">
+            <span class="logo__mark"><img src="assets/caarya-logo-mark.svg" alt="" /></span>
+            <span class="logo__name">caarya</span>
+          </span>
+        </footer>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ONBOARDING ============ -->
+  <section class="screen onboarding" data-screen="onboarding">
+    <div class="progress" aria-hidden="true">
+      <span class="progress__bar"></span><span class="progress__bar"></span><span class="progress__bar"></span>
+    </div>
+
+    <!-- Step 1: About you -->
+    <div class="step" data-step="about">
+      <div class="step__card">
+        <div class="heading">
+          <p class="heading__title">Tell Us About yourself</p>
+          <p class="heading__sub">A few details about you</p>
+        </div>
+        <form class="groups" id="about-form" novalidate>
+          <fieldset class="group">
+            <legend class="group__title">About You</legend>
+            <label class="field">
+              <span class="field__label">Full Name</span>
+              <input class="input" name="name" disabled />
+            </label>
+            <label class="field">
+              <span class="field__label">Email</span>
+              <input class="input" name="email" disabled />
+            </label>
+            <label class="field" data-field="mobile">
+              <span class="field__label">Mobile</span>
+              <span class="input input--prefixed">
+                <span class="input__prefix">+91</span>
+                <input name="mobile" inputmode="numeric" placeholder="00000 00000" autocomplete="tel-national" />
+              </span>
+              <span class="error"></span>
+            </label>
+            <label class="field">
+              <span class="field__label">Linkedin</span>
+              <input class="input" name="linkedin" type="url" placeholder="linkedin.com/in/username" />
+            </label>
+          </fieldset>
+
+          <fieldset class="group">
+            <legend class="group__title">Education &amp; Experience</legend>
+            <label class="field" data-field="college">
+              <span class="field__label">College</span>
+              <span class="select">
+                <select name="college">
+                  <option value="">Select College</option>
+                </select>
+                <img src="assets/icons/sort-down.svg" alt="" />
+              </span>
+              <span class="error"></span>
+            </label>
+            <label class="field" data-field="field">
+              <span class="field__label">Field of Study</span>
+              <input class="input" name="field" placeholder="eg. BA Psychology Hons." />
+              <span class="error"></span>
+            </label>
+            <label class="field">
+              <span class="field__label">Year Of Graduation</span>
+              <span class="select">
+                <select name="year"></select>
+                <img src="assets/icons/sort-down.svg" alt="" />
+              </span>
+            </label>
+          </fieldset>
+        </form>
+      </div>
+    </div>
+
+    <!-- Step 2: Roles -->
+    <div class="step" data-step="roles">
+      <div class="step__card">
+        <div class="heading">
+          <p class="heading__title">What kind of roles are you interested in exploring?</p>
+          <p class="heading__sub">Choose all that excite you (select up to 3)</p>
+        </div>
+        <div class="groups" id="roles"></div>
+      </div>
+    </div>
+
+    <!-- Step 3: Industries -->
+    <div class="step" data-step="industries">
+      <div class="step__card">
+        <div class="heading">
+          <p class="heading__title">Which industries excite you?</p>
+          <p class="heading__sub">Think of where you’d like to make an impact</p>
+        </div>
+        <div class="industries" id="industries"></div>
+      </div>
+    </div>
+
+    <div class="step-nav">
+      <p class="error step-nav__error" data-step-error></p>
+      <div class="step-nav__buttons">
+        <button class="btn btn--secondary" type="button" data-back>Back</button>
+        <button class="btn btn--primary" type="button" data-next>
+          <span data-next-label>Next</span> <img src="assets/icons/next-link-16.svg" alt="" />
+        </button>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ============ CONFIRMATION (Figma 1010:40639) ============ -->
+  <section class="screen confirm" data-screen="confirm">
+    <div class="confirm__content">
+      <div class="heading confirm__heading">
+        <p class="heading__title">You’re all set, <span data-first-name></span>!</p>
+        <p class="heading__sub" data-summary></p>
+      </div>
+      <div class="confirm__loader">
+        <img class="confirm__logo" src="assets/logo-animation.jpg" alt="" />
+        <div class="ticker" role="status" aria-live="polite">
+          <div class="ticker__track">
+            <p class="ticker__line">Initializing career development pathways...</p>
+            <p class="ticker__line">Setting up Achievement Card Samplers...</p>
+            <p class="ticker__line">Activation service Profiles...</p>
+            <p class="ticker__line">Creating Assessments...</p>
+            <p class="ticker__line">Populating your caarya Space...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ WORKSPACE: menu bar (1010:38167, coin bar 1012:41544) + pages ============ -->
+  <section class="screen workspace" data-screen="workspace">
+    <nav class="menu" aria-label="Main">
+      <div class="menu__logo">
+        <img src="assets/menu/logo-icon.jpg" alt="" />
+        <span>caarya</span>
+      </div>
+      <div class="menu__sections" id="menu-sections"></div>
+      <div class="menu__divider"><span></span></div>
+      <div class="menu__bottom">
+        <div class="coins" role="meter" aria-label="Coin balance" aria-valuemin="0">
+          <div class="coins__track"><div class="coins__fill"></div></div>
+          <p class="coins__label"><img src="assets/growth/coins-dark.svg" alt="" /><span data-coins></span></p>
+        </div>
+        <button class="inbox" type="button">
+          <span class="inbox__icon">
+            <span class="inbox__glyph" id="inbox-glyph"></span>
+            <img class="inbox__dot" src="assets/menu/inbox-dot.svg" alt="" />
+          </span>
+          <span class="inbox__text">
+            <span class="inbox__title">Inbox</span>
+            <span class="inbox__sub">2 New Messages</span>
+          </span>
+        </button>
+      </div>
+    </nav>
+
+    <div class="workspace__content">
+      <header class="navbar">
+        <p class="breadcrumb">
+          <span data-crumb-section></span><span>/</span><span class="breadcrumb__current" data-crumb-page></span>
+        </p>
+        <div class="user-chip">
+          <img class="user-chip__avatar" src="assets/user-avatar.png" alt="" />
+          <span class="user-chip__name" data-user-name></span>
+          <img src="assets/icons/more-vert.svg" alt="" />
+        </div>
+      </header>
+
+      <main class="workspace__main" data-page="assessments">
+        <div class="page-header">
+          <h1 class="page-header__title">Assessments</h1>
+          <p class="page-header__sub">Discover how you work, what drives you, and where you add the most value</p>
+        </div>
+        <div class="assessment-groups" id="assessments"></div>
+      </main>
+
+      <!-- Growth Track pages (Figma section 843:17179), rendered by growth.js -->
+      <main class="workspace__main gt" data-page="growth" id="growth-page"></main>
+
+      <!-- Desk (Figma section 843:21999), rendered by desk.js -->
+      <main class="workspace__main gt desk" data-page="desk" id="desk-page"></main>
+
+      <!-- Impact Journal: Proof of Work (925:36209), Achievements (944:39793), Journal (1032:17298), rendered by impact.js -->
+      <main class="workspace__main gt impact" data-page="impact" id="impact-page"></main>
+
+      <!-- Competencies (adapted from mobile 1038:5931 + 1038:7327), rendered by competencies.js -->
+      <main class="workspace__main gt competencies" data-page="competencies" id="competencies-page"></main>
+
+      <!-- Profile (Figma 1007:33866), rendered by profile.js -->
+      <main class="workspace__main gt profile" data-page="profile" id="profile-page"></main>
+    </div>
+  </section>
+
+  <!-- ============ FOCUS SESSION (Figma section 903:17976), rendered by session.js ============ -->
+  <section class="screen session" data-screen="session" id="session-screen"></section>
+
+  <!-- ============ NEW ACHIEVEMENT WIZARD (Figma 944:38069 onwards), rendered by impact.js ============ -->
+  <section class="screen wizard gt" data-screen="wizard" id="wizard-screen"></section>
+
+  <button class="to-top" type="button" aria-label="Back to top">
+    <span class="to-top__icon"><img src="assets/icons/arrow-upward.svg" alt="" /></span>
+  </button>
+
+  <script src="app.js"></script>
+  <script src="workspace.js"></script>
+  <script src="growth.js"></script>
+  <script src="desk.js"></script>
+  <script src="session.js"></script>
+  <script src="data.js"></script>
+  <script src="impact.js"></script>
+  <script src="competencies.js"></script>
+  <script src="profile.js"></script>
+  <script src="particles.js"></script>
+</body>
+</html>
