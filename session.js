@@ -305,7 +305,8 @@ function openInfoDrawer(title, body) {
 }
 
 // ---------- Artefacts ----------
-// "Submitting Artefact" drawer (903:16154)
+// "Submitting Artefact" drawer (903:16154, review states 1080:32086). Each submission goes to a
+// community mentor: "Verification Pending" until they grade it, then a verified level badge.
 function openArtefactDrawer() {
   const { woId, vcId } = state.session;
   const v = vcProgress(woId, vcId);
@@ -314,7 +315,7 @@ function openArtefactDrawer() {
     <div class="artefact">
       <a class="artefact__link${a.primary ? " is-primary" : ""}" href="${esc(a.link)}" target="_blank" rel="noopener noreferrer">
         ${a.primary ? `<span class="artefact__tag">Primary Link <img src="${S}star.svg" alt="" /></span>` : ""}
-        <img src="${S}link.svg" alt="" /><span>${esc(a.title)}</span>
+        <img src="${S}link.svg" alt="" /><span>${esc(a.title)}</span>${reviewBadge(a)}
       </a>
       <div class="artefact__more">
         <button type="button" data-art-menu="${i}" aria-label="More options"><img src="${S}more-vert.svg" alt="" /></button>
@@ -345,9 +346,9 @@ function openArtefactDrawer() {
     const t = e.target;
     if (t.closest("[data-art-add]")) {
       openArtefactModal("New Artefact Submission", (item) => {
-        v.artefacts.push({ ...item, primary: v.artefacts.length === 0 });
+        v.artefacts.push({ ...item, status: "pending", primary: v.artefacts.length === 0 });
         refresh();
-        showToast("Artefact submitted — this construct is now complete");
+        showToast("A community mentor will review & grade your submission");
       });
     }
     const m = t.closest("[data-art-menu]");
@@ -369,7 +370,12 @@ function openArtefactDrawer() {
   });
 }
 
-// "New Artefact Submission" modal (903:17228) — also used for the final deliverable.
+// Mentor review status on a submission: pending, or the level it was graded at (1080:31868).
+const reviewBadge = (item) => item.level
+  ? `<span class="review-badge review-badge--done"><img src="${S}verified.svg" alt="Verified" />L${item.level}</span>`
+  : `<span class="review-badge">Verification Pending</span>`;
+
+// "New Artefact Submission" modal (1080:30433) — also used for the final deliverable. Saving sends it for review.
 function openArtefactModal(title, onSave) {
   const ov = openOverlay(`
     <form class="art-modal" role="dialog" aria-modal="true" aria-labelledby="art-modal-title" novalidate>
@@ -383,7 +389,7 @@ function openArtefactModal(title, onSave) {
       </div>
       <footer>
         <button type="button" class="btn btn--secondary" data-close>Cancel</button>
-        <button type="submit" class="btn btn--primary"><img src="${S}plus-white.svg" alt="" />Add Now</button>
+        <button type="submit" class="btn btn--primary">Submit For Verification</button>
       </footer>
     </form>`, "modal");
   const form = ov.querySelector("form");

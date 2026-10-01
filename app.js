@@ -88,11 +88,11 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 const ROUTES = [
   "login", "signup", "otp", "about", "roles", "industries", "confirm",
   "assessments", "growth", "explore", "explore-all", "work-order", "desk", "session",
-  "proof", "proof-asset", "achievements", "achievement-new", "journal", "competencies", "profile",
+  "proof", "proof-asset", "achievements", "achievement-new", "journal", "competencies", "profile", "riasec", "wep",
 ];
 const STEPS = ["about", "roles", "industries"];
 const WORKSPACE_ROUTES = ["assessments", "growth", "explore", "explore-all", "work-order", "desk", "proof", "proof-asset", "achievements", "journal", "competencies", "profile"];
-const SCREEN_FOR = { login: "auth", signup: "auth", otp: "auth", confirm: "confirm", session: "session", "achievement-new": "wizard" };
+const SCREEN_FOR = { login: "auth", signup: "auth", otp: "auth", confirm: "confirm", session: "session", "achievement-new": "wizard", riasec: "riasec", wep: "wep" };
 WORKSPACE_ROUTES.forEach((r) => (SCREEN_FOR[r] = "workspace"));
 const displayName = () => state.name || state.email.split("@")[0];
 
@@ -128,6 +128,8 @@ function render() {
   else if (screen === "confirm") startConfirm();
   else if (screen === "session") renderSession(); // session.js
   else if (screen === "wizard") renderWizard(); // impact.js
+  else if (screen === "riasec") renderRiasec(param); // riasec.js
+  else if (screen === "wep") renderWep(param); // wep.js
   else renderWorkspace(route, param); // workspace.js / growth.js
 
   if (navigated) {
