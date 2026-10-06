@@ -219,7 +219,7 @@ $('[data-view="login"]').addEventListener("submit", (e) => {
   // Demo account (demo-user.js): skips the OTP and lands in a seasoned profile.
   if (DEMO_LOGINS.includes(username.toLowerCase())) {
     loadDemoUser();
-    return go("growth");
+    return loggingIn(() => go("growth"));
   }
   state.name = username.includes("@") ? "" : username;
   state.email = username.includes("@") ? username : "";
@@ -269,8 +269,21 @@ $('[data-view="otp"]').addEventListener("submit", (e) => {
     $("[data-error]", e.target).textContent = "Enter all 6 digits. Any code works in this prototype.";
     return;
   }
-  go("about");
+  state.authTab === "login" ? loggingIn(() => go("about")) : go("about");
 });
+
+// "Logging in" loader after a successful sign-in: the logo pulses while a bar fills, then `next` runs.
+const LOGIN_LOADER_MS = 1600;
+function loggingIn(next) {
+  const first = displayName().split(" ")[0];
+  openOverlay(`
+    <div class="desk-loader login-loader" role="status">
+      <img class="desk-loader__logo" src="assets/logo-animation.jpg" alt="" />
+      <p>${first ? `Welcome back, ${esc(first)}` : "Logging you in"}</p>
+      <span class="login-loader__bar" style="--login-ms:${LOGIN_LOADER_MS}ms"><i></i></span>
+    </div>`, "loader"); // growth.js
+  setTimeout(() => { closeAllOverlays(); next(); }, LOGIN_LOADER_MS);
+}
 
 let resendTimer;
 const resendBtn = $("[data-resend]");
