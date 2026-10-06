@@ -81,6 +81,7 @@ const state = {
   email: "",
   roles: new Set(),
   industries: new Set(),
+  avatar: "assets/user-avatar.png", // the demo account swaps in its own photo
 };
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -120,6 +121,7 @@ function render() {
   if (navigated) window.scrollTo(0, 0);
   lastRendered = target;
   $$("[data-user-name]").forEach((el) => (el.textContent = displayName()));
+  $$("[data-user-avatar]").forEach((el) => (el.src = state.avatar));
   $$("[data-first-name]").forEach((el) => (el.textContent = displayName().split(" ")[0]));
 
   stopConfirm();
@@ -213,6 +215,11 @@ $('[data-view="login"]').addEventListener("submit", (e) => {
   if (!username || !f.password.value) {
     $("[data-error]", f).textContent = "Enter your username and password.";
     return;
+  }
+  // Demo account (demo-user.js): skips the OTP and lands in a seasoned profile.
+  if (username.toLowerCase() === "demo") {
+    loadDemoUser();
+    return go("growth");
   }
   state.name = username.includes("@") ? "" : username;
   state.email = username.includes("@") ? username : "";

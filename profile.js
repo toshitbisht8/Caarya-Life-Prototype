@@ -33,7 +33,7 @@ function pfIdentity() {
   const sub = [about.college.value, about.field.value.trim(), about.year.value].filter(Boolean).join(", ");
   return `
     <header class="pf-id">
-      <div class="pf-id__top"><img src="assets/user-avatar.png" alt="" /><div><h1>${esc(displayName())}</h1>${sub ? `<p>${esc(sub)}</p>` : ""}</div></div>
+      <div class="pf-id__top"><img src="${esc(state.avatar)}" alt="" /><div><h1>${esc(displayName())}</h1>${sub ? `<p>${esc(sub)}</p>` : ""}</div></div>
       ${state.roles.size ? `<div class="pf-id__roles">${[...state.roles].map((r) => `<span>${esc(roleName(r))}</span>`).join("")}</div>` : ""}
     </header>`;
 }

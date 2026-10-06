@@ -7602,14 +7602,14 @@ const catalogFor = (roleId) => WORK_ORDER_CATALOG.filter((wo) => roleId && wo.ui
 // One shape for every surface, whether the work order is real (catalog) or a Figma placeholder.
 function woContent(id) {
   const wo = CATALOG_BY_ID[id];
-  return wo ? fromCatalog(wo) : placeholderContent();
+  return { ...(wo ? fromCatalog(wo) : placeholderContent()), stage: stageForWo(id) };
 }
 
 function fromCatalog(wo) {
   const { identity: idn, pre, background: bg, ui } = wo;
   const vcIds = Object.keys(wo.vcs).map(Number);
   const bars = vcIds.filter((k) => wo.vcs[k].bar).length;
-  const n = state.careerStage; // growth.js; Shift+C cycles it (mentor-sim.js)
+  const n = stageForWo(ui.id); // growth.js; Shift+C cycles it (mentor-sim.js)
   const st = wo.stages[String(n)];
   const nudge = (st.nudge || []).map(Number);
   const tags = [idn.industry, ui.stage, ui.category, ui.time];

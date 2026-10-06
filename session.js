@@ -154,7 +154,7 @@ function viewMain(s) {
           <i>${v.artefacts.length ? `${v.artefacts.length} link${v.artefacts.length > 1 ? "s" : ""} attached · ` : ""}You can replace or improve it at any time</i>
         </div>
       </div>
-      <div class="fs-pgm">${pgmBadge(false)}<p>Since you’re currently ${CAREER_STAGES[state.careerStage - 1][1].toLowerCase()}, I suggest you aim to submit this artefact at L${Math.min(vc.rubric.length, targetLevel(vc))}</p></div>
+      <div class="fs-pgm">${pgmBadge(false)}<p>Since you’re currently ${CAREER_STAGES[stageForWo(s.woId) - 1][1].toLowerCase()}, I suggest you aim to submit this artefact at L${Math.min(vc.rubric.length, targetLevel(vc, stageForWo(s.woId)))}</p></div>
     </section>
 
     <section class="fs-card">
@@ -198,7 +198,7 @@ function viewMain(s) {
 
 // Level the growth manager suggests aiming for, by stage: contribute at L1, go a level deeper at C2,
 // meet the quality bar at C3, then push to L4 / L5 (capped at the construct's top band by the caller).
-const targetLevel = (vc) => [1, 2, Math.max(2, vc.bar ? vc.floorLevel : 2), 4, 5][state.careerStage - 1];
+const targetLevel = (vc, stage) => [1, 2, Math.max(2, vc.bar ? vc.floorLevel : 2), 4, 5][stage - 1];
 
 function viewResources(s) {
   const items = vcInfo(s.woId, s.vcId).community; // work-orders.js
@@ -332,9 +332,9 @@ function openSessionMenu() {
       <div class="bg-block"><p class="kicker">About ‘${esc(c.venture)}’</p><p>${esc(c.about)}</p></div>`);
     if (what === "criteria") openInfoDrawer("Progression Criteria", `
       <div class="bg-block"><p class="kicker">To unlock paid work</p>
-        <div class="unlock__items unlock__items--stack">${unlockItems("desk").map(([t, d]) => `<div class="unlock__item"><img src="${G}progress-pending.png" alt="" /><span><b>${t}</b><span>${d}</span></span></div>`).join("")}</div>
+        <div class="unlock__items unlock__items--stack">${unlockItems("desk").map(([t, d, done]) => `<div class="unlock__item">${unlockIcon(done)}<span><b>${t}</b><span>${d}</span></span></div>`).join("")}</div>
       </div>
-      <div class="bg-block"><p class="kicker">Career progression (${stageRange()})</p>
+      <div class="bg-block"><p class="kicker">Career progression (${stageRange(c.stage)})</p>
         ${c.progression.map(([t, pts]) => `<p class="milestone"><b>${esc(pts)}</b><span>${esc(t)}</span></p>`).join("")}
       </div>`);
     if (what === "logs") { state.session.view = "logs"; render(); }

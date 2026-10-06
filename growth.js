@@ -61,9 +61,17 @@ const LOCKED_TABS = {
 };
 // Career journey stages. New users start every role at C1; Shift+C (mentor-sim.js) cycles C1-C5 for testing.
 const CAREER_STAGES = [["Exploration", "Exploring"], ["Alignment", "Aligning"], ["Activation", "Activating"], ["Enhancement", "Enhancing"], ["Advancement", "Advancing"]];
-state.careerStage = 1;
-const stageRange = () => (state.careerStage < 5 ? `C${state.careerStage}-C${state.careerStage + 1}` : "C5");
-const roleStatus = () => ({ stage: `Currently ${CAREER_STAGES[state.careerStage - 1][1]}`, level: `C${state.careerStage}`, toNext: 2 });
+state.roleStages = {}; // role id -> 1..5; roles not listed are at C1 (the demo account seeds some, see demo-user.js)
+const stageOf = (role) => state.roleStages[role] || 1;
+// The stage that applies to a work order: the role whose growth track holds it, else the active role.
+const stageForWo = (id) => stageOf(myRoles().find((r) => (state.growth.tracks[r] || []).includes(id)) || activeRole());
+const stageRange = (n) => (n < 5 ? `C${n}-C${n + 1}` : "C5");
+// Work orders delivered (final deliverable graded) on a role's growth track.
+const deliveredFor = (role) => (state.growth.tracks[role] || []).filter((id) => state.deskData?.[id]?.final?.level).length;
+function roleStatus(role) {
+  const n = stageOf(role);
+  return { stage: `Currently ${CAREER_STAGES[n - 1][1]}`, level: `C${n}`, n, toNext: Math.max(1, 2 - (deliveredFor(role) % 2)) };
+}
 
 // ---------- Helpers ----------
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -95,13 +103,15 @@ function roleIdentity(id, iconSize = 40) {
     </span>`;
 }
 
+// Done requirements get the green check; open ones the dashed progress ring.
+const unlockIcon = (done) => done ? `<img src="assets/desk/check-circle.svg" alt="Done" />` : `<img src="${G}progress-pending.png" alt="" />`;
 const unlockProgress = () => `
   <div class="unlock">
     <p class="unlock__label">To Unlock Paid Work</p>
     <div class="unlock__items">
-      ${unlockItems("growth").map(([t, d]) => `
+      ${unlockItems("growth").map(([t, d, done]) => `
         <div class="unlock__item">
-          <img src="${G}progress-pending.png" alt="" />
+          ${unlockIcon(done)}
           <span><b>${t}</b><span>${d}</span></span>
         </div>`).join("")}
     </div>
@@ -148,13 +158,15 @@ function woCard(id, variant) {
   let body = "", footer = "";
   if (variant === "track") {
     const onDesk = state.growth.desk.has(id);
+    const fin = state.deskData[id]?.final; // desk.js
+    const logCount = Object.values(state.deskData[id]?.vcs || {}).reduce((n, v) => n + v.logs.length, 0);
     body = `
       ${onDesk ? `<div class="wo__highlights">${resume}${progression}</div>` : ""}
       <div class="wo__metrics">
-        <p><span>Artefacts Submitted:</span><b>0/0 <i class="help" title="Artefacts you've submitted out of those you can collect">?</i></b></p>
-        <p><span>Deliverable Submitted:</span><b>No</b></p>
-        <p><span>Deliverable Rating:</span><b>N/A</b></p>
-        <p><span>Session Logs</span><b>00</b></p>
+        <p><span>Artefacts Submitted:</span><b>${submittedVcs(id)}/${Object.keys(w.vcs).length} <i class="help" title="Artefacts you've submitted out of those you can collect">?</i></b></p>
+        <p><span>Deliverable Submitted:</span><b>${fin ? "Yes" : "No"}</b></p>
+        <p><span>Deliverable Rating:</span><b>${fin ? (fin.level ? `L${fin.level}` : "In review") : "N/A"}</b></p>
+        <p><span>Session Logs</span><b>${pad2(logCount)}</b></p>
       </div>`;
     footer = `
       <div class="wo__footer wo__footer--end">
@@ -259,16 +271,23 @@ function tabs(items, active, action) {
     </button>`).join("")}</div>`;
 }
 
+// Stage at which each gig tab opens for a role (matches the LOCKED_TABS copy).
+const UNLOCK_AT = { unpaid: 3, paid: 4, jobs: 5 };
+
 function pageExploreAll() {
   const role = activeRole();
   const tab = state.growth.exploreTab;
+  const isLocked = (key) => stageOf(role) < UNLOCK_AT[key];
+  // Unlocked gig tabs have no designed listings yet, so they say so instead of showing the lock.
   const content = tab === "studio"
     ? `${filterChips()}<div class="gt-grid">${workOrderIds(EXPLORE_COUNT).map((id) => woCard(id, "explore")).join("")}</div>`
-    : (([, text, unlock]) => `
+    : (([name, text, unlock]) => `
         <div class="locked">
           <span class="locked__icon"><span style="inset:9.31% 0"><img src="${G}briefcase.svg" alt="" /></span></span>
           <p class="locked__text">${text}</p>
-          <p class="locked__pill"><img src="${G}lock-small.svg" alt="" />${unlock}</p>
+          ${isLocked(tab)
+            ? `<p class="locked__pill"><img src="${G}lock-small.svg" alt="" />${unlock}</p>`
+            : `<p class="locked__pill">No ${name.toLowerCase()} open for ‘${esc(roleName(role))}’ right now. New ones are posted every week.</p>`}
         </div>`)(LOCKED_TABS[tab]);
   return `
     <div class="gt-head">${backLink("Back to Growth Track", "growth")}<h1 class="gt-title">Exploring Work</h1></div>
@@ -280,7 +299,7 @@ function pageExploreAll() {
         </div>
         ${unlockProgress()}
       </div>
-      ${tabs([["studio", "Experience Studio"], ["unpaid", "Unpaid Gigs", true], ["paid", "Paid Gigs", true], ["jobs", "Jobs", true]], tab, "explore-tab")}
+      ${tabs([["studio", "Experience Studio"], ["unpaid", "Unpaid Gigs", isLocked("unpaid")], ["paid", "Paid Gigs", isLocked("paid")], ["jobs", "Jobs", isLocked("jobs")]], tab, "explore-tab")}
       <p class="gt-intro">A paragraph about learning work... lorem ipsum dolor sit</p>
       ${content}
     </section>`;
@@ -293,7 +312,7 @@ function brandBlocks(d) {
         </div>`;
   const asset = `<div class="voice__block"><p class="kicker">The asset you’ll have at the end</p><p class="voice__asset">${esc(d.assetLine)}</p></div>`;
   const resume = `<div class="resume-box"><p class="kicker">What you can add to your resume</p><p>${esc(d.resume)}</p></div>`;
-  return d.real && state.careerStage >= 3 ? resume + asset + pieces : pieces + asset + resume;
+  return d.real && d.stage >= 3 ? resume + asset + pieces : pieces + asset + resume;
 }
 
 function pageDetails(id) {
@@ -323,7 +342,7 @@ function pageDetails(id) {
         <div class="voice__block"><p class="kicker">Skills you’ll sharpen</p>
           <p class="pills">${d.technical.map((s) => `<span class="pill pill--tech">${esc(s)}</span>`).join("")}${d.transferable.map((s) => `<span class="pill pill--transfer">${esc(s)}</span>`).join("")}</p>
         </div>
-        <div class="voice__block"><p class="kicker">Career Progression (${stageRange()})</p>
+        <div class="voice__block"><p class="kicker">Career Progression (${stageRange(d.stage)})</p>
           ${d.progression.map(([t, pts]) => `<p class="milestone"><b>${esc(pts)}</b><span>${esc(t)}</span></p>`).join("")}
         </div>
         ${d.grow ? `<div class="voice__block"><p class="kicker">Where it takes you next</p><p class="voice__asset">${esc(d.grow)}</p></div>` : ""}
@@ -523,7 +542,7 @@ function openFocusModal() {
   const cards = myRoles().map((r) => `
     <button type="button" class="focus-role" data-focus-role="${esc(r)}">
       ${roleIdentity(r)}
-      <span class="focus-role__next"><b>${String(roleStatus(r).toNext).padStart(2, "0")}</b> more work orders to reach C2</span>
+      <span class="focus-role__next">${roleStatus(r).n < 5 ? `<b>${String(roleStatus(r).toNext).padStart(2, "0")}</b> more work orders to reach C${roleStatus(r).n + 1}` : "Top stage reached"}</span>
     </button>`).join("");
   const ov = openOverlay(`
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="focus-title">

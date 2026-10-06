@@ -44,6 +44,10 @@ function unlockItems(where) {
   ];
 }
 
+const sinceLabel = (t) => {
+  const days = Math.floor((Date.now() - t) / 86400000);
+  return days < 1 ? "Today" : days === 1 ? "Yesterday" : `${days} days ago`;
+};
 const pad2 = (n) => String(n).padStart(2, "0");
 const fmtHm = (ms) => `${pad2(Math.floor(ms / 3600000))}h ${pad2(Math.floor(ms / 60000) % 60)}m`;
 
@@ -192,7 +196,7 @@ function pageDesk() {
           <h2 class="desk-wo__title">${esc(c.title)}</h2>
         </div>
         <p class="desk-wo__tags"><span class="tag-role">${esc(role)}</span><span class="tag-industry">${esc(c.industry)}</span></p>
-        <p class="desk-wo__since">On Desk Since: <span>Today</span></p>
+        <p class="desk-wo__since">On Desk Since: <span>${sinceLabel(p.since)}</span></p>
       </div>
       <div class="desk-wo__actions">
         <button type="button" class="desk-btn" data-desk="pause"><img src="${D}pause.svg" alt="" />Pause this Work</button>
@@ -202,8 +206,8 @@ function pageDesk() {
     <section class="desk-block">
       <div class="unlock">
         <p class="unlock__label">To Unlock Paid Work For ‘${esc(role)}’</p>
-        <div class="unlock__items">${unlockItems("desk").map(([t, d]) => `
-          <div class="unlock__item unlock__item--gold"><img src="${G}progress-pending.png" alt="" /><span><b>${t}</b><span>${d}</span></span></div>`).join("")}</div>
+        <div class="unlock__items">${unlockItems("desk").map(([t, d, done]) => `
+          <div class="unlock__item unlock__item--gold">${unlockIcon(done)}<span><b>${t}</b><span>${d}</span></span></div>`).join("")}</div>
       </div>
       <div class="pgm-note">${pgmBadge()}<p>${esc(c.pgm)}</p></div>
     </section>
