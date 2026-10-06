@@ -52,12 +52,11 @@ const DESK_VCS = {
   1: {}, 2: { mandatory: true, recommended: true }, 3: { mandatory: true },
   4: {}, 5: { mandatory: true }, 6: {}, 7: {},
 };
-const vcName = (id) => `Value Construct Title ${id}`;
+const vcName = (woId, id) => vcInfo(woId, id).name; // work-orders.js
 const DESK_STEPS = [[1], [6, 2], [3], [4], [], [5], [7]]; // constructs applicable to each methodology step
 const DESK_VC_TAB = [1, 2, 3, 4, 5]; // "Available Value Constructs" list, as designed
 const DESK_TABS = [["brief", "Brief"], ["vcs", "Available Value Constructs"], ["resources", "Resources"], ["journal", "Impact Journal"], ["background", "Work Background"]];
 const DESK_LOREM = "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
-const DESK_BRIEF = `A paragraph about what needs to be done in detail, as stated by the client or the person posting the work order......  ${DESK_LOREM} Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`;
 
 const deskWo = () => [...state.growth.desk][0];
 
@@ -70,7 +69,7 @@ const pgmBadge = (boost = true) => `
   </span>`;
 
 function vcCard(woId, id, { standalone = true, wrap = true } = {}) {
-  const vc = DESK_VCS[id];
+  const vc = vcInfo(woId, id); // work-orders.js
   const v = vcProgress(woId, id);
   const status = vcStatus(woId, id);
   const icon = status === "done"
@@ -84,12 +83,12 @@ function vcCard(woId, id, { standalone = true, wrap = true } = {}) {
   const card = `
     <div class="vc-card${standalone ? "" : " vc-card--nested"}">
       <div class="vc-card__main">
-        <p class="vc-card__title">${vcName(id)}${vc.mandatory ? '<span class="vc-card__badge">Mandatory L1</span>' : ""}${icon}</p>
-        <p class="vc-card__desc">1-2 line description of what it is</p>
-        <p class="vc-card__leaves">Leaves: Artefact description to come here</p>
+        <p class="vc-card__title">${esc(vc.name)}${vc.bar ? `<span class="vc-card__badge">Mandatory L${vc.floorLevel}</span>` : ""}${icon}</p>
+        <p class="vc-card__desc">${esc(vc.desc)}</p>
+        <p class="vc-card__leaves">Leaves: ${esc(vc.leaves)}</p>
         ${stats}
       </div>
-      <div class="vc-card__side"><button type="button" class="vc-card__action" data-desk="work-on" data-vc="${id}">${label}</button><span class="vc-card__time">8-10h</span></div>
+      <div class="vc-card__side"><button type="button" class="vc-card__action" data-desk="work-on" data-vc="${id}">${label}</button><span class="vc-card__time">${esc(vc.time)}</span></div>
     </div>`;
   return vc.recommended && wrap
     ? `<div class="vc-rec"><p class="vc-rec__head"><img src="${G}career-progression.png" alt="" />Recommended<span class="vc-rec__help">${helpDot(16)}</span></p>${card}</div>`
@@ -97,28 +96,29 @@ function vcCard(woId, id, { standalone = true, wrap = true } = {}) {
 }
 
 function deskTabContent(woId, tab) {
+  const c = woContent(woId); // work-orders.js
   if (tab === "brief") {
-    const steps = DESK_STEPS.map((vcs, i) => `
+    const steps = c.steps.map(({ title, desc, vcs, loopnote }, i) => `
       <div class="step-row">
         <div class="step-row__rail"><span class="step-row__n">${i + 1}</span><span class="step-row__line"></span></div>
         <div class="step-row__body">
           <div class="step-row__head">
-            <b>Methodology Step Name</b>
-            <p>Methodology step details in a line or two......  ${DESK_LOREM}</p>
+            <b>${esc(title)}</b>
+            <p>${esc(desc)}</p>${loopnote ? `<p class="step-row__loop">↻ ${esc(loopnote)}</p>` : ""}
           </div>
           ${vcs.length ? `<div class="step-row__vcs"><p class="step-row__label">Applicable Constructs</p>${vcs.map((v) => vcCard(woId, v, { standalone: false })).join("")}</div>` : ""}
         </div>
       </div>`).join("");
     return `
-      <p class="desk-brief">${DESK_BRIEF}</p>
+      <p class="desk-brief">${esc(c.brief)}</p>
       <p class="chirag"><img src="${D}sparkle.svg" alt="" />C.H.I.R.A.G ‘s Recommended Methodology<button type="button" class="chirag__eye" aria-label="Preview methodology"><img src="${D}eye.svg" alt="" /></button></p>
       <div class="steps">${steps}</div>`;
   }
   if (tab === "vcs") {
     return `
       <div class="desk-vcs">
-        <p class="desk-vcs__intro">You can apply 9 different concepts when building this work order. You can pick and choose the ones that align most with your skill set</p>
-        <div class="desk-vcs__list">${DESK_VC_TAB.map((v) => vcCard(woId, v)).join("")}</div>
+        <p class="desk-vcs__intro">You can apply ${Object.keys(c.vcs).length} different concepts when building this work order. You can pick and choose the ones that align most with your skill set</p>
+        <div class="desk-vcs__list">${c.vcTab.map((v) => vcCard(woId, v)).join("")}</div>
       </div>
       <div class="vc-help">
         <div class="vc-help__text"><b>Not sure which VC you should do?</b><p>Get personalized recommendations from your professional growth manager by boosting its capabilities</p></div>
@@ -128,15 +128,15 @@ function deskTabContent(woId, tab) {
   if (tab === "resources") {
     return `
       <p class="desk-resources__head"><img src="${D}sparkle-24.svg" alt="" />You can learn about the following topics to help you with this work</p>
-      <div class="desk-resources">${Array.from({ length: 5 }, () => `
-        <div class="resource"><b>Resource Title</b><p>Resource details in a line or two......  ${DESK_LOREM}</p></div>`).join("")}</div>`;
+      <div class="desk-resources">${c.resources.map(([t, d]) => `
+        <div class="resource"><b>${esc(t)}</b><p>${esc(d)}</p></div>`).join("")}</div>`;
   }
   if (tab === "journal") {
     const p = deskProgress(woId);
     const rows = [
       ["Process Documentation", "No. of journal entries added", pad2(journalEntries(woId))],
-      ["VC Artefacts Submitted", "", `${submittedVcs(woId)} of 9`],
-      ["VC Artefacts Graded", "By a community mentor", `${artefactVcs(woId)} of 9`],
+      ["VC Artefacts Submitted", "", `${submittedVcs(woId)} of ${Object.keys(c.vcs).length}`],
+      ["VC Artefacts Graded", "By a community mentor", `${artefactVcs(woId)} of ${Object.keys(c.vcs).length}`],
       ["Final Asset Submission Status", "", p.final ? (p.final.level ? "Verified" : "Verification Pending") : "Not Submitted"],
     ];
     // Figma: "Asset Quality" is not shown until the asset is submitted.
@@ -153,8 +153,8 @@ function deskTabContent(woId, tab) {
       </div>`;
   }
   return `
-    <div class="bg-block"><p class="kicker">Why this work is needed</p><p>${DETAILS.why}</p></div>
-    <div class="bg-block"><p class="kicker">About ‘Initiative name’</p><p>${DETAILS.about}</p></div>`;
+    <div class="bg-block"><p class="kicker">Why this work is needed</p><p>${esc(c.why)}</p></div>
+    <div class="bg-block"><p class="kicker">About ‘${esc(c.venture)}’</p><p>${esc(c.about)}</p></div>`;
 }
 
 function pageDesk() {
@@ -176,21 +176,22 @@ function pageDesk() {
   }
   const role = roleName(state.growth.deskRole || activeRole());
   const p = deskProgress(woId);
+  const c = woContent(woId); // work-orders.js
   const arts = artefactVcs(woId);
   const submit = p.final
     ? p.final.level
       ? `<button type="button" class="desk-submit__btn is-done" disabled>Deliverable Verified</button><p>${esc(p.final.title)} · graded L${p.final.level} by a community mentor</p>`
       : `<button type="button" class="desk-submit__btn is-done" disabled>Verification Pending</button><p>${esc(p.final.title)} · a community mentor is reviewing it</p>`
-    : `<button type="button" class="desk-submit__btn" data-desk="submit-final" ${arts >= 2 ? "" : "disabled"}>Submit Final Deliverable</button>
-       <p>${arts >= 2 ? "Ready to submit — your artefacts are graded (2/2)" : `Get at least 2 construct artefacts graded first (${arts}/2)`}</p>`;
+    : `<button type="button" class="desk-submit__btn" data-desk="submit-final" ${arts >= c.gate ? "" : "disabled"}>Submit Final Deliverable</button>
+       <p>${arts >= c.gate ? `Ready to submit — your artefacts are graded (${c.gate}/${c.gate})` : `Get at least ${c.gate} construct artefacts graded first (${arts}/${c.gate})`}</p>`;
   return `${header}
     <section class="desk-wo">
       <div class="desk-wo__info">
         <div>
-          <p class="desk-wo__service">${DETAILS.service}</p>
-          <h2 class="desk-wo__title">${DETAILS.title}</h2>
+          <p class="desk-wo__service">${esc(c.service)}</p>
+          <h2 class="desk-wo__title">${esc(c.title)}</h2>
         </div>
-        <p class="desk-wo__tags"><span class="tag-role">${esc(role)}</span><span class="tag-industry">Industry Name</span></p>
+        <p class="desk-wo__tags"><span class="tag-role">${esc(role)}</span><span class="tag-industry">${esc(c.industry)}</span></p>
         <p class="desk-wo__since">On Desk Since: <span>Today</span></p>
       </div>
       <div class="desk-wo__actions">
@@ -204,7 +205,7 @@ function pageDesk() {
         <div class="unlock__items">${unlockItems("desk").map(([t, d]) => `
           <div class="unlock__item unlock__item--gold"><img src="${G}progress-pending.png" alt="" /><span><b>${t}</b><span>${d}</span></span></div>`).join("")}</div>
       </div>
-      <div class="pgm-note">${pgmBadge()}<p>You do not need to complete the entire work order yet. Contribute to it through a VC of your choice to better understand how this role aligns with you. You can always come back to this work order when activating this role</p></div>
+      <div class="pgm-note">${pgmBadge()}<p>${esc(c.pgm)}</p></div>
     </section>
     ${p.lastVc ? `
     <section class="desk-block desk-block--tight">

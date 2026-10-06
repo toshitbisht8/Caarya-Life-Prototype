@@ -4,6 +4,7 @@
 //   Shift+D  grade the final deliverable (asset) awaiting verification
 //   Shift+S  rate every technical skill awaiting verification (Competencies)
 //   Shift+M  all of the above
+//   Shift+C  cycle the career stage C1 → C5 (stage-specific copy, recommended constructs, progression)
 const mentorLevel = (max) => 2 + Math.floor(Math.random() * (max - 2)); // a plausible grade: L2 up to L(max-1)
 
 function gradeArtefacts() {
@@ -34,6 +35,11 @@ const MENTOR_KEYS = {
 };
 
 document.addEventListener("keydown", (e) => {
+  if (e.key === "C" && e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey && !e.repeat && !e.target.closest("input, textarea, select, [contenteditable]")) {
+    state.careerStage = (state.careerStage % 5) + 1;
+    render();
+    return showToast(`Career stage: C${state.careerStage} ${CAREER_STAGES[state.careerStage - 1][0]}`);
+  }
   const run = MENTOR_KEYS[e.key];
   if (!run || !e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || e.repeat) return;
   if (e.target.closest("input, textarea, select, [contenteditable]")) return;
