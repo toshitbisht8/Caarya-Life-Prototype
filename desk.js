@@ -15,16 +15,23 @@ function vcProgress(woId, vcId) {
 }
 const vcTimeMs = (v) => v.logs.reduce((sum, l) => sum + l.durationMs, 0);
 const vcJournalCount = (v) => v.logs.filter((l) => l.journal).length;
+const isGraded = (v) => v.artefacts.some((a) => a.level);
 function vcStatus(woId, vcId) {
   const v = vcProgress(woId, vcId);
-  if (v.artefacts.length) return "done";
+  // Done only once a community mentor has graded an artefact; submitted but ungraded is "review".
+  if (isGraded(v)) return "done";
+  if (v.artefacts.length) return "review";
   const live = state.session && state.session.woId === woId && state.session.vcId === vcId;
   return v.logs.length || live ? "progress" : "open";
 }
-const artefactVcs = (woId) => Object.values(deskProgress(woId).vcs).filter((v) => v.artefacts.length).length;
+// Constructs with a mentor-graded artefact (these count towards unlocks and the final deliverable)…
+const artefactVcs = (woId) => Object.values(deskProgress(woId).vcs).filter(isGraded).length;
+// …and constructs with any artefact submitted, graded or not.
+const submittedVcs = (woId) => Object.values(deskProgress(woId).vcs).filter((v) => v.artefacts.length).length;
 const totalArtefactVcs = () => Object.keys(state.deskData).reduce((n, wo) => n + artefactVcs(wo), 0);
 const journalEntries = (woId) => Object.values(deskProgress(woId).vcs).reduce((n, v) => n + vcJournalCount(v), 0);
-const contributedWos = () => Object.values(state.deskData).filter((p) => p.final).length;
+// A work order counts as contributed once a mentor has graded its final deliverable.
+const contributedWos = () => Object.values(state.deskData).filter((p) => p.final?.level).length;
 
 // Unlock requirements, live. Growth Track home repeats the artefact line (as designed); the desk has a third placeholder.
 function unlockItems(where) {
@@ -68,11 +75,12 @@ function vcCard(woId, id, { standalone = true, wrap = true } = {}) {
   const status = vcStatus(woId, id);
   const icon = status === "done"
     ? `<img class="vc-card__status" src="${D}check-circle.svg" alt="Completed" />`
-    : status === "progress" ? `<img class="vc-card__status" src="${D}pending.svg" alt="In progress" />` : "";
+    : status === "open" ? "" : `<img class="vc-card__status" src="${D}pending.svg" alt="${status === "review" ? "Awaiting mentor review" : "In progress"}" />`;
   const stats = status === "done"
-    ? `<p class="vc-card__stats"><span>Journal Entries: <b>${pad2(vcJournalCount(v))}</b></span><span>Artefact Quality: <b>In review</b> ${helpDot()}</span></p>`
+    ? `<p class="vc-card__stats"><span>Journal Entries: <b>${pad2(vcJournalCount(v))}</b></span><span>Artefact Quality: <b>L${Math.max(...v.artefacts.map((a) => a.level || 0))}</b> ${helpDot()}</span></p>`
+    : status === "review" ? `<p class="vc-card__stats"><span>Time Logged: <b>${fmtHm(vcTimeMs(v))}</b></span><span>Artefact: <b>Verification Pending</b></span></p>`
     : status === "progress" ? `<p class="vc-card__stats"><span>Time Logged: <b>${fmtHm(vcTimeMs(v))}</b></span><span>Journal Entries: <b>${pad2(vcJournalCount(v))}</b></span></p>` : "";
-  const label = status === "progress" ? "Continue Working" : "Work On This";
+  const label = status === "progress" || status === "review" ? "Continue Working" : "Work On This";
   const card = `
     <div class="vc-card${standalone ? "" : " vc-card--nested"}">
       <div class="vc-card__main">
@@ -127,11 +135,12 @@ function deskTabContent(woId, tab) {
     const p = deskProgress(woId);
     const rows = [
       ["Process Documentation", "No. of journal entries added", pad2(journalEntries(woId))],
-      ["VC Artefacts Submitted", "", `${artefactVcs(woId)} of 9`],
-      ["Final Asset Submission Status", "", p.final ? "Submitted" : "Not Submitted"],
+      ["VC Artefacts Submitted", "", `${submittedVcs(woId)} of 9`],
+      ["VC Artefacts Graded", "By a community mentor", `${artefactVcs(woId)} of 9`],
+      ["Final Asset Submission Status", "", p.final ? (p.final.level ? "Verified" : "Verification Pending") : "Not Submitted"],
     ];
     // Figma: "Asset Quality" is not shown until the asset is submitted.
-    if (p.final) rows.push(["Asset Quality", "Based on process documentation & artefact submission", "In review"]);
+    if (p.final) rows.push(["Asset Quality", "Graded by a community mentor, based on process documentation & artefact submission", p.final.level ? `L${p.final.level}` : "In review"]);
     return `
       <div class="desk-journal">
         <h3 class="desk-journal__title">Here’s the progress you’ve made towards the impact journal entry for this asset</h3>
@@ -169,9 +178,11 @@ function pageDesk() {
   const p = deskProgress(woId);
   const arts = artefactVcs(woId);
   const submit = p.final
-    ? `<button type="button" class="desk-submit__btn is-done" disabled>Deliverable Submitted</button><p>Submitted: ${esc(p.final.title)}</p>`
+    ? p.final.level
+      ? `<button type="button" class="desk-submit__btn is-done" disabled>Deliverable Verified</button><p>${esc(p.final.title)} · graded L${p.final.level} by a community mentor</p>`
+      : `<button type="button" class="desk-submit__btn is-done" disabled>Verification Pending</button><p>${esc(p.final.title)} · a community mentor is reviewing it</p>`
     : `<button type="button" class="desk-submit__btn" data-desk="submit-final" ${arts >= 2 ? "" : "disabled"}>Submit Final Deliverable</button>
-       <p>${arts >= 2 ? "Ready to submit — your artefacts are attached (2/2)" : `Attach at least 2 construct artefacts first (${arts}/2)`}</p>`;
+       <p>${arts >= 2 ? "Ready to submit — your artefacts are graded (2/2)" : `Get at least 2 construct artefacts graded first (${arts}/2)`}</p>`;
   return `${header}
     <section class="desk-wo">
       <div class="desk-wo__info">
@@ -246,9 +257,9 @@ deskPage.addEventListener("click", (e) => {
   else if (el.dataset.desk === "work-on") startSession(woId, Number(el.dataset.vc)); // session.js
   else if (el.dataset.desk === "submit-final") {
     openArtefactModal("Submit Final Deliverable", (item) => { // session.js
-      deskProgress(woId).final = item;
+      deskProgress(woId).final = { ...item, status: "pending" };
       render();
-      showToast("Final deliverable submitted");
+      showToast("A community mentor will review & grade your submission");
     });
   }
 });

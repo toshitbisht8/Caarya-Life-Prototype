@@ -36,6 +36,7 @@ function renderWorkspace(route, param) {
   if (info.page === "impact") renderImpact(route, param); // impact.js
   if (info.page === "competencies") renderCompetencies(); // competencies.js
   if (info.page === "profile") renderProfile(); // profile.js
+  if (info.page === "assessments") syncAssessmentCards(); // riasec.js
 }
 
 // Coin balance bar (Figma 1013:45188)
@@ -179,7 +180,7 @@ function renderCoins() {
         </div>
         <div class="assessment__footer">
           <span class="assessment__time">3-4 min</span>
-          <button class="assessment__start" type="button">Start Now <img src="assets/icons/play-circle.svg" alt="" /></button>
+          <button class="assessment__start" type="button" data-assess="${title}">Start Now <img src="assets/icons/play-circle.svg" alt="" /></button>
         </div>`;
       card.querySelector("h3").textContent = title;
       card.querySelector("p").textContent = desc;

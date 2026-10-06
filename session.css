@@ -180,14 +180,14 @@
 
 /* Submitting artefact drawer (903:16154) */
 .artefacts { display: flex; flex-direction: column; gap: 20px; }
-.artefacts__label { font-weight: 500; font-style: italic; font-size: 14px; letter-spacing: 0.42px; text-transform: capitalize; color: var(--neutral-400); }
+.artefacts__label { font-weight: 500; font-style: italic; font-size: 12px; letter-spacing: 0.36px; text-transform: capitalize; color: var(--neutral-400); }
 .artefacts__list { display: flex; flex-direction: column; gap: 12px; }
 .artefacts__list:empty { display: none; }
 .artefact { display: flex; align-items: center; gap: 12px; }
 .artefact__link { position: relative; flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 11px; border: 1px solid var(--neutral-100); border-radius: 8px; background: #fff; box-shadow: var(--shadow); font-weight: 700; font-size: 14px; letter-spacing: 0.28px; color: var(--neutral-800); text-decoration: none; }
 .artefact__link.is-primary { border-color: var(--purple-50); margin-top: 8px; }
 .artefact__link > img { width: 20px; height: 20px; }
-.artefact__link > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.artefact__link > span:not(.review-badge) { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .artefact__link:hover > span { text-decoration: underline; }
 .artefact__tag { position: absolute; left: 7px; top: -9px; display: flex; align-items: center; gap: 4px; padding: 1px 3px 1px 5px; border: 1px solid var(--purple-50); border-radius: 4px; background: var(--purple-30); font-weight: 500; font-size: 10px; letter-spacing: 0.2px; line-height: 1.5; color: var(--purple-500); }
 .artefact__tag img { width: 12px; height: 12px; }
@@ -259,3 +259,7 @@
 .desk-submit__btn:not(:disabled) { background: var(--purple-500) !important; cursor: pointer; }
 .desk-submit__btn:not(:disabled):hover { filter: brightness(1.05); }
 .desk-submit__btn.is-done { background: var(--neutral-100) !important; color: var(--neutral-500) !important; }
+/* Mentor review status on a submission (1080:31868) */
+.review-badge { flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; padding: 3px 7px; border: 1px solid var(--neutral-100); border-radius: 4px; background: var(--neutral-50); font-weight: 500; font-style: italic; font-size: 10px; letter-spacing: 0.2px; line-height: 1.5; color: var(--neutral-400); white-space: nowrap; }
+.review-badge--done { padding-left: 5px; font-weight: 700; font-style: normal; color: var(--neutral-800); }
+.review-badge img { width: 12px; height: 12px; }

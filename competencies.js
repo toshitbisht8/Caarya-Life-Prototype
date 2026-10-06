@@ -1,8 +1,9 @@
-// Competencies (Figma 1045:35026 technical, 1045:34295 transferable): add and rate technical skills,
-// rate comfort with transferable skills. Ratings feed the Profile page.
+// Competencies (Figma 1073:25397 technical, 1045:34295 transferable): add technical skills and ask a
+// community mentor to verify them, rate comfort with transferable skills. Ratings feed the Profile page.
 const CP = "assets/competencies/";
 
-state.techSkills = []; // [{ name, level }] — proficiency 1–5, new skills start at 1 (Novice)
+// [{ name, status, level }] — status "new" | "pending" | "verified"; a mentor sets the 1–5 level on verifying.
+state.techSkills = [];
 state.tSkills = {}; // { skill name: comfort 1–7 }; missing = not rated yet
 state.tDraft = null; // transferable ratings being edited (null = viewing)
 state.compTab = "technical";
@@ -62,7 +63,6 @@ function paintScale(input) {
   const box = input.closest(".scale");
   const text = box.querySelector("[data-scale-text]");
   if (box.classList.contains("is-unset")) text.innerHTML = "<b>Not rated yet</b>";
-  else if (input.dataset.kind === "tech") text.innerHTML = `<b>${TECH_LEVELS[input.value - 1][0]}:</b> ${TECH_LEVELS[input.value - 1][1]}`;
   else text.textContent = COMFORT_LEVELS[input.value - 1][2];
 }
 
@@ -85,9 +85,22 @@ function technicalTab() {
       </div></div>`;
   }
   return `
-    ${cpIntro("Skill Proficiency", "Rate your skills based on how proficient you are each of them", "manage-tech", "settings.svg", "Manage")}
-    <div class="cp-skills">${state.techSkills.map((s) => `
-      <div class="cp-skill"><h3>${esc(s.name)}</h3>${scale(s.name, 5, s.level, "tech", 3)}</div>`).join("")}</div>`;
+    ${cpIntro("Skill Proficiency", "Get your skills verified by a community mentor to show how proficient you are", "manage-tech", "settings.svg", "Manage")}
+    <div class="cp-vskills">${state.techSkills.map(techRow).join("")}</div>`;
+}
+
+// A skill row (1073:25397): Get Verified → Verification Pending; verified skills show the mentor's rating.
+function techRow(s) {
+  if (s.status === "verified") {
+    const [label, desc] = TECH_LEVELS[s.level - 1];
+    return `
+      <div class="cp-vskill"><h3>${esc(s.name)}<img src="${CP}verified.svg" alt="Verified" title="Verified by a community mentor" /></h3>
+        <div class="cp-rating cp-vskill__rating">${diamonds(s.level, 5)}<p><b>${label}:</b> ${desc}</p></div></div>`;
+  }
+  return `
+    <div class="cp-vskill"><h3>${esc(s.name)}</h3>${s.status === "pending"
+      ? `<span class="cp-verify cp-verify--pending">Verification Pending</span>`
+      : `<button type="button" class="cp-verify" data-cp-verify="${esc(s.name)}">Get Verified</button>`}</div>`;
 }
 
 // Pick which skills are on the list (1045:35589)
@@ -113,8 +126,8 @@ function openManageTech() {
     const chip = e.target.closest("[data-mt]");
     if (chip) { picked.has(chip.dataset.mt) ? picked.delete(chip.dataset.mt) : picked.add(chip.dataset.mt); return draw(); }
     if (!e.target.closest("[data-mt-save]")) return;
-    // Skills that stay keep their rating; new ones start at Novice.
-    state.techSkills = [...picked].map((name) => techSkill(name) || { name, level: 1 });
+    // Skills that stay keep their verification status; new ones start unverified.
+    state.techSkills = [...picked].map((name) => techSkill(name) || { name, status: "new" });
     closeOverlay();
     render();
   });
@@ -167,6 +180,12 @@ function renderCompetencies() {
 }
 
 competenciesPage.addEventListener("click", (e) => {
+  const verify = e.target.closest("[data-cp-verify]");
+  if (verify) {
+    techSkill(verify.dataset.cpVerify).status = "pending";
+    renderCompetencies();
+    return showToast("A community mentor will reach out to you soon");
+  }
   const tab = e.target.closest("[data-cp-tab]");
   if (tab) {
     state.compTab = tab.dataset.cpTab;
@@ -186,13 +205,12 @@ competenciesPage.addEventListener("click", (e) => {
   }
 });
 
-// Sliders: technical ratings save as you drag; transferable ones go to the draft until Save.
+// Sliders (transferable only): ratings go to the draft until Save.
 function onScale(input) {
   input.closest(".scale").classList.remove("is-unset");
   paintScale(input);
   const value = Number(input.value);
-  if (input.dataset.kind === "tech") techSkill(input.dataset.scale).level = value;
-  else if (state.tDraft) state.tDraft[input.dataset.scale] = value;
+  if (state.tDraft) state.tDraft[input.dataset.scale] = value;
 }
 competenciesPage.addEventListener("input", (e) => e.target.matches("[data-scale]") && onScale(e.target));
 // A click on "1" doesn't change the value, so it fires no input event — still counts as rating 1.

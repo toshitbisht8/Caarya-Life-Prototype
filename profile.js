@@ -4,15 +4,7 @@ const PF = "assets/profile/";
 
 state.profileOpen = null; // which "area of interest" is expanded (domain name), null = first
 
-// Sample results — the assessments themselves aren't part of the prototype yet.
-const SYNERGY = [["Realistic", 83], ["Investigative", 72], ["Artistic", 64], ["Social", 60], ["Enterprising", 49], ["Conventional", 35]];
-const SYNERGY_MEANING = "This individual shows a strong preference for <b>analytical</b> and <b>investigative</b> activities, thriving in environments that require <b>problem-solving</b> and <b>deep thinking</b>. They have a <b>creative</b> side, enjoying tasks that allow for <b>expression</b> and <b>innovation</b>. Their interest in <b>hands-on</b>, <b>practical</b> work complements their analytical nature, making them well-suited to environments that value <b>independent, focused</b> work with <b>tangible</b> results. They may prefer working <b>alone</b> or in <b>small teams</b> rather than in highly social or structured settings.";
-const WORK_PREFS = [
-  ["General", [["Workload", "<10 Hours / week"], ["Weekend Work", "Sometimes"], ["Work Experience", "1 - 2 Years"]]],
-  ["Work Style", [["Innovation Culture", "Highly experimental"], ["Pace of Delivery", "Moderate"], ["Peer Culture", "Independent but supportive"], ["Execution Style", "Agile / Sprint-based"]]],
-  ["Workplace", [["Startup Stage", "Growth-stage"], ["Funding Type", "VC-funded"], ["Work Mode", "Hybrid"], ["Work Hours Flexibility", "Fully flexible"]]],
-  ["Autonomy", [["Exposure Level", "Medium"], ["Level of Autonomy", "High (own projects)"]]],
-];
+// Sample results — these assessments aren't built yet.
 const VALUES = [
   ["Embrace equality", "For self-improvement", "value-1.svg"],
   ["Prioritize personal growth", "For Empathetic-growth", "value-2.svg"],
@@ -125,24 +117,43 @@ function pfSkills() {
     </div>`;
 }
 
-const pfSynergy = () => `
-  <section class="pf-section">
-    ${pfHead("interest profile", "My Occupational Synergy")}
-    <div class="pf-syn">
-      <div class="pf-syn__bars">${SYNERGY.map(([name, pct]) => `
-        <div class="pf-bar"><p><span>${name} : <b>${pct}%</b></span><i class="pf-help pf-help--lg">?</i></p><div><span style="width:${pct}%"></span></div></div>`).join("")}</div>
-      <div class="pf-note"><h3><img src="${PF}insights.svg" alt="" />What does this mean?</h3><p>${SYNERGY_MEANING}</p></div>
-    </div>
-  </section>`;
-
-function pfPrefs() {
-  let n = 0;
+// Real results from the Occupational Synergy assessment (riasec.js); a prompt to take it until then.
+function pfSynergy() {
+  const result = state.riasec?.result;
+  if (!result) {
+    return `
+      <section class="pf-section">
+        ${pfHead("interest profile", "My Occupational Synergy")}
+        ${pfEmpty("Take the Occupational Synergy assessment to see your interest profile here.", "#riasec", "Start the assessment")}
+      </section>`;
+  }
+  const combo = RIASEC_COMBOS[result.code];
   return `
     <section class="pf-section">
-      ${pfHead("worker profile", "Work Environment Preferences")}
-      <div class="pf-prefs">${WORK_PREFS.map(([group, items]) => `
-        <div><h3>${group}</h3><div class="pf-prefs__row">${items.map(([label, value]) => `
-          <div class="pf-pref"><p><img src="${PF}pref-${++n}.svg" alt="" />${label}</p><b>${esc(value)}</b></div>`).join("")}</div></div>`).join("")}</div>
+      ${pfHead("interest profile", "My Occupational Synergy")}
+      <div class="pf-syn">
+        <div class="pf-syn__bars">${RIASEC_ORDER.map((t) => `
+          <div class="pf-bar"><p><span>${RIASEC_TYPES[t].name} : <b>${result.scores[t]}%</b></span><button type="button" class="pf-help pf-help--lg" data-pf-type="${t}" aria-label="About the ${RIASEC_TYPES[t].name} type">?</button></p><div><span style="width:${result.scores[t]}%"></span></div></div>`).join("")}</div>
+        <div class="pf-note"><h3><img src="${PF}insights.svg" alt="" />What does this mean?</h3><p><b>${esc(combo.title)} (${result.code}).</b> ${esc(combo.overview)}</p>
+          <a class="pf-link pf-note__link" href="#riasec/result">View full results</a></div>
+      </div>
+    </section>`;
+}
+
+// Answers from the Work Environment Preferences assessment (wep.js); a prompt to take it until then.
+function pfPrefs() {
+  const result = state.wep?.result;
+  const head = pfHead("worker profile", "Work Environment Preferences");
+  if (!result) {
+    return `<section class="pf-section">${head}${pfEmpty("Take the Work Environment Preferences assessment to fill this in.", "#wep", "Start the assessment")}</section>`;
+  }
+  return `
+    <section class="pf-section">
+      ${head}
+      <div class="pf-prefs">${WEP_GROUPS.map((group) => `
+        <div><h3>${group}</h3><div class="pf-prefs__row">${WEP_QUESTIONS.filter((q) => q[1] === group).map(([key, , label, icon]) => `
+          <div class="pf-pref" title="${esc(wepDesc(key, result.answers[key]))}"><p><img src="${icon}" alt="" />${label}</p><b>${esc(result.answers[key])}</b></div>`).join("")}</div></div>`).join("")}
+      </div>
     </section>`;
 }
 
@@ -170,6 +181,8 @@ profilePage.addEventListener("click", (e) => {
     renderProfile();
     return window.scrollTo(0, y);
   }
+  const type = e.target.closest("[data-pf-type]");
+  if (type) return openTypeDrawer(type.dataset.pfType); // riasec.js
   const tab = e.target.closest("[data-pf-tab]");
   if (tab) state.compTab = tab.dataset.pfTab; // land on the matching Competencies tab
 });
