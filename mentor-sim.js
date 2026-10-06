@@ -4,7 +4,7 @@
 //   Shift+D  grade the final deliverable (asset) awaiting verification
 //   Shift+S  rate every technical skill awaiting verification (Competencies)
 //   Shift+M  all of the above
-//   Shift+C  cycle the career stage C1 → C5 (stage-specific copy, recommended constructs, progression)
+//   Shift+C  cycle the career stage C1 → C5 of the role in view (the desk's role on Desk / session)
 const mentorLevel = (max) => 2 + Math.floor(Math.random() * (max - 2)); // a plausible grade: L2 up to L(max-1)
 
 function gradeArtefacts() {
@@ -36,9 +36,11 @@ const MENTOR_KEYS = {
 
 document.addEventListener("keydown", (e) => {
   if (e.key === "C" && e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey && !e.repeat && !e.target.closest("input, textarea, select, [contenteditable]")) {
-    state.careerStage = (state.careerStage % 5) + 1;
+    const role = ["desk", "session"].includes(currentBase()) && state.growth.deskRole ? state.growth.deskRole : activeRole();
+    if (!role) return;
+    state.roleStages[role] = (stageOf(role) % 5) + 1;
     render();
-    return showToast(`Career stage: C${state.careerStage} ${CAREER_STAGES[state.careerStage - 1][0]}`);
+    return showToast(`${roleName(role)}: C${stageOf(role)} ${CAREER_STAGES[stageOf(role) - 1][0]}`);
   }
   const run = MENTOR_KEYS[e.key];
   if (!run || !e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || e.repeat) return;
