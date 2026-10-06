@@ -217,7 +217,7 @@ $('[data-view="login"]').addEventListener("submit", (e) => {
     return;
   }
   // Demo account (demo-user.js): skips the OTP and lands in a seasoned profile.
-  if (username.toLowerCase() === "demo") {
+  if (DEMO_LOGINS.includes(username.toLowerCase())) {
     loadDemoUser();
     return go("growth");
   }

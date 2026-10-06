@@ -1,10 +1,11 @@
-// Demo account: sign in with the username "demo" (any password) to land in a seasoned profile.
+// Demo account: sign in as "arjun.mehta" (or arjun.mehta@example.com), any password, to land in a seasoned profile.
 // Everything is seeded in memory, like the rest of the prototype; a page reload starts fresh.
 //
 // Arjun Mehta, Interaction Designer (C4), Content Creator (C3), Campaign Manager (C2): two work orders
 // delivered and graded, one more delivered for content, one in progress on the desk, one started
 // for campaigns, plus proof of work, achievements, rated skills and both assessments taken.
 
+const DEMO_LOGINS = ["arjun.mehta", "arjun.mehta@example.com"]; // usernames that open the demo account (app.js)
 const DEMO_ROLES = {
   interaction: "Design::Interaction Designer",
   content: "Marketing & Communications::Content Creator",
