@@ -1,5 +1,5 @@
-// Growth Track (Figma section 843:17179). Front-end only; all data below is placeholder
-// copy lifted from the designs until real work orders exist.
+// Growth Track (Figma section 843:17179). Front-end only. Real sample work orders live in
+// work-orders.js; every other id falls back to the placeholder copy below (via woContent).
 
 const G = "assets/growth/";
 const WO_COST = 100;
@@ -59,8 +59,11 @@ const LOCKED_TABS = {
   paid: ["Paid Gigs", "Get paid for real work with real companies (some explanation about what this is)", "Paid Gigs unlock once you reach C4 in this role"],
   jobs: ["Jobs", "Land a role with a company you've already worked with (some explanation about what this is)", "Jobs unlock once you reach C5 in this role"],
 };
-// New users start every role at C1 (see chat decision).
-const roleStatus = () => ({ stage: "Currently Exploring", level: "C1", toNext: 2 });
+// Career journey stages. New users start every role at C1; Shift+C (mentor-sim.js) cycles C1-C5 for testing.
+const CAREER_STAGES = [["Exploration", "Exploring"], ["Alignment", "Aligning"], ["Activation", "Activating"], ["Enhancement", "Enhancing"], ["Advancement", "Advancing"]];
+state.careerStage = 1;
+const stageRange = () => (state.careerStage < 5 ? `C${state.careerStage}-C${state.careerStage + 1}` : "C5");
+const roleStatus = () => ({ stage: `Currently ${CAREER_STAGES[state.careerStage - 1][1]}`, level: `C${state.careerStage}`, toNext: 2 });
 
 // ---------- Helpers ----------
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -124,7 +127,8 @@ function filterChips({ role = false } = {}) {
 
 // ---------- Work order card (recommended / explore / on growth track) ----------
 function woCard(id, variant) {
-  const w = WORK_ORDER;
+  const w = woContent(id); // work-orders.js
+  const vcNames = Object.values(w.vcs).map((v) => v.name);
   const resume = `
     <div class="wo-block wo-block--resume">
       <p class="wo-block__head">${starIcon(16)}What you can add to your resume</p>
@@ -133,11 +137,11 @@ function woCard(id, variant) {
   const progression = `
     <div class="wo-block wo-block--progress">
       <p class="wo-block__head"><img src="${G}career-progression.png" alt="" />Career Progression</p>
-      ${w.progression.map(([t, pts]) => `<p class="wo-goal"><img src="${G}checkbox.svg" alt="" /><span>${t} <b>${pts}</b></span></p>`).join("")}
+      ${w.progression.map(([t, pts]) => `<p class="wo-goal"><img src="${G}checkbox.svg" alt="" /><span>${esc(t)} <b>${esc(pts)}</b></span></p>`).join("")}
     </div>`;
   const vcs = `
     <p class="wo__vcs"><b>Value Constructs:</b>
-      <span>${w.vcs.map(esc).join('<span class="dot">•</span>')}<u>+${w.moreVcs} more</u></span>
+      <span>${vcNames.slice(0, 3).map(esc).join('<span class="dot">•</span>')}${vcNames.length > 3 ? `<u>+${vcNames.length - 3} more</u>` : ""}</span>
     </p>`;
   const details = `<button type="button" class="gt-action gt-action--orange" data-action="wo-details" data-id="${id}">Details <img src="${G}chevron-orange.svg" alt="" /></button>`;
 
@@ -168,11 +172,11 @@ function woCard(id, variant) {
   return `
     <article class="wo wo--${variant}${variant === "track" && state.growth.justAdded === id ? " wo--new" : ""}" data-wo="${id}">
       <div class="wo__head">
-        <p class="wo__service">${w.service}</p>
-        <h3 class="wo__title">${w.title}</h3>
-        <p class="wo__desc">${w.desc}</p>
+        <p class="wo__service">${esc(w.service)}</p>
+        <h3 class="wo__title">${esc(w.title)}</h3>
+        <p class="wo__desc">${esc(w.desc)}</p>
       </div>
-      <div class="wo__tags">${w.tags.map((t) => `<span>${t}</span>`).join("")}</div>
+      <div class="wo__tags">${w.tags.map((t) => `<span>${esc(t)}</span>`).join("")}</div>
       ${body}
       ${footer}
     </article>`;
@@ -214,8 +218,15 @@ function pageHome() {
     </section>`;
 }
 
+// The role's real work orders come first, then placeholders fill the stack / grid to the designed size.
+function workOrderIds(count) {
+  const real = catalogFor(activeRole()); // work-orders.js
+  return [...real, ...Array.from({ length: Math.max(0, count - real.length) }, (_, n) => n + 1)];
+}
+
 function pageRecommended() {
-  const i = state.growth.recIndex % RECOMMENDED_COUNT;
+  const ids = workOrderIds(RECOMMENDED_COUNT);
+  const i = state.growth.recIndex % ids.length;
   return `
     <div class="gt-head">${backLink("Back to Growth Track", "growth")}<h1 class="gt-title">Exploring Work</h1></div>
     <section class="gt-panel gt-panel--rec">
@@ -235,8 +246,8 @@ function pageRecommended() {
       </div>
       ${filterChips({ role: true })}
       <div class="rec">
-        <p class="rec__count">${i + 1}/${RECOMMENDED_COUNT}</p>
-        ${woCard(i + 1, "rec")}
+        <p class="rec__count">${i + 1}/${ids.length}</p>
+        ${woCard(ids[i], "rec")}
       </div>
     </section>`;
 }
@@ -252,7 +263,7 @@ function pageExploreAll() {
   const role = activeRole();
   const tab = state.growth.exploreTab;
   const content = tab === "studio"
-    ? `${filterChips()}<div class="gt-grid">${Array.from({ length: EXPLORE_COUNT }, (_, n) => woCard(n + 1, "explore")).join("")}</div>`
+    ? `${filterChips()}<div class="gt-grid">${workOrderIds(EXPLORE_COUNT).map((id) => woCard(id, "explore")).join("")}</div>`
     : (([, text, unlock]) => `
         <div class="locked">
           <span class="locked__icon"><span style="inset:9.31% 0"><img src="${G}briefcase.svg" alt="" /></span></span>
@@ -275,8 +286,18 @@ function pageExploreAll() {
     </section>`;
 }
 
+// Brand manager's blocks. Early stages (C1-C2) lead with the pieces you collect, later ones with the resume line.
+function brandBlocks(d) {
+  const pieces = `<div class="voice__block"><p class="kicker">The pieces you collect along the way</p>
+          <p class="pills">${d.artefacts.map((a) => `<span class="pill">${esc(a)}</span>`).join("")}</p>
+        </div>`;
+  const asset = `<div class="voice__block"><p class="kicker">The asset you’ll have at the end</p><p class="voice__asset">${esc(d.assetLine)}</p></div>`;
+  const resume = `<div class="resume-box"><p class="kicker">What you can add to your resume</p><p>${esc(d.resume)}</p></div>`;
+  return d.real && state.careerStage >= 3 ? resume + asset + pieces : pieces + asset + resume;
+}
+
 function pageDetails(id) {
-  const d = DETAILS;
+  const d = woContent(id); // work-orders.js
   const g = state.growth;
   const added = isTracked(id);
   const broke = state.coins < WO_COST;
@@ -289,33 +310,30 @@ function pageDetails(id) {
   let body = "";
   if (g.woTab === "overview") {
     body = `
-      <p class="wo-brief">${d.brief}</p>
-      <div class="wo-produces"><p class="kicker">What this produces:</p><b>Functional Deliverable Title</b><p>Functional deliverable details</p></div>
+      <p class="wo-brief">${esc(d.brief)}</p>
+      <div class="wo-produces"><p class="kicker">What this produces:</p><b>${esc(d.produces[0])}</b><p>${esc(d.produces[1])}</p></div>
       <section class="voice voice--growth">
         <div class="voice__head">
           <p class="voice__from"><span class="voice__avatar"><img src="${G}growth-manager.png" alt="" /></span>From your personal growth manager:</p>
           <h3 class="voice__title">Here’s how you can grow</h3>
         </div>
         <div class="voice__block"><p class="kicker">Capabilities You'll Build</p>
-          ${d.capabilities.map((c) => `<p class="capability"><span>${c}</span><span class="tag">Capability Name</span></p>`).join("")}
+          ${d.capabilities.map(([what, name]) => `<p class="capability"><span>${esc(what)}</span><span class="tag">${esc(name)}</span></p>`).join("")}
         </div>
         <div class="voice__block"><p class="kicker">Skills you’ll sharpen</p>
-          <p class="pills">${d.technical.map((s) => `<span class="pill pill--tech">${s}</span>`).join("")}${d.transferable.map((s) => `<span class="pill pill--transfer">${s}</span>`).join("")}</p>
+          <p class="pills">${d.technical.map((s) => `<span class="pill pill--tech">${esc(s)}</span>`).join("")}${d.transferable.map((s) => `<span class="pill pill--transfer">${esc(s)}</span>`).join("")}</p>
         </div>
-        <div class="voice__block"><p class="kicker">Career Progression (C1-C2)</p>
-          ${WORK_ORDER.progression.map(([t, pts]) => `<p class="milestone"><b>${pts}</b><span>${t}</span></p>`).join("")}
+        <div class="voice__block"><p class="kicker">Career Progression (${stageRange()})</p>
+          ${d.progression.map(([t, pts]) => `<p class="milestone"><b>${esc(pts)}</b><span>${esc(t)}</span></p>`).join("")}
         </div>
+        ${d.grow ? `<div class="voice__block"><p class="kicker">Where it takes you next</p><p class="voice__asset">${esc(d.grow)}</p></div>` : ""}
       </section>
       <section class="voice voice--brand">
         <div class="voice__head">
           <p class="voice__from"><span class="voice__avatar voice__avatar--brand">${starIcon(18, "brand-star.svg")}</span>From your brand manager:</p>
           <h3 class="voice__title">Here’s what you’ll be able to show potential recruiters</h3>
         </div>
-        <div class="voice__block"><p class="kicker">The pieces you collect along the way</p>
-          <p class="pills">${Array.from({ length: d.artefacts }, () => `<span class="pill">VC Artefact Name</span>`).join("")}</p>
-        </div>
-        <div class="voice__block"><p class="kicker">The asset you’ll have at the end</p><p class="voice__asset">Description of the final asset</p></div>
-        <div class="resume-box"><p class="kicker">What you can add to your resume</p><p>${WORK_ORDER.resume}</p></div>
+        ${brandBlocks(d)}
       </section>`;
   } else if (g.woTab === "vcs") {
     body = `
@@ -323,28 +341,28 @@ function pageDetails(id) {
         <p>You’ll get to apply the following concepts while working on this</p>
         <p class="vc-intro__note">The more concepts you apply, the more proof you collect and the better the quality of your deliverables</p>
       </div>
-      <div class="vc-list">${Array.from({ length: d.vcCount }, (_, n) => `
+      <div class="vc-list">${Object.entries(d.vcs).map(([k, v]) => `
         <div class="vc">
-          <div class="vc__text"><b>Value Construct Title</b><p>Description of what this value construct is</p><i>Leaves ‘artefact details’</i></div>
-          <button type="button" class="vc__judged" data-action="judged" data-vc="${n}">See how this is judged</button>
+          <div class="vc__text"><b>${esc(v.name)}</b><p>${esc(v.desc)}</p><i>Leaves ‘${esc(v.leaves)}’</i></div>
+          <button type="button" class="vc__judged" data-action="judged" data-vc="${k}">See how this is judged</button>
         </div>`).join("")}</div>`;
   } else {
     body = `
-      <div class="bg-block"><p class="kicker">Why this work is needed</p><p>${d.why}</p></div>
-      <div class="bg-block"><p class="kicker">About ‘Initiative name’</p><p>${d.about}</p></div>`;
+      <div class="bg-block"><p class="kicker">Why this work is needed</p><p>${esc(d.why)}</p></div>
+      <div class="bg-block"><p class="kicker">About ‘${esc(d.venture)}’</p><p>${esc(d.about)}</p></div>`;
   }
   return `
     <div class="gt-head">${back}</div>
     <section class="gt-panel gt-panel--details">
       <div class="wo-header">
         <div class="wo-header__text">
-          <p class="wo-header__service">${d.service}</p>
-          <h1 class="wo-header__title">${d.title}</h1>
-          <p class="wo-header__tags">${d.tags.map((t) => `<span>${t}</span>`).join("")}</p>
+          <p class="wo-header__service">${esc(d.service)}</p>
+          <h1 class="wo-header__title">${esc(d.title)}</h1>
+          <p class="wo-header__tags">${d.tags.map((t) => `<span>${esc(t)}</span>`).join("")}</p>
         </div>
         <div class="wo-header__cta">${addBtn}${!added && broke ? `<p class="add-track__note">Not enough coins</p>` : ""}</div>
       </div>
-      <div class="wo-overview">${d.overview.map(([h, t]) => `<div><b>${h}</b><p>${t}</p></div>`).join("")}</div>
+      <div class="wo-overview">${d.overview.map(([h, t]) => `<div><b>${esc(h)}</b><p>${esc(t)}</p></div>`).join("")}</div>
       ${tabs([["overview", "Overview"], ["vcs", "Value Constructs"], ["background", "Background"]], g.woTab, "wo-tab")}
       ${body}
     </section>`;
@@ -403,7 +421,7 @@ page.addEventListener("click", (e) => {
       break;
     }
     case "add-to-desk": addToDesk(id); break;
-    case "judged": openJudgedDrawer(); break;
+    case "judged": openJudgedDrawer(g.lastWo, Number(el.dataset.vc)); break;
   }
 });
 
@@ -567,10 +585,14 @@ function openManageRoles() {
   });
 }
 
+// Assessment bands for a construct, as "Level n" criteria (shared with the session's artefact drawer).
+const critLevels = (vc) => vc.rubric.map(([label, desc], i) => `
+  <div class="crit"><p class="crit__n">Level ${i + 1}</p><b>${esc(label)}</b><p>${esc(desc)}</p></div>`).join("");
+
 // "How This Is Judged" drawer (1014:45708)
-function openJudgedDrawer() {
-  const levels = [1, 2, 3, 4, 5].map((n) => `
-    <div class="crit"><p class="crit__n">Level ${n}</p><b>Criteria Title for L${n}</b><p>Description of criteria in a line or two...  ${LOREM}</p></div>`).join("");
+function openJudgedDrawer(woId, vcId) {
+  const vc = vcInfo(woId, vcId); // work-orders.js
+  const levels = critLevels(vc);
   const ov = openOverlay(`
     <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="judged-title">
       <header class="drawer__head">
@@ -579,9 +601,9 @@ function openJudgedDrawer() {
       </header>
       <div class="drawer__body">
         <div class="drawer__vc">
-          <h3>Value construct Title</h3>
-          <p>VC description comes here......  ${LOREM}</p>
-          <i>Leaves ‘artefact details’</i>
+          <h3>${esc(vc.name)}${vc.bar ? `<span class="vc-card__badge">Mandatory L${vc.floorLevel}</span>` : ""}</h3>
+          <p>${esc(vc.desc)}</p>
+          <i>Leaves ‘${esc(vc.leaves)}’</i>
         </div>
         <div class="judged">
           <button type="button" class="judged__toggle" aria-expanded="true">How This Is Judged <img src="${G}expand-less-24.svg" alt="" /></button>

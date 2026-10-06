@@ -117,3 +117,4 @@ button.vc-card__action:disabled { cursor: default; }
 .desk-journal__row b { letter-spacing: 0.32px; line-height: 1.5; }
 .desk-journal__row > b { min-width: 120px; text-align: right; }
 .desk-journal__row p { letter-spacing: 0.48px; line-height: 1.8; color: var(--neutral-500); }
+.step-row__head .step-row__loop { margin-top: 4px; font-style: italic; font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; color: var(--neutral-500); }

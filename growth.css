@@ -318,3 +318,5 @@
 .talent .gt-link { font-size: 14px; letter-spacing: 0.42px; }
 .pill--tech, .pill--transfer { font-size: 12px; letter-spacing: 0.3px; }
 .resume-box .kicker { font-size: 14px; letter-spacing: 1.4px; }
+/* Quality-bar badge beside the construct name in the judged drawer */
+.drawer__vc h3 .vc-card__badge { margin-left: 8px; vertical-align: middle; font-family: var(--font-satoshi); }

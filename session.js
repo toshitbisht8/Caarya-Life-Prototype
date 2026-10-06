@@ -18,32 +18,76 @@ function startSession(woId, vcId) {
 }
 
 // ---------- Moment templates ----------
-const MOMENT_TYPES = [
-  "Judgment & Decision-Making", "Failure & Setbacks", "Working in Ambiguity",
-  "Learning", "Context Switching", "Process & Framework",
-  "Insights", "Stakeholder Navigation", "Generation",
-];
-// The decision template is from Figma; the other types don't have one designed yet, so they share a simple placeholder.
-const MOMENT_TEMPLATES = {
-  "Judgment & Decision-Making": [
-    ["In this session I had to make a call about", "call", "what you were deciding - e.g., whether to keep going or scrap what I had"],
-    ["I was weighing", "options", "the options - e.g., sticking with the safer version vs. trying the riskier one"],
+// [type, subtitle on the capture card, template]. Template parts: [lead-in, field key, hint, text after the field].
+const MOMENTS = [
+  ["Judgment & Decision-Making", "I had to make a call between multiple options", [
+    ["In this session I had to make a call about", "call", "what you were deciding - e.g., which direction to take the layout, whether to keep going or scrap what I had", "."],
+    ["I was weighing", "options", "the options - e.g., sticking with the safer version vs. trying the riskier one", "."],
     ["For now I've gone with", "choice", "what you chose"],
-    ["because", "reason", "quick reason"],
-    ["Still unsure about", "unsure", "optional - anything you want to revisit later"],
-  ],
-  default: [
-    ["In this session", "what", "what happened"],
-    ["What I took away was", "takeaway", "the lesson or insight"],
-  ],
-};
-const templateFor = (type) => MOMENT_TEMPLATES[type] || MOMENT_TEMPLATES.default;
+    ["because", "reason", "quick reason", "."],
+    ["Still unsure about", "unsure", "optional - anything you want to revisit later", "."],
+  ]],
+  ["Failure & Setbacks", "Something went wrong or got blocked", [
+    ["This session didn't fully go to plan —", "wrong", "what went wrong or got blocked - e.g., the approach I tried broke halfway, I realised I'd been building on a wrong assumption", "."],
+    ["I think it happened because", "why", "quick read on why", "."],
+    ["For now I've", "action", "what you did about it, or parked for later - e.g., reverted to the last working version, left a note to fix it tomorrow", "."],
+    ["Note to self:", "note", "anything to remember - e.g., check this assumption before going further next time", "."],
+  ]],
+  ["Working in Ambiguity", "I kept moving without full clarity", [
+    ["Went into this session without full clarity on", "unclear", "what was unclear - e.g., what the client actually wants, how this connects to the bigger picture", "."],
+    ["To keep moving, I assumed", "assumption", "the assumption you ran with"],
+    ["— mainly because", "reason", "quick reason", "."],
+    ["Flagging this so I remember to", "confirm", "what to confirm later - e.g., check this with the team before locking it in", "."],
+  ]],
+  ["Learning", "I had to pick up something new to get unstuck", [
+    ["Had to pick up", "learned", "what you learned this session - e.g., how to use a feature I hadn't touched before, a concept I needed to understand"],
+    ["to get unstuck. I figured it out by", "how", "how - e.g., digging through docs, trial and error, asking someone", "."],
+    ["Used it for", "applied", "where it applied - e.g., getting the component working", "."],
+    ["Still want to understand", "fuzzy", "optional - anything still fuzzy", "."],
+  ]],
+  ["Context Switching", "I was pulled between different modes of work", [
+    ["This session pulled me between", "modeA", "mode one - e.g., heads-down detail work"],
+    ["and", "modeB", "mode two - e.g., zooming out to think about the overall direction"],
+    [", mostly because", "cause", "what caused it - e.g., a message that needed a strategic answer mid-task", "."],
+    ["The tricky part was", "tricky", "what made it hard to switch cleanly", "."],
+    ["Managed it by", "managed", "quick note on how you held it together", "."],
+  ]],
+  ["Process & Framework", "I used a process or framework to tackle something", [
+    ["Used", "process", "the process or framework - e.g., a structured checklist, a specific method"],
+    ["this session to tackle", "target", "what you applied it to", "."],
+    ["Went with it because", "reason", "quick reason", "."],
+    ["Adapted it by", "adapted", "optional - anything you tweaked to fit", "."],
+    ["It helped me", "helped", "what it got you - e.g., get through the messy part faster", "."],
+  ]],
+  ["Insights", "I noticed something worth acting on", [
+    ["Noticed something this session:", "insight", "the insight or finding - e.g., the data points to a different problem than I thought, users seem to drop off earlier than expected", "."],
+    ["It came up while", "where", "where it surfaced", "."],
+    ["Worth acting on because", "why", "why it matters / what it could change", "."],
+    ["Next move:", "next", "what you plan to do with it", "."],
+  ]],
+  ["Stakeholder Navigation", "I worked through something with another person", [
+    ["This session involved working through something with", "who", "who - e.g., a teammate, my manager, the client", "."],
+    ["The friction was", "friction", "what made it tricky - e.g., we didn't agree on the direction, I needed a sign-off that wasn't easy to get", "."],
+    ["I handled it by", "handled", "what you did", "."],
+    ["Where it landed:", "outcome", "outcome, or what's still open", "."],
+  ]],
+  ["Generation", "My thinking shifted to a new idea or approach", [
+    ["Had a shift in thinking this session — instead of", "old", "the old approach"],
+    [", I started seeing it as", "reframe", "the new idea or reframe", "."],
+    ["It came from", "spark", "what sparked it", "."],
+    ["If it holds up, it could mean", "changes", "what it changes", "."],
+    ["Next step is to", "test", "how you'll test or build on it", "."],
+  ]],
+];
+const MOMENT_TYPES = MOMENTS.map(([type]) => type);
+const momentInfo = (type) => MOMENTS.find(([t]) => t === type);
+const templateFor = (type) => momentInfo(type)[2];
 
 function momentCard(m, i, scope) {
-  const parts = templateFor(m.type).map(([lead, key, hint]) => `
-    <b>${lead}</b>
+  const parts = templateFor(m.type).map(([lead, key, hint, after = ""]) => `
+    <b>${esc(lead)}</b>
     <input class="moment__field" data-${scope}-moment="${i}" data-field="${key}" placeholder="${esc(hint)}"
-      value="${esc(m.fields[key] || "")}" style="width:${Math.min(hint.length + 3, 64)}ch" aria-label="${esc(lead)}" />`).join("");
+      value="${esc(m.fields[key] || "")}" style="width:${Math.min(hint.length + 3, 64)}ch" aria-label="${esc(lead)}" />${after ? `<b>${after}</b>` : ""}`).join("");
   return `
     <div class="moment">
       <div class="moment__head">
@@ -56,7 +100,7 @@ function momentCard(m, i, scope) {
 
 const captureCards = (scope) => MOMENT_TYPES.map((t) => `
   <button type="button" class="capture" data-${scope}-add="${esc(t)}">
-    <span><i>${esc(t)}</i>I had to take a decision among multiple options</span>
+    <span><i>${esc(t)}</i>${esc(momentInfo(t)[1])}</span>
     <span class="capture__icon"><img src="${S}add-soft.svg" alt="" /><img src="${S}add-circle-hover.svg" alt="" /></span>
   </button>`).join("");
 
@@ -88,6 +132,7 @@ function sessionChrome() {
 
 function viewMain(s) {
   const v = vcProgress(s.woId, s.vcId);
+  const vc = vcInfo(s.woId, s.vcId); // work-orders.js
   const mentor = v.mentor
     ? `<p class="fs-help__booked-label">Booked for:</p>
        <p class="fs-help__booked">${esc(v.mentor)}<button type="button" data-fs="mentor" aria-label="Change slot">✎</button></p>`
@@ -95,34 +140,30 @@ function viewMain(s) {
   return `
     <section class="fs-card fs-card--vc">
       <div class="fs-vc__head">
-        <p class="fs-vc__title">${vcName(s.vcId)} <span class="fs-chip">1h-2h approx.</span></p>
+        <p class="fs-vc__title">${esc(vc.name)} <span class="fs-chip">${esc(vc.time)} approx.</span></p>
         <button type="button" class="fs-link" data-fs="judged">See how this is Judged</button>
       </div>
-      <p class="fs-vc__desc">Description of what needs to be done in for this work......  ${DESK_LOREM} Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+      <p class="fs-vc__desc">${esc(vc.desc)}</p>
       <div class="fs-vc__row">
         <div class="fs-vc__leaves">
           <i>What this leaves behind:</i>
-          <span class="fs-chip fs-chip--strong">VC Artefact Title ${helpDot()}</span>
+          <span class="fs-chip fs-chip--strong">${esc(vc.leaves)} ${helpDot()}</span>
         </div>
         <div class="fs-vc__submit">
           <button type="button" class="btn btn--primary" data-fs="artefact">${v.artefacts.length ? "Update Artefact" : "Submit Artefact"}</button>
           <i>${v.artefacts.length ? `${v.artefacts.length} link${v.artefacts.length > 1 ? "s" : ""} attached · ` : ""}You can replace or improve it at any time</i>
         </div>
       </div>
-      <div class="fs-pgm">${pgmBadge(false)}<p>Since you’re currently exploring, I suggest you aim to submit this artefact at L1</p></div>
+      <div class="fs-pgm">${pgmBadge(false)}<p>Since you’re currently ${CAREER_STAGES[state.careerStage - 1][1].toLowerCase()}, I suggest you aim to submit this artefact at L${Math.min(vc.rubric.length, targetLevel(vc))}</p></div>
     </section>
 
     <section class="fs-card">
       <h2 class="fs-card__title">Explore Community Resources</h2>
       <div class="fs-group"><p class="fs-label">Recommended Reads</p>
-        <div class="fs-reads">${Array.from({ length: 3 }, () => `<div class="fs-read"><b>Topic to study</b><span>Explanation of how this helps with the current work</span></div>`).join("")}</div>
+        <div class="fs-reads">${vc.reads.map(([t, d]) => `<div class="fs-read"><b>${esc(t)}</b><span>${esc(d)}</span></div>`).join("")}</div>
       </div>
       <div class="fs-group"><p class="fs-label">Where to Use AI</p>
-        <ul class="fs-ai">
-          <li>Build a unit model for one video in this niche, with time costed at a rate I set.</li>
-          <li>Which two inputs is this model most sensitive to?</li>
-          <li>At what output volume does this candidate stop being viable, and what does that demand weekly?</li>
-        </ul>
+        <ul class="fs-ai">${vc.ai.map((q) => `<li>${esc(q)}</li>`).join("")}</ul>
       </div>
       <div class="fs-group"><p class="fs-label">Need assistance with this work?</p>
         <div class="fs-help">
@@ -155,12 +196,16 @@ function viewMain(s) {
     </section>`;
 }
 
+// Level the growth manager suggests aiming for, by stage: contribute at L1, go a level deeper at C2,
+// meet the quality bar at C3, then push to L4 / L5 (capped at the construct's top band by the caller).
+const targetLevel = (vc) => [1, 2, Math.max(2, vc.bar ? vc.floorLevel : 2), 4, 5][state.careerStage - 1];
+
 function viewResources(s) {
-  const items = [["play", "Any mechanical keyboard enthusiasts in design?"], ["play", "Any mechanical keyboard enthusiasts in design?"], ["reader", "Any mechanical keyboard enthusiasts in design?"], ["reader", "Any mechanical keyboard enthusiasts in design?"], ["play", "Any mechanical keyboard enthusiasts in design?"], ["reader", "Any mechanical keyboard enthusiasts in design?"]];
+  const items = vcInfo(s.woId, s.vcId).community; // work-orders.js
   return `
     <section class="fs-card fs-card--sub">
       <button type="button" class="gt-back" data-fs="back"><img src="${G}arrow-back.svg" alt="" /><span>Back</span></button>
-      <h2 class="fs-card__title fs-card__title--icon"><img src="${S}community-dot.png" alt="" />Exploring community resoures for: ‘${vcName(s.vcId)}’</h2>
+      <h2 class="fs-card__title fs-card__title--icon"><img src="${S}community-dot.png" alt="" />Exploring community resoures for: ‘${esc(vcName(s.woId, s.vcId))}’</h2>
       <div class="gt-search"><img src="${G}search.svg" alt="" /><input type="search" placeholder="Search for resources" aria-label="Search for resources" data-fs-search /></div>
       <div class="fs-resources">
         ${items.map(([icon, t]) => `<div class="fs-resource"><span class="fs-resource__icon"><img src="${S}${icon}.svg" alt="" /></span><b>${t}</b></div>`).join("")}
@@ -192,7 +237,7 @@ function viewLogs(s) {
   return `
     <section class="fs-card fs-card--sub">
       <button type="button" class="gt-back" data-fs="back"><img src="${G}arrow-back.svg" alt="" /><span>Back</span></button>
-      <h2 class="fs-card__title">Session Logs For ‘${vcName(s.vcId)}’</h2>
+      <h2 class="fs-card__title">Session Logs For ‘${esc(vcName(s.woId, s.vcId))}’</h2>
       <div class="gt-search"><img src="${G}search.svg" alt="" /><input type="search" placeholder="Search session logs" aria-label="Search session logs" data-fs-search /></div>
       <div class="fs-logs">${body}</div>
     </section>`;
@@ -254,7 +299,7 @@ sessionScreen.addEventListener("click", (e) => {
   switch (el.dataset.fs) {
     case "menu": openSessionMenu(); break;
     case "end": openJournal(); break;
-    case "judged": openJudgedDrawer(); break;
+    case "judged": openJudgedDrawer(s.woId, s.vcId); break;
     case "artefact": openArtefactDrawer(); break;
     case "mentor": openMentorModal(); break;
     case "resources": s.view = "resources"; render(); break;
@@ -271,7 +316,7 @@ function openSessionMenu() {
       <div class="fs-panel__items">
         <button type="button" data-menu="details"><b>Work Order Details</b><span>The brief, why this work is needed and who it's for</span></button>
         <button type="button" data-menu="criteria"><b>Progression Criteria</b><span>What moves this role forward</span></button>
-        <button type="button" data-menu="logs"><b>Session Log</b><span>Past sessions on ${vcName(state.session.vcId)}</span></button>
+        <button type="button" data-menu="logs"><b>Session Log</b><span>Past sessions on ${esc(vcName(state.session.woId, state.session.vcId))}</span></button>
         <button type="button" data-menu="end" class="is-end"><b>End Session</b><span>Wrap up and add a journal entry</span></button>
       </div>
     </nav>`, "panel");
@@ -280,16 +325,17 @@ function openSessionMenu() {
     if (!b) return;
     closeOverlay();
     const what = b.dataset.menu;
+    const c = woContent(state.session.woId); // work-orders.js
     if (what === "details") openInfoDrawer("Work Order Details", `
-      <div class="bg-block"><p class="kicker">Brief</p><p>${DESK_BRIEF}</p></div>
-      <div class="bg-block"><p class="kicker">Why this work is needed</p><p>${DETAILS.why}</p></div>
-      <div class="bg-block"><p class="kicker">About ‘Initiative name’</p><p>${DETAILS.about}</p></div>`);
+      <div class="bg-block"><p class="kicker">Brief</p><p>${esc(c.brief)}</p></div>
+      <div class="bg-block"><p class="kicker">Why this work is needed</p><p>${esc(c.why)}</p></div>
+      <div class="bg-block"><p class="kicker">About ‘${esc(c.venture)}’</p><p>${esc(c.about)}</p></div>`);
     if (what === "criteria") openInfoDrawer("Progression Criteria", `
       <div class="bg-block"><p class="kicker">To unlock paid work</p>
         <div class="unlock__items unlock__items--stack">${unlockItems("desk").map(([t, d]) => `<div class="unlock__item"><img src="${G}progress-pending.png" alt="" /><span><b>${t}</b><span>${d}</span></span></div>`).join("")}</div>
       </div>
-      <div class="bg-block"><p class="kicker">Career progression (C1-C2)</p>
-        ${WORK_ORDER.progression.map(([t, pts]) => `<p class="milestone"><b>${pts}</b><span>${t}</span></p>`).join("")}
+      <div class="bg-block"><p class="kicker">Career progression (${stageRange()})</p>
+        ${c.progression.map(([t, pts]) => `<p class="milestone"><b>${esc(pts)}</b><span>${esc(t)}</span></p>`).join("")}
       </div>`);
     if (what === "logs") { state.session.view = "logs"; render(); }
     if (what === "end") openJournal();
@@ -310,7 +356,8 @@ function openInfoDrawer(title, body) {
 function openArtefactDrawer() {
   const { woId, vcId } = state.session;
   const v = vcProgress(woId, vcId);
-  const levels = [1, 2, 3, 4, 5].map((n) => `<div class="crit"><p class="crit__n">Level ${n}</p><b>Criteria Title for L${n}</b><p>Description of criteria in a line or two...  ${DESK_LOREM}</p></div>`).join("");
+  const vc = vcInfo(woId, vcId); // work-orders.js
+  const levels = critLevels(vc); // growth.js
   const list = () => v.artefacts.map((a, i) => `
     <div class="artefact">
       <a class="artefact__link${a.primary ? " is-primary" : ""}" href="${esc(a.link)}" target="_blank" rel="noopener noreferrer">
@@ -329,7 +376,7 @@ function openArtefactDrawer() {
     <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="art-title">
       <header class="drawer__head"><button type="button" data-close aria-label="Close"><img src="${S}close-dark.svg" alt="" /></button><h2 id="art-title">Submitting Artefact</h2></header>
       <div class="drawer__body">
-        <div class="drawer__vc"><h3>Value construct Artefact</h3><p>VC artefact description comes here......  ${DESK_LOREM}</p></div>
+        <div class="drawer__vc"><h3>${esc(vc.leaves)}</h3><p>${esc(vc.desc)}</p></div>
         <div class="artefacts">
           <p class="artefacts__label">Submissions</p>
           <div class="artefacts__list" data-art-list>${list()}</div>
@@ -471,7 +518,7 @@ function openJournal() {
       </header>
       <div class="journal__body">
         <label class="fs-field"><span>Worked On</span>
-          <span class="select"><select data-j-vc>${Object.keys(DESK_VCS).map((id) => `<option value="${id}"${Number(id) === draft.vcId ? " selected" : ""}>${vcName(id)}</option>`).join("")}</select><img src="${S}sort-down.svg" alt="" /></span>
+          <span class="select"><select data-j-vc>${Object.entries(woContent(s.woId).vcs).map(([id, vc]) => `<option value="${id}"${Number(id) === draft.vcId ? " selected" : ""}>${esc(vc.name)}</option>`).join("")}</select><img src="${S}sort-down.svg" alt="" /></span>
         </label>
         <div class="fs-field"><span>Time Spent Working</span>
           <div class="journal__time">
