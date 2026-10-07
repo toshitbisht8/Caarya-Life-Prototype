@@ -120,7 +120,7 @@
 .wo__tags span { padding: 3px 5px; border: 1px solid var(--neutral-100); border-radius: 4px; font-size: 10px; letter-spacing: 0.2px; line-height: 1.5; color: var(--neutral-500); white-space: nowrap; }
 .wo__vcs { width: 100%; display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; }
 .wo__vcs b { color: var(--neutral-800); }
-.wo__vcs > span { flex: 1; min-width: 320px; font-weight: 500; color: var(--neutral-400); }
+.wo__vcs > span { flex: 1; min-width: min(320px, 100%); font-weight: 500; color: var(--neutral-400); }
 .wo__vcs .dot { padding: 0 6px; }
 .wo__vcs u { margin-left: 8px; font-style: italic; }
 .wo-block { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 12px; padding: 16px; border-left: 1px solid #a5f2f2; }
@@ -320,3 +320,7 @@
 .resume-box .kicker { font-size: 14px; letter-spacing: 1.4px; }
 /* Quality-bar badge beside the construct name in the judged drawer */
 .drawer__vc h3 .vc-card__badge { margin-left: 8px; vertical-align: middle; font-family: var(--font-satoshi); }
+/* Functional work orders in the explore screens sit in the "Recommended" banner (843:20427, as on the Desk) */
+.wo-rec { gap: 0; }
+.wo-rec > .wo { width: 100%; }
+.gt-grid > .wo-rec { align-self: start; }
