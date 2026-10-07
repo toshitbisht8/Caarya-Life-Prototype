@@ -418,7 +418,11 @@ function renderGrowth(route, param) {
   if (route === "growth") {
     page.innerHTML = pageHome();
     const list = page.querySelector(".role-tabs__list"), tab = list?.querySelector(".is-active");
-    if (tab && tab.offsetLeft + tab.offsetWidth > list.clientWidth) list.scrollLeft = tab.offsetLeft - 16;
+    // Scroll the active role into view only if it's cut off (positions measured against the strip itself).
+    if (tab) {
+      const box = list.getBoundingClientRect(), t = tab.getBoundingClientRect();
+      if (t.right > box.right || t.left < box.left) list.scrollLeft += t.left - box.left - 16;
+    }
     state.growth.justAdded = null;
   }
   else if (route === "explore") {
@@ -472,6 +476,16 @@ page.addEventListener("click", (e) => {
     case "judged": openJudgedDrawer(g.lastWo, Number(el.dataset.vc)); break;
   }
 });
+
+// The role strip has no visible scrollbar, so a vertical mouse wheel scrolls it sideways.
+page.addEventListener("wheel", (e) => {
+  const list = e.target.closest(".role-tabs__list");
+  if (!list || list.scrollWidth <= list.clientWidth || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+  const max = list.scrollWidth - list.clientWidth;
+  if ((e.deltaY < 0 && list.scrollLeft <= 0) || (e.deltaY > 0 && list.scrollLeft >= max)) return; // let the page scroll at the ends
+  e.preventDefault();
+  list.scrollLeft += e.deltaY;
+}, { passive: false });
 
 // Home search: filters the listed work orders by title / description.
 page.addEventListener("input", (e) => {
