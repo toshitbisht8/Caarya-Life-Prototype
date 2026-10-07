@@ -1,6 +1,6 @@
 // Card-only work orders: fill the Recommended stack and the Explore grid around the functional ones
 // (work-orders.js). Content is generated from the role's mapped business services (role-services.js)
-// and a set of made-up ventures, so every role sees plausible cards. They don't open.
+// and a set of made-up ventures, so every role sees plausible cards. Their Details button does nothing.
 
 // [name, industry, stage, what it does]
 const DUMMY_VENTURES = [

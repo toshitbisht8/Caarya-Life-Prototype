@@ -3,7 +3,7 @@
 
 const G = "assets/growth/";
 const WO_COST = 100;
-const RECOMMENDED_COUNT = 20;
+const RECOMMENDED_COUNT = 24;
 const EXPLORE_COUNT = 24;
 
 Object.assign(state, { coins: 2500, coinsMax: 5000 });
@@ -155,7 +155,8 @@ function woCard(id, variant) {
     <p class="wo__vcs"><b>Value Constructs:</b>
       <span>${vcNames.slice(0, 3).map(esc).join('<span class="dot">•</span>')}${vcNames.length > 3 ? `<u>+${vcNames.length - 3} more</u>` : ""}</span>
     </p>`;
-  const details = `<button type="button" class="gt-action gt-action--orange" data-action="wo-details" data-id="${id}">Details <img src="${G}chevron-orange.svg" alt="" /></button>`;
+  // Dummy cards keep a Details button that looks the same but goes nowhere (card-only, for the demo).
+  const details = `<button type="button" class="gt-action gt-action--orange" data-action="${dummy ? "wo-details-dummy" : "wo-details"}" data-id="${id}">Details <img src="${G}chevron-orange.svg" alt="" /></button>`;
 
   let body = "", footer = "";
   if (variant === "track") {
@@ -181,8 +182,8 @@ function woCard(id, variant) {
     body = `${vcs}${resume}${progression}`;
     const skip = `<button type="button" class="wo__skip" data-action="rec-skip" aria-label="Show the next work order"><img src="${G}close-light.svg" alt="" /></button>`;
     footer = variant === "rec"
-      ? `<div class="wo__footer">${skip}${dummy ? "" : details}</div>`
-      : dummy ? "" : `<div class="wo__footer wo__footer--end">${details}</div>`;
+      ? `<div class="wo__footer">${skip}${details}</div>`
+      : `<div class="wo__footer wo__footer--end">${details}</div>`;
   }
   const card = `
     <article class="wo wo--${variant}${variant === "track" && state.growth.justAdded === id ? " wo--new" : ""}${dummy ? " wo--dummy" : ""}" data-wo="${id}">
