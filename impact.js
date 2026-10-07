@@ -601,24 +601,13 @@ function saveAchievement() {
   showToast(editId ? "Achievement updated" : "Achievement card created", { label: "View Card", onClick: () => openCardOverlay(a.id) });
 }
 
-// ---------- Journal (empty state, 1032:17298) ----------
-const pageJournal = () => `
-  ${impactHeader("Journal", "Capture and document your unique process of working")}
-  ${toolbar("journal", "Search for entries", "", true)}
-  <div class="im-content im-soon">
-    <div class="im-soon__mark"><h2>Journal</h2><img src="${IM}journal-empty.svg" alt="" /></div>
-    <div class="im-soon__text"><h3>Document your work process</h3><p>Capture, document and share your unique process of working.</p></div>
-    <span class="im-soon__pill">Coming Soon</span>
-  </div>`;
-
 // ---------- Render + events ----------
 function renderImpact(route, param) {
   closeAllOverlays();
   if (route === "proof-asset" && !assetById(param)) return go("proof");
   impactPage.innerHTML = route === "proof" ? pageProof()
     : route === "proof-asset" ? pageAsset(assetById(param))
-    : route === "achievements" ? pageAchievements()
-    : pageJournal();
+    : pageAchievements();
   // The "just added" highlight plays once.
   state.justAddedAsset = state.justAddedAch = null;
 }

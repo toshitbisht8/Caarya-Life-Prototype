@@ -247,12 +247,12 @@
 /* Journal "coming soon" (1032:17508) */
 .im-soon { flex: 1; gap: 56px; }
 .im-soon__mark { display: flex; flex-direction: column; align-items: center; gap: 16px; }
-.im-soon__mark h2 { font-family: var(--font-lato); font-weight: 700; font-size: 24px; letter-spacing: 0.48px; line-height: 1.5; color: #6775f5; }
+.im-soon__mark h2 { font-family: var(--font-lato); font-weight: 700; font-size: 24px; letter-spacing: 0.48px; line-height: 1.5; color: var(--soon, #6775f5); }
 .im-soon__mark img { width: 98px; height: 105px; margin: 7px 0 8px 8px; }
 .im-soon__text { display: flex; flex-direction: column; gap: 4px; text-align: center; line-height: 1.5; }
 .im-soon__text h3 { font-family: var(--font-lato); font-weight: 700; font-size: 16px; letter-spacing: 0.32px; text-transform: capitalize; color: var(--neutral-800); }
 .im-soon__text p { font-size: 12px; letter-spacing: 0.24px; color: var(--neutral-500); }
-.im-soon__pill { padding: 14px 48px; border-radius: 136px; background: var(--neutral-100); font-weight: 700; font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: #6775f5; }
+.im-soon__pill { padding: 14px 48px; border-radius: 136px; background: var(--neutral-100); font-weight: 700; font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: var(--soon, #6775f5); }
 
 /* Second pass: data-driven deliverables, preview card, environment traits, warning modal */
 .deliverable b, .picked b { font-weight: 700; color: var(--neutral-800); }
@@ -299,3 +299,6 @@
 .warn-modal__actions button { flex: 1; padding: 20px !important; background: #fff !important; font-family: var(--font-satoshi); font-weight: 700; font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: var(--neutral-800); transition: background 0.15s; }
 .warn-modal__actions button:hover { background: var(--neutral-50) !important; }
 .warn-modal__actions .is-danger { color: #ed4c41; }
+/* Coming-soon pages: the section's menu icon, enlarged and tinted in its colour (Figma 1102:37515) */
+.soon__icon { width: 96px; height: 96px; background: var(--soon); opacity: 0.25; -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; }
+.soon .im-soon__text p { max-width: 420px; }

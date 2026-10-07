@@ -13,8 +13,50 @@ const PAGE_FOR = {
   achievements: { page: "impact", menu: "achievements", crumb: ["Your Impact Journal", "Achievements"] },
   competencies: { page: "competencies", menu: "competencies", crumb: ["Your Impact Journal", "Competencies"] },
   profile: { page: "profile", menu: "profile", crumb: ["Your Unique Identity", "Profile"] },
-  journal: { page: "impact", menu: "journal", crumb: ["Your Impact Journal", "Journal"] },
+  journal: { page: "soon", menu: "journal", crumb: ["Your Impact Journal", "Journal"] },
+  "domain-affinity": { page: "soon", menu: "domain-affinity", crumb: ["Your Career", "Domain Affinity"] },
+  "industry-affinity": { page: "soon", menu: "industry-affinity", crumb: ["Your Career", "Industry Affinity"] },
+  "session-logs": { page: "soon", menu: "session-logs", crumb: ["Your Work", "Session Logs"] },
+  "daily-gains": { page: "soon", menu: "daily-gains", crumb: ["Your Knowledge Space", "Daily Gains"] },
+  exchange: { page: "soon", menu: "exchange", crumb: ["Your Knowledge Space", "Exchange"] },
+  rolodex: { page: "soon", menu: "rolodex", crumb: ["Your Network", "Rolodex"] },
+  "network-profile": { page: "soon", menu: "network-profile", crumb: ["Your Network", "Profile"] },
 };
+
+// Coming-soon pages (Figma 1102:37515). Each uses its menu section's colour and a faded, tinted copy of its
+// menu icon (Journal keeps its own illustration). [page title, page subtitle, headline, lines, colour, icon]
+const SOON = {
+  "domain-affinity": ["Domain Affinity", "How your work and interests map across domains", "Your Neo-Generalist Spotlight",
+    ["See which domains your work keeps pulling you toward, and where your strengths overlap."], "#f57d34", "domain-affinity.svg"],
+  "industry-affinity": ["Industry Affinity", "The industries your work has touched", "How You Have Interacted With Industries",
+    ["See every industry you've worked across, and the ones you keep coming back to."], "#f57d34", "industry-affinity.svg"],
+  "session-logs": ["Session Logs", "Every focus session you've logged", "Capture Work While Doing It",
+    ["Every session in one place: what you worked on, for how long, and what you noticed along the way."], "#eea638", "session-logs.svg"],
+  journal: ["Journal", "Capture and document your unique process of working", "Document Your Work Process",
+    ["Capture, document and share your unique process of working."], "#6775f5", null],
+  "daily-gains": ["Daily Gains", "Short reads picked for the work you do", "Curated Insights To Fuel Your Day",
+    ["Fresh content, tailored to what matters most.", "Stay ahead with knowledge that compounds daily."], "#c44eb9", "daily-gains.svg"],
+  exchange: ["Peer Knowledge Exchange", "Ask, answer and learn alongside other students", "Tap Into The Collective Wisdom Of Peers",
+    ["Ask, guide, or share: there's always something to learn.", "Knowledge flows when communities connect."], "#c44eb9", "exchange.svg"],
+  rolodex: ["Rolodex", "The people you've met and worked with", "Keep Track Of Your Network",
+    ["Everyone you've worked with, been mentored by or met through Caarya, in one place.", "Relationships that grow with your career."], "#0497ae", "rolodex.svg"],
+  "network-profile": ["Profile", "How you show up to your network", "Your Social Avatar",
+    ["The version of you that people in your network see.", "Your work and your story, one link away."], "#0497ae", "network-profile.svg"],
+};
+
+function renderSoon(route) {
+  const [title, sub, head, lines, color, icon] = SOON[route];
+  const art = icon
+    ? `<span class="soon__icon" style="-webkit-mask-image:url(assets/menu/${icon});mask-image:url(assets/menu/${icon})"></span>`
+    : `<img src="assets/impact/journal-empty.svg" alt="" />`;
+  document.getElementById("soon-page").innerHTML = `
+    <div class="page-header"><h1 class="page-header__title">${title}</h1><p class="page-header__sub">${sub}</p></div>
+    <div class="im-content im-soon soon" style="--soon:${color}">
+      <div class="im-soon__mark"><h2>${title}</h2>${art}</div>
+      <div class="im-soon__text"><h3>${head}</h3>${lines.map((l) => `<p>${l}</p>`).join("")}</div>
+      <span class="im-soon__pill">Coming Soon</span>
+    </div>`;
+}
 
 function renderWorkspace(route, param) {
   const info = PAGE_FOR[route];
@@ -37,6 +79,7 @@ function renderWorkspace(route, param) {
   if (info.page === "competencies") renderCompetencies(); // competencies.js
   if (info.page === "profile") renderProfile(); // profile.js
   if (info.page === "assessments") syncAssessmentCards(); // riasec.js
+  if (info.page === "soon") renderSoon(route);
 }
 
 // Coin balance bar (Figma 1013:45188)
@@ -70,8 +113,8 @@ function renderCoins() {
   const MENU = [
     { title: "Your Career", color: "#f57d34", icon: "section-career.png", items: [
       ["Growth Track", whole("growth-track.svg"), "growth", "growth-track-focus.svg"],
-      ["Domain Affinity", whole("domain-affinity.svg")],
-      ["Industry Affinity", whole("industry-affinity.svg")],
+      ["Domain Affinity", whole("domain-affinity.svg"), "domain-affinity"],
+      ["Industry Affinity", whole("industry-affinity.svg"), "industry-affinity"],
     ] },
     { title: "Your Work", color: "#eea638", icon: "section-work.png", items: [
       ["Desk", [
@@ -80,7 +123,7 @@ function renderCoins() {
         { file: "desk-g3.svg", inset: "56.54% 0 12.2% 24.35%" },
         { file: "desk-g4.svg", inset: "18.92% 62.54% 50.64% 7.02%" },
       ], "desk", ["desk-g1-focus.svg", "desk-g2-focus.svg", "desk-g3-focus.svg", "desk-g4-focus.svg"]],
-      ["Session Logs", [{ file: "session-logs.svg", inset: "5.21%" }]],
+      ["Session Logs", [{ file: "session-logs.svg", inset: "5.21%" }], "session-logs"],
     ] },
     { title: "Your Impact Journal", color: "#6775f5", icon: "section-impact.svg", items: [
       ["Achievements", [{ file: "achievements.svg", inset: "0 6.05%" }], "achievements"],
@@ -93,12 +136,12 @@ function renderCoins() {
       ["Assessments", [{ file: "assessments-idle.svg", inset: "5.21% 13.54% 5.22% 13.54%" }], "assessments", "assessments-focus.svg"],
     ] },
     { title: "Your Knowledge Space", color: "#c44eb9", icon: "section-knowledge.png", items: [
-      ["Daily Gains", whole("daily-gains.svg")],
-      ["Exchange", whole("exchange.svg")],
+      ["Daily Gains", whole("daily-gains.svg"), "daily-gains"],
+      ["Exchange", whole("exchange.svg"), "exchange"],
     ] },
     { title: "Your Network", color: "#0497ae", icon: "section-network.svg", items: [
-      ["Rolodex", whole("rolodex.svg")],
-      ["Profile", whole("network-profile.svg")],
+      ["Rolodex", whole("rolodex.svg"), "rolodex"],
+      ["Profile", whole("network-profile.svg"), "network-profile"],
     ] },
   ];
 
@@ -113,7 +156,7 @@ function renderCoins() {
       <div class="menu-section__items"></div>`;
     sec.querySelector(".menu-section__title span").textContent = section.title;
     section.items.forEach(([label, layers, route, focusIcon]) => {
-      // Only pages that exist navigate; the rest show hover states but stay inert.
+      // Every item navigates; sections not built yet open a coming-soon page.
       const item = document.createElement(route ? "a" : "button");
       item.className = "menu-item";
       if (route) {
