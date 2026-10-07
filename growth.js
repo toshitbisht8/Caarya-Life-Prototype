@@ -3,8 +3,7 @@
 
 const G = "assets/growth/";
 const WO_COST = 100;
-const RECOMMENDED_COUNT = 20;
-const EXPLORE_COUNT = 5;
+const EXPLORE_COUNT = 24;
 
 Object.assign(state, { coins: 2500, coinsMax: 5000 });
 state.growth = {
@@ -137,7 +136,9 @@ function filterChips({ role = false } = {}) {
 
 // ---------- Work order card (recommended / explore / on growth track) ----------
 function woCard(id, variant) {
-  const w = woContent(id); // work-orders.js
+  // Ids like "d4" are card-only dummies (dummy-orders.js): no details, no banner.
+  const dummy = typeof id === "string";
+  const w = dummy ? dummyContent(activeRole(), Number(id.slice(1))) : woContent(id); // work-orders.js
   const vcNames = Object.values(w.vcs).map((v) => v.name);
   const resume = `
     <div class="wo-block wo-block--resume">
@@ -153,7 +154,8 @@ function woCard(id, variant) {
     <p class="wo__vcs"><b>Value Constructs:</b>
       <span>${vcNames.slice(0, 3).map(esc).join('<span class="dot">•</span>')}${vcNames.length > 3 ? `<u>+${vcNames.length - 3} more</u>` : ""}</span>
     </p>`;
-  const details = `<button type="button" class="gt-action gt-action--orange" data-action="wo-details" data-id="${id}">Details <img src="${G}chevron-orange.svg" alt="" /></button>`;
+  // Dummy cards keep a Details button that looks the same but goes nowhere (card-only, for the demo).
+  const details = `<button type="button" class="gt-action gt-action--orange" data-action="${dummy ? "wo-details-dummy" : "wo-details"}" data-id="${id}">Details <img src="${G}chevron-orange.svg" alt="" /></button>`;
 
   let body = "", footer = "";
   if (variant === "track") {
@@ -177,12 +179,13 @@ function woCard(id, variant) {
       </div>`;
   } else {
     body = `${vcs}${resume}${progression}`;
+    const skip = `<button type="button" class="wo__skip" data-action="rec-skip" aria-label="Show the next work order"><img src="${G}close-light.svg" alt="" /></button>`;
     footer = variant === "rec"
-      ? `<div class="wo__footer"><button type="button" class="wo__skip" data-action="rec-skip" aria-label="Show the next work order"><img src="${G}close-light.svg" alt="" /></button>${details}</div>`
+      ? `<div class="wo__footer">${skip}${details}</div>`
       : `<div class="wo__footer wo__footer--end">${details}</div>`;
   }
-  return `
-    <article class="wo wo--${variant}${variant === "track" && state.growth.justAdded === id ? " wo--new" : ""}" data-wo="${id}">
+  const card = `
+    <article class="wo wo--${variant}${variant === "track" && state.growth.justAdded === id ? " wo--new" : ""}${dummy ? " wo--dummy" : ""}" data-wo="${id}">
       <div class="wo__head">
         <p class="wo__service">${esc(w.service)}</p>
         <h3 class="wo__title">${esc(w.title)}</h3>
@@ -192,6 +195,10 @@ function woCard(id, variant) {
       ${body}
       ${footer}
     </article>`;
+  // Functional work orders carry the "Recommended" banner (Figma 843:20427) on the explore screens.
+  return !dummy && w.real && variant !== "track"
+    ? `<div class="vc-rec wo-rec"><p class="vc-rec__head"><img src="${G}career-progression.png" alt="" />Recommended<span class="vc-rec__help" title="Picked for this role by your growth manager">${helpDot(16)}</span></p>${card}</div>`
+    : card;
 }
 
 // ---------- Pages ----------
@@ -230,15 +237,29 @@ function pageHome() {
     </section>`;
 }
 
-// The role's real work orders come first, then placeholders fill the stack / grid to the designed size.
-function workOrderIds(count) {
+// The role's functional work orders, spread every `gap` cards (starting with the first) among
+// card-only dummies ("d1", "d2", …) that fill the stack / grid to `count`.
+function workOrderIds(count, gap) {
   const real = catalogFor(activeRole()); // work-orders.js
-  return [...real, ...Array.from({ length: Math.max(0, count - real.length) }, (_, n) => n + 1)];
+  let d = 0;
+  return Array.from({ length: Math.max(count, (real.length - 1) * gap + 1) }, (_, i) =>
+    i % gap === 0 && i / gap < real.length ? real[i / gap] : `d${++d}`);
 }
 
+// The Recommended stack holds only the role's functional work orders; once they've all been skipped
+// (or the role has none) it says so and points to Explore All Work.
 function pageRecommended() {
-  const ids = workOrderIds(RECOMMENDED_COUNT);
-  const i = state.growth.recIndex % ids.length;
+  const ids = catalogFor(activeRole()); // work-orders.js
+  const i = state.growth.recIndex;
+  const role = activeRole() ? esc(roleName(activeRole())) : "this role";
+  const stack = i < ids.length
+    ? `<p class="rec__count">${i + 1}/${ids.length}</p>
+        ${woCard(ids[i], "rec")}`
+    : `<div class="gt-empty rec-done">
+         <img src="${G}empty-work.png" alt="" />
+         <p>${ids.length ? `No more recommended work for ‘${role}’` : `No recommended work for ‘${role}’ yet`}</p>
+         <button type="button" class="gt-empty__btn" data-action="explore-all"><img src="${G}work-light.svg" alt="" />Explore All Work</button>
+       </div>`;
   return `
     <div class="gt-head">${backLink("Back to Growth Track", "growth")}<h1 class="gt-title">Exploring Work</h1></div>
     <section class="gt-panel gt-panel--rec">
@@ -258,8 +279,7 @@ function pageRecommended() {
       </div>
       ${filterChips({ role: true })}
       <div class="rec">
-        <p class="rec__count">${i + 1}/${ids.length}</p>
-        ${woCard(ids[i], "rec")}
+        ${stack}
       </div>
     </section>`;
 }
@@ -280,7 +300,7 @@ function pageExploreAll() {
   const isLocked = (key) => stageOf(role) < UNLOCK_AT[key];
   // Unlocked gig tabs have no designed listings yet, so they say so instead of showing the lock.
   const content = tab === "studio"
-    ? `${filterChips()}<div class="gt-grid">${workOrderIds(EXPLORE_COUNT).map((id) => woCard(id, "explore")).join("")}</div>`
+    ? `${filterChips()}<div class="gt-grid">${workOrderIds(EXPLORE_COUNT, 4).map((id) => woCard(id, "explore")).join("")}</div>`
     : (([name, text, unlock]) => `
         <div class="locked">
           <span class="locked__icon"><span style="inset:9.31% 0"><img src="${G}briefcase.svg" alt="" /></span></span>
@@ -392,11 +412,24 @@ const page = document.getElementById("growth-page");
 
 function renderGrowth(route, param) {
   closeAllOverlays();
+  const prev = state.growth.route;
+  state.growth.lastRoute = prev;
+  state.growth.route = route;
   if (route === "growth") {
     page.innerHTML = pageHome();
+    const list = page.querySelector(".role-tabs__list"), tab = list?.querySelector(".is-active");
+    // Scroll the active role into view only if it's cut off (positions measured against the strip itself).
+    if (tab) {
+      const box = list.getBoundingClientRect(), t = tab.getBoundingClientRect();
+      if (t.right > box.right || t.left < box.left) list.scrollLeft += t.left - box.left - 16;
+    }
     state.growth.justAdded = null;
   }
-  else if (route === "explore") page.innerHTML = pageRecommended();
+  else if (route === "explore") {
+    // A fresh visit starts the stack over; coming back from a work order keeps your place.
+    if (!["explore", "work-order"].includes(state.growth.lastRoute)) state.growth.recIndex = 0;
+    page.innerHTML = pageRecommended();
+  }
   else if (route === "explore-all") page.innerHTML = pageExploreAll();
   else if (route === "work-order") {
     const id = Number(param) || 1;
@@ -443,6 +476,16 @@ page.addEventListener("click", (e) => {
     case "judged": openJudgedDrawer(g.lastWo, Number(el.dataset.vc)); break;
   }
 });
+
+// The role strip has no visible scrollbar, so a vertical mouse wheel scrolls it sideways.
+page.addEventListener("wheel", (e) => {
+  const list = e.target.closest(".role-tabs__list");
+  if (!list || list.scrollWidth <= list.clientWidth || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+  const max = list.scrollWidth - list.clientWidth;
+  if ((e.deltaY < 0 && list.scrollLeft <= 0) || (e.deltaY > 0 && list.scrollLeft >= max)) return; // let the page scroll at the ends
+  e.preventDefault();
+  list.scrollLeft += e.deltaY;
+}, { passive: false });
 
 // Home search: filters the listed work orders by title / description.
 page.addEventListener("input", (e) => {

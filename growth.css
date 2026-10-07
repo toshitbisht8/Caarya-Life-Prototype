@@ -51,8 +51,11 @@
 
 /* Home: role tabs */
 .role-tabs { width: 100%; display: flex; align-items: center; gap: 8px; }
-.role-tabs__list { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--neutral-200); }
-.role-tab { position: relative; padding: 16px 48px 16px 32px !important; }
+/* Roles stay left-aligned and scroll sideways when they don't fit; Manage Roles stays pinned on the right. */
+.role-tabs__list { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: none; border-bottom: 1px solid var(--neutral-200); }
+.role-tabs__list::-webkit-scrollbar { display: none; }
+.role-tabs > .gt-link { flex-shrink: 0; }
+.role-tab { position: relative; flex-shrink: 0; padding: 16px 48px 16px 32px !important; }
 .role-tab::after { content: ""; position: absolute; left: 0.5px; right: -0.5px; bottom: 0; height: 3px; border-radius: 8px 8px 0 0; background: transparent; transition: background 0.15s; }
 .role-tab.is-active::after { background: var(--neutral-800); }
 .role-tab:not(.is-active):hover::after { background: var(--neutral-200); }
@@ -120,7 +123,7 @@
 .wo__tags span { padding: 3px 5px; border: 1px solid var(--neutral-100); border-radius: 4px; font-size: 10px; letter-spacing: 0.2px; line-height: 1.5; color: var(--neutral-500); white-space: nowrap; }
 .wo__vcs { width: 100%; display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; }
 .wo__vcs b { color: var(--neutral-800); }
-.wo__vcs > span { flex: 1; min-width: 320px; font-weight: 500; color: var(--neutral-400); }
+.wo__vcs > span { flex: 1; min-width: min(320px, 100%); font-weight: 500; color: var(--neutral-400); }
 .wo__vcs .dot { padding: 0 6px; }
 .wo__vcs u { margin-left: 8px; font-style: italic; }
 .wo-block { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 12px; padding: 16px; border-left: 1px solid #a5f2f2; }
@@ -320,3 +323,9 @@
 .resume-box .kicker { font-size: 14px; letter-spacing: 1.4px; }
 /* Quality-bar badge beside the construct name in the judged drawer */
 .drawer__vc h3 .vc-card__badge { margin-left: 8px; vertical-align: middle; font-family: var(--font-satoshi); }
+/* Functional work orders in the explore screens sit in the "Recommended" banner (843:20427, as on the Desk) */
+.wo-rec { gap: 0; }
+.wo-rec > .wo { width: 100%; }
+.gt-grid > .wo-rec { align-self: start; }
+/* "No more recommended work" at the end of the Recommended stack */
+.rec-done { width: 100%; }
