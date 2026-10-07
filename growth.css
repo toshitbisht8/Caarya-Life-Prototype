@@ -192,7 +192,7 @@
 .gt-tab:not(.is-active):hover { color: var(--neutral-800); }
 .gt-panel--details .gt-tabs { max-width: none; }
 .gt-intro { width: 100%; max-width: 800px; font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: var(--neutral-500); }
-.gt-panel .gt-intro + .gt-filters { margin: 0 0 -40px; }
+.gt-panel .gt-tabs + .gt-filters { margin: 0 0 -16px; }
 .gt-grid { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start; padding: 24px; border-radius: 24px; background: var(--neutral-50); }
 .locked { width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 56px; border-radius: 16px; background: var(--neutral-50); }
 .locked__icon { position: relative; width: 80px; height: 80px; overflow: hidden; }

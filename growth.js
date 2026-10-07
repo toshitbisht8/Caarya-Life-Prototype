@@ -54,9 +54,9 @@ const LOREM = "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do e
 const UNLOCK_PAID = [["Contribute to at least 2 work orders", "0/2 done"], ["Submit at least 3 VC Artefacts", "0/3 done"], ["Submit at least 3 VC Artefacts", "0/3 done"]];
 // Paid Gigs / Jobs copy mirrors the designed Unpaid Gigs state; their unlock levels are placeholders.
 const LOCKED_TABS = {
-  unpaid: ["Unpaid Gigs", "Gain your first real work experience, working with real companies (some explanation about what this is)", "Unpaid Gigs unlock once you reach C3 in this role"],
-  paid: ["Paid Gigs", "Get paid for real work with real companies (some explanation about what this is)", "Paid Gigs unlock once you reach C4 in this role"],
-  jobs: ["Jobs", "Land a role with a company you've already worked with (some explanation about what this is)", "Jobs unlock once you reach C5 in this role"],
+  unpaid: ["Unpaid Gigs", "Gain your first real work experience, working with real companies", "Unpaid Gigs unlock once you reach C3 in this role"],
+  paid: ["Paid Gigs", "Get paid for real work with real companies", "Paid Gigs unlock once you reach C4 in this role"],
+  jobs: ["Jobs", "Land a role with a company you've already worked with", "Jobs unlock once you reach C5 in this role"],
 };
 // Career journey stages. New users start every role at C1; Shift+C (mentor-sim.js) cycles C1-C5 for testing.
 const CAREER_STAGES = [["Exploration", "Exploring"], ["Alignment", "Aligning"], ["Activation", "Activating"], ["Enhancement", "Enhancing"], ["Advancement", "Advancing"]];
@@ -320,7 +320,6 @@ function pageExploreAll() {
         ${unlockProgress()}
       </div>
       ${tabs([["studio", "Experience Studio"], ["unpaid", "Unpaid Gigs", isLocked("unpaid")], ["paid", "Paid Gigs", isLocked("paid")], ["jobs", "Jobs", isLocked("jobs")]], tab, "explore-tab")}
-      <p class="gt-intro">A paragraph about learning work... lorem ipsum dolor sit</p>
       ${content}
     </section>`;
 }

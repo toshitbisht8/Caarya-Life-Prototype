@@ -1,0 +1,74 @@
+/* Responsive layer: keeps every screen working down to 800px wide.
+   Loaded last. Base styles follow the 1440px Figma frames; these rules only kick in when space runs out.
+   Two kinds of rule: (1) always-on fixes for rows that should wrap instead of overflowing, and
+   (2) width breakpoints that tighten gutters and stack two-column layouts. */
+
+/* ---------- 1. Rows that wrap instead of overflowing (all widths) ---------- */
+.wo-goal { align-items: flex-start; }
+.wo-goal > span { flex: 1; min-width: 0; }
+.wo-goal img { margin-top: 2px; }
+.talent, .talent__head, .pgm, .vc-card__title, .vc-rec__head, .desk-journal__actions, .asset-head, .desk-wo__tags { flex-wrap: wrap; }
+.talent__head { row-gap: 6px; }
+.vc-rec__head { row-gap: 0; }
+.bubble, .bubble__text { max-width: 100%; }
+.vc-card__stats { flex-wrap: wrap; row-gap: 4px; white-space: normal; }
+.asset-head__text { flex: 1 1 240px; }
+.unlock__item { width: min(320px, 100%); }
+.unlock__item > span { min-width: 0; white-space: normal; }
+.gt-user { flex-wrap: wrap; row-gap: 24px; }
+/* Explore All Work header: the role block keeps its width; the unlock requirements wrap beneath it when there's no room. */
+.gt-user__role { flex: 1 0 260px; grid-template-columns: 64px minmax(0, 1fr); }
+.gt-user .unlock { flex: 1 1 320px; min-width: min(320px, 100%); }
+.wo-header__tags span, .wo__tags span { max-width: 100%; white-space: normal; }
+.vc-help__pgm { max-width: 100%; }
+.pf-pair .pf-section, .pf-syn__bars, .pf-note { min-width: min(420px, 100%); }
+.assessment__footer { flex-wrap: wrap; gap: 8px; }
+
+/* ---------- 2. Up to 1200px: narrower gutters ---------- */
+@media (max-width: 1200px) {
+  .workspace__main { padding: 40px; gap: 56px; }
+  .pf-pair, .pf-syn { gap: 40px; }
+  .gt-user { gap: 32px; }
+  .wo-header { flex-wrap: wrap; gap: 24px; }
+  .hero, .auth__panel { padding: 40px 64px; }
+
+  /* Tab rows scroll sideways (no scrollbar) rather than spilling out of their panel. */
+  .gt-tabs, .cp-tabs { max-width: 100%; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+  .gt-tabs::-webkit-scrollbar, .cp-tabs::-webkit-scrollbar { display: none; }
+  .gt-tab, .cp-tab { flex-shrink: 0; white-space: nowrap; margin-bottom: 0; }
+}
+
+/* ---------- 3. Up to 1024px: tight gutters, single-column grids ---------- */
+@media (max-width: 1024px) {
+  .workspace__main { padding: 32px 24px; gap: 40px; }
+  .gt-panel, .desk-tabs, .cp-panel { padding: 24px; }
+  .gt-panel { gap: 32px; }
+  .desk-tabs { gap: 40px; }
+  .gt-grid { grid-template-columns: minmax(0, 1fr); padding: 16px; gap: 16px; }
+  .rec { padding: 16px; }
+  .assessment-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .focus-grid { grid-template-columns: minmax(0, 1fr); }
+
+  /* Desk header: actions drop under the work order details. */
+  .desk-wo { flex-wrap: wrap; align-items: flex-start; }
+  .desk-wo__actions { width: 100%; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+  .desk-submit { align-items: flex-start; }
+  .desk-submit p { white-space: normal; }
+  .desk-btn { padding: 14px 20px !important; }
+
+  /* Auth: split screen with tighter padding; onboarding grids reflow. */
+  .hero, .auth__panel { padding: 32px; }
+  .tabs__tab { padding: 12px 16px; }
+  .otp { width: 100%; max-width: 312px; }
+  .onboarding { padding: 32px 24px; }
+  .industries { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); padding: 24px; }
+  .industry { min-width: 0; }
+  .chips { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---------- 4. Up to 900px ---------- */
+@media (max-width: 900px) {
+  .assessment-grid { grid-template-columns: minmax(0, 1fr); }
+  .hero__title { font-size: 24px; }
+  .hero__body { font-size: 16px; }
+}
