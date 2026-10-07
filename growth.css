@@ -51,8 +51,10 @@
 
 /* Home: role tabs */
 .role-tabs { width: 100%; display: flex; align-items: center; gap: 8px; }
-.role-tabs__list { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--neutral-200); }
-.role-tab { position: relative; padding: 16px 48px 16px 32px !important; }
+/* Roles stay left-aligned and scroll sideways when they don't fit; Manage Roles stays pinned on the right. */
+.role-tabs__list { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: thin; border-bottom: 1px solid var(--neutral-200); }
+.role-tabs > .gt-link { flex-shrink: 0; }
+.role-tab { position: relative; flex-shrink: 0; padding: 16px 48px 16px 32px !important; }
 .role-tab::after { content: ""; position: absolute; left: 0.5px; right: -0.5px; bottom: 0; height: 3px; border-radius: 8px 8px 0 0; background: transparent; transition: background 0.15s; }
 .role-tab.is-active::after { background: var(--neutral-800); }
 .role-tab:not(.is-active):hover::after { background: var(--neutral-200); }
@@ -324,3 +326,5 @@
 .wo-rec { gap: 0; }
 .wo-rec > .wo { width: 100%; }
 .gt-grid > .wo-rec { align-self: start; }
+/* "No more recommended work" at the end of the Recommended stack */
+.rec-done { width: 100%; }

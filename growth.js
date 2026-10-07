@@ -3,7 +3,6 @@
 
 const G = "assets/growth/";
 const WO_COST = 100;
-const RECOMMENDED_COUNT = 24;
 const EXPLORE_COUNT = 24;
 
 Object.assign(state, { coins: 2500, coinsMax: 5000 });
@@ -247,9 +246,20 @@ function workOrderIds(count, gap) {
     i % gap === 0 && i / gap < real.length ? real[i / gap] : `d${++d}`);
 }
 
+// The Recommended stack holds only the role's functional work orders; once they've all been skipped
+// (or the role has none) it says so and points to Explore All Work.
 function pageRecommended() {
-  const ids = workOrderIds(RECOMMENDED_COUNT, 3);
-  const i = state.growth.recIndex % ids.length;
+  const ids = catalogFor(activeRole()); // work-orders.js
+  const i = state.growth.recIndex;
+  const role = activeRole() ? esc(roleName(activeRole())) : "this role";
+  const stack = i < ids.length
+    ? `<p class="rec__count">${i + 1}/${ids.length}</p>
+        ${woCard(ids[i], "rec")}`
+    : `<div class="gt-empty rec-done">
+         <img src="${G}empty-work.png" alt="" />
+         <p>${ids.length ? `No more recommended work for ‘${role}’` : `No recommended work for ‘${role}’ yet`}</p>
+         <button type="button" class="gt-empty__btn" data-action="explore-all"><img src="${G}work-light.svg" alt="" />Explore All Work</button>
+       </div>`;
   return `
     <div class="gt-head">${backLink("Back to Growth Track", "growth")}<h1 class="gt-title">Exploring Work</h1></div>
     <section class="gt-panel gt-panel--rec">
@@ -269,8 +279,7 @@ function pageRecommended() {
       </div>
       ${filterChips({ role: true })}
       <div class="rec">
-        <p class="rec__count">${i + 1}/${ids.length}</p>
-        ${woCard(ids[i], "rec")}
+        ${stack}
       </div>
     </section>`;
 }
@@ -403,11 +412,20 @@ const page = document.getElementById("growth-page");
 
 function renderGrowth(route, param) {
   closeAllOverlays();
+  const prev = state.growth.route;
+  state.growth.lastRoute = prev;
+  state.growth.route = route;
   if (route === "growth") {
     page.innerHTML = pageHome();
+    const list = page.querySelector(".role-tabs__list"), tab = list?.querySelector(".is-active");
+    if (tab && tab.offsetLeft + tab.offsetWidth > list.clientWidth) list.scrollLeft = tab.offsetLeft - 16;
     state.growth.justAdded = null;
   }
-  else if (route === "explore") page.innerHTML = pageRecommended();
+  else if (route === "explore") {
+    // A fresh visit starts the stack over; coming back from a work order keeps your place.
+    if (!["explore", "work-order"].includes(state.growth.lastRoute)) state.growth.recIndex = 0;
+    page.innerHTML = pageRecommended();
+  }
   else if (route === "explore-all") page.innerHTML = pageExploreAll();
   else if (route === "work-order") {
     const id = Number(param) || 1;
