@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Caarya Life — Initial Profiling (Artefacts)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;1,400;1,700&family=Poppins:wght@600&display=swap" rel="stylesheet" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,401,501&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="profiling.css" />
+</head>
+<body data-variant="artefacts">
+  <!-- Artefacts version of profiling.html: keep the two files in sync; only <title> and data-variant differ. -->
+  <header class="pf-nav">
+    <div class="pf-logo">
+      <span class="pf-logo__mark"><span><img src="assets/profiling/logo-polygon.svg" alt="" /></span></span>
+      <span class="pf-logo__name">caarya</span>
+    </div>
+    <img src="assets/profiling/menu-right.svg" alt="" />
+  </header>
+
+  <main class="pf-main">
+    <!-- Welcome / college selection (1209:48902) -->
+    <section class="pf-welcome" data-step="welcome">
+      <form class="pf-welcome__start" novalidate>
+        <span class="pf-welcome__logo" aria-hidden="true"><span><img src="assets/profiling/logo-polygon-lg.svg" alt="" /></span></span>
+        <div class="pf-welcome__heading">
+          <p class="pf-welcome__kicker">Welcome to Caarya</p>
+          <h1 class="pf-welcome__title">Select your college to get started!</h1>
+        </div>
+        <div class="pf-welcome__form">
+          <label class="pf-welcome__select" data-field="college">
+            <span class="pf-visually-hidden">College</span>
+            <select name="college" id="pf-college">
+              <option value="">Select College</option>
+            </select>
+            <img src="assets/profiling/sort-down.svg" alt="" />
+          </label>
+          <label class="pf-welcome__select pf-welcome__other" data-field="collegeOther" hidden>
+            <span class="pf-visually-hidden">Your college name</span>
+            <input name="collegeOther" id="pf-college-other" placeholder="Type your college name" autocomplete="organization" />
+          </label>
+          <p class="pf-error" data-welcome-error role="alert"></p>
+          <button class="pf-btn pf-btn--next pf-welcome__continue" type="submit">
+            Continue <img src="assets/profiling/chevron-right.svg" alt="" />
+          </button>
+        </div>
+        <div class="pf-welcome__pod">
+          <p class="pf-welcome__pod-q">Can’t find your college in the list?</p>
+          <p><button class="pf-link" type="button" data-start-pod>Start a pod</button> in your college</p>
+        </div>
+      </form>
+
+      <div class="pf-props" aria-roledescription="carousel" aria-label="Why Caarya">
+        <div class="pf-props__art" aria-hidden="true"><img src="assets/profiling/placeholder-cross.svg" alt="" /></div>
+        <div class="pf-props__copy" aria-live="polite">
+          <p class="pf-props__title" data-prop-title></p>
+          <p class="pf-props__body" data-prop-body></p>
+        </div>
+        <div class="pf-props__dots" data-prop-dots></div>
+      </div>
+    </section>
+
+    <div class="pf-page">
+      <div class="pf-header">
+        <div class="pf-header__top">
+          <p class="pf-header__eyebrow" data-eyebrow></p>
+          <p class="pf-header__count" data-count></p>
+        </div>
+        <h1 class="pf-header__title" data-title></h1>
+        <p class="pf-header__desc" data-desc></p>
+      </div>
+
+      <!-- About You (1197:47020) -->
+      <form class="pf-step pf-fields" data-step="about" novalidate>
+        <label class="pf-field" data-field="name">
+          <span class="pf-field__label">Full Name</span>
+          <input class="pf-input" name="name" placeholder="John Doe" autocomplete="name" />
+          <span class="pf-error"></span>
+        </label>
+        <label class="pf-field" data-field="study">
+          <span class="pf-field__label">Field of study</span>
+          <input class="pf-input" name="study" placeholder="eg. B.Sc. Hons. Physics" />
+          <span class="pf-error"></span>
+        </label>
+        <label class="pf-field">
+          <span class="pf-field__label">Year Of Graduation</span>
+          <span class="pf-input pf-select">
+            <img src="assets/profiling/calendar.svg" alt="" />
+            <select name="year"></select>
+            <img src="assets/profiling/sort-down.svg" alt="" />
+          </span>
+        </label>
+      </form>
+
+      <!-- Your Goal (1220:46885) -->
+      <div class="pf-step pf-options pf-options--priority" data-step="priority" id="pf-priority"></div>
+
+      <!-- Role Interests (1197:47217) -->
+      <div class="pf-step pf-groups" data-step="roles" id="pf-roles"></div>
+
+      <!-- Business services per role (1197:47365, 1197:47439) -->
+      <div class="pf-step pf-groups" data-step="services" id="pf-services"></div>
+
+      <!-- Mapping Your Strengths (1197:47513) -->
+      <div class="pf-step pf-skill-groups" data-step="skills" id="pf-skills"></div>
+
+      <!-- Mapping Your Capabilities: value construct artefacts (1216:19894), artefacts version only -->
+      <div class="pf-step pf-groups" data-step="artefacts" id="pf-artefacts"></div>
+
+      <!-- Industry Affinity (1197:47753) -->
+      <div class="pf-step pf-industries" data-step="industries" id="pf-industries"></div>
+
+      <!-- Brand Engagement (1221:46998) -->
+      <div class="pf-step pf-options pf-options--gigs" data-step="gigs" id="pf-gigs"></div>
+
+      <!-- Nano Influencer (1221:47190) -->
+      <form class="pf-step pf-fields pf-nano" data-step="nano" novalidate>
+        <div class="pf-radios" role="radiogroup" aria-label="Sign up as a nano influencer">
+          <label class="pf-radio">
+            <input type="radio" name="nano" value="yes" />
+            <img class="is-on" src="assets/profiling/radio-on.svg" alt="" /><img class="is-off" src="assets/profiling/radio-off.svg" alt="" />
+            <span>Yes</span>
+          </label>
+          <label class="pf-radio">
+            <input type="radio" name="nano" value="no" />
+            <img class="is-on" src="assets/profiling/radio-on.svg" alt="" /><img class="is-off" src="assets/profiling/radio-off.svg" alt="" />
+            <span>No</span>
+          </label>
+        </div>
+        <div class="pf-nano__fields" hidden>
+          <label class="pf-field" data-field="instagram">
+            <span class="pf-field__label">Instagram Handle</span>
+            <input class="pf-input" name="instagram" id="pf-instagram" placeholder="@user_name" autocomplete="off" />
+            <span class="pf-error"></span>
+          </label>
+          <label class="pf-field" data-field="followers">
+            <span class="pf-field__label">No. Of Followers</span>
+            <input class="pf-input" name="followers" id="pf-followers" inputmode="numeric" placeholder="00" />
+            <span class="pf-error"></span>
+          </label>
+        </div>
+      </form>
+
+      <!-- Contact Details (1197:47086) -->
+      <form class="pf-step pf-fields" data-step="contact" novalidate>
+        <label class="pf-field" data-field="email">
+          <span class="pf-field__label">Email Id</span>
+          <input class="pf-input" name="email" type="email" placeholder="eg. email@domain.com" autocomplete="email" />
+          <span class="pf-error"></span>
+        </label>
+        <label class="pf-field" data-field="mobile">
+          <span class="pf-field__label">Mobile No.</span>
+          <span class="pf-input pf-input--prefixed">
+            <span class="pf-input__prefix">+91</span>
+            <input name="mobile" inputmode="numeric" placeholder="00000 00000" autocomplete="tel-national" maxlength="11" />
+          </span>
+          <span class="pf-error"></span>
+        </label>
+        <label class="pf-field" data-field="linkedin">
+          <span class="pf-field__label">Linkedin</span>
+          <input class="pf-input" name="linkedin" placeholder="linkedin.com/" autocomplete="url" />
+          <span class="pf-error"></span>
+        </label>
+      </form>
+    </div>
+
+    <!-- Congratulations (1197:47151) -->
+    <section class="pf-done" data-step="done">
+      <div class="pf-done__hero">
+        <img class="pf-done__art" src="assets/profiling/handshake.png" alt="" />
+        <div class="pf-done__heading">
+          <p class="pf-done__title">Congratulations!!!</p>
+          <p class="pf-done__sub">Your submission has been received</p>
+        </div>
+      </div>
+      <p class="pf-done__note">Our talent team will reach out to you shortly.</p>
+      <div class="pf-done__socials">
+        <p>For more information about industry 5.0 and the future of work, education and careers do check us out on our socials.</p>
+        <div class="pf-done__icons">
+          <span><img src="assets/profiling/instagram.svg" alt="Instagram" /></span>
+          <span><img src="assets/profiling/linkedin.svg" alt="LinkedIn" /></span>
+        </div>
+      </div>
+      <div class="pf-done__actions">
+        <a class="pf-pill pf-pill--red" href="index.html" data-visit-life>
+          <img src="assets/profiling/north-east.svg" alt="" /> Visit Caarya Life
+        </a>
+        <button class="pf-pill" type="button" data-retake>
+          <img src="assets/profiling/restart.svg" alt="" /> Retake assessment
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="pf-footer">
+    <div class="pf-progress" aria-hidden="true"><span data-progress></span></div>
+    <div class="pf-footer__nav">
+      <p class="pf-error pf-footer__error" data-step-error role="alert"></p>
+      <div class="pf-footer__buttons">
+        <button class="pf-btn pf-btn--back" type="button" data-back>Back</button>
+        <button class="pf-btn pf-btn--next" type="button" data-next>
+          <span data-next-label>Next</span> <img src="assets/profiling/arrow-next.svg" alt="" />
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <button class="pf-to-top" type="button" aria-label="Back to top">
+    <img src="assets/icons/arrow-upward.svg" alt="" />
+  </button>
+
+  <script src="profiling-data.js"></script>
+  <script src="profiling.js"></script>
+</body>
+</html>
