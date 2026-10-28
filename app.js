@@ -90,10 +90,10 @@ const ROUTES = [
   "login", "signup", "otp", "about", "roles", "industries", "confirm",
   "assessments", "growth", "explore", "explore-all", "work-order", "desk", "session",
   "proof", "proof-asset", "achievements", "achievement-new", "journal", "competencies", "profile", "riasec", "wep",
-  "domain-affinity", "industry-affinity", "session-logs", "daily-gains", "exchange", "rolodex", "network-profile",
+  "domain-affinity", "industry-affinity", "session-logs", "daily-gains", "exchange", "rolodex", "network-profile", "camp",
 ];
 const STEPS = ["about", "roles", "industries"];
-const WORKSPACE_ROUTES = ["assessments", "growth", "explore", "explore-all", "work-order", "desk", "proof", "proof-asset", "achievements", "journal", "competencies", "profile",
+const WORKSPACE_ROUTES = ["camp", "assessments", "growth", "explore", "explore-all", "work-order", "desk", "proof", "proof-asset", "achievements", "journal", "competencies", "profile",
   "domain-affinity", "industry-affinity", "session-logs", "daily-gains", "exchange", "rolodex", "network-profile"];
 const SCREEN_FOR = { login: "auth", signup: "auth", otp: "auth", confirm: "confirm", session: "session", "achievement-new": "wizard", riasec: "riasec", wep: "wep" };
 WORKSPACE_ROUTES.forEach((r) => (SCREEN_FOR[r] = "workspace"));
@@ -221,7 +221,7 @@ $('[data-view="login"]').addEventListener("submit", (e) => {
   // Demo account (demo-user.js): skips the OTP and lands in a seasoned profile.
   if (DEMO_LOGINS.includes(username.toLowerCase())) {
     loadDemoUser();
-    return loggingIn(() => go("growth"));
+    return loggingIn(() => go("camp"));
   }
   state.name = username.includes("@") ? "" : username;
   state.email = username.includes("@") ? username : "";
@@ -271,7 +271,13 @@ $('[data-view="otp"]').addEventListener("submit", (e) => {
     $("[data-error]", e.target).textContent = "Enter all 6 digits. Any code works in this prototype.";
     return;
   }
-  state.authTab === "login" ? loggingIn(() => go("about")) : go("about");
+  // Signing up continues into the profiling flow (profiling.html, skills version), which hands back to Camp.
+  // Logging in lands in Camp; a returning user's saved profile is picked up when it's theirs.
+  if (state.authTab !== "login") return startProfiling(); // camp.js
+  const saved = savedProfile();
+  const who = (state.name || state.email).toLowerCase();
+  if (saved && [saved.about?.name, saved.contact?.email].some((v) => v && v.toLowerCase() === who)) applyProfile(saved, false);
+  loggingIn(() => go("camp"));
 });
 
 // "Logging in" loader after a successful sign-in: the logo pulses while a bar fills, then `next` runs.

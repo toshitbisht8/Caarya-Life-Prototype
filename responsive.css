@@ -23,6 +23,9 @@
 .vc-help__pgm { max-width: 100%; }
 .pf-pair .pf-section, .pf-syn__bars, .pf-note { min-width: min(420px, 100%); }
 .assessment__footer { flex-wrap: wrap; gap: 8px; }
+/* Menu items fill the sidebar, so a scrollbar (tall menus, short windows) doesn't push them out. */
+.menu-section__items { align-self: stretch; }
+.menu-section__items .menu-item { width: 100%; }
 
 /* ---------- 2. Up to 1200px: narrower gutters ---------- */
 @media (max-width: 1200px) {

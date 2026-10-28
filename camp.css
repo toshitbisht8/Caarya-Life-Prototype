@@ -1,0 +1,72 @@
+/* Camp: landing page + inbox (camp.js), and the PGM's role-experience flow (Figma 1299:25773). */
+
+.camp { gap: 48px; }
+.camp-head, .camp-block { width: 100%; max-width: 1400px; }
+.camp-head h1 { font-family: var(--font-lato); font-weight: 700; font-size: 28px; letter-spacing: 0.28px; line-height: 1.3; color: var(--neutral-900); }
+.camp-head p { margin-top: 4px; font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: var(--neutral-500); }
+.camp-block { display: flex; flex-direction: column; gap: 16px; }
+.camp-kicker { font-family: var(--font-lato); font-style: italic; font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: var(--neutral-400); }
+
+/* Messages from the manager personas */
+.camp-msgs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr)); gap: 24px; align-items: stretch; }
+.camp-msg { display: flex; flex-direction: column; gap: 12px; padding: 16px 20px; border: 1px solid var(--neutral-200); border-radius: 16px; background: var(--shades-50); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
+.camp-msg__from { display: flex; align-items: center; gap: 8px; font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: var(--neutral-500); }
+.camp-msg__text { flex: 1; font-size: 14px; letter-spacing: 0.28px; line-height: 1.6; color: var(--neutral-800); }
+.camp-msg__cta { align-self: flex-end; display: inline-flex; align-items: center; gap: 6px; padding: 0 !important; font-weight: 700; font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: var(--neutral-900); text-decoration: underline; text-underline-offset: 3px; }
+.camp-msg__cta:hover { color: var(--dawn-500); }
+.camp-avatar { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; flex-shrink: 0; border-radius: 120px; overflow: hidden; }
+.camp-avatar img { width: 14px; height: 14px; object-fit: contain; }
+.camp-avatar--pgm { background: #ffe9e5; }
+.camp-avatar--talent { background: #edffff; }
+.camp-avatar--brand { background: #edffff; }
+
+/* Setup checklist: done (green tick), current (dashed), upcoming (solid) */
+.camp-steps { display: flex; flex-direction: column; gap: 12px; padding: 0; margin: 0; list-style: none; }
+.camp-step { width: 100%; display: flex; align-items: center; gap: 20px; padding: 6px 8px !important; border-radius: 12px; text-align: left; }
+button.camp-step:hover { background: var(--shades-50); }
+.camp-step__mark { width: 44px; height: 44px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border: 3px solid var(--neutral-500); border-radius: 50%; font-family: var(--font-lato); font-weight: 700; font-size: 18px; color: var(--neutral-800); }
+.camp-step__mark.is-current { border-style: dashed; }
+.camp-step__mark.is-done { border-color: #5fd068; background: #effbf0; color: #2bb656; font-size: 20px; }
+.camp-step__title { flex: 1; min-width: 0; font-weight: 500; font-size: 18px; letter-spacing: 0.36px; line-height: 1.4; color: var(--neutral-800); }
+.camp-step.is-done .camp-step__title { color: var(--neutral-500); }
+.camp-step__go { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 12px; letter-spacing: 0.36px; text-transform: uppercase; color: var(--neutral-400); opacity: 0; transition: opacity 0.15s; }
+.camp-step__go img { width: 14px; height: 14px; transform: rotate(180deg); }
+.camp-step.is-current .camp-step__go, button.camp-step:hover .camp-step__go, button.camp-step:focus-visible .camp-step__go { opacity: 1; color: var(--neutral-900); }
+.camp-setup-done summary { cursor: pointer; font-size: 14px; color: var(--neutral-500); }
+.camp-setup-done[open] summary { margin-bottom: 16px; }
+
+/* ---------- PGM modal ---------- */
+.pgm-modal { width: min(560px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 24px; padding: 20px 24px 24px; border-radius: 24px; background: var(--shades-50); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
+.pgm-modal--intro { width: min(460px, calc(100vw - 32px)); }
+.pgm-modal__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pgm-modal__from { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; letter-spacing: 0.24px; color: var(--neutral-500); }
+.pgm-modal__skip { display: inline-flex; align-items: center; gap: 6px; padding: 4px !important; font-weight: 700; font-size: 12px; letter-spacing: 0.36px; text-transform: uppercase; color: var(--neutral-400); }
+.pgm-modal__skip:hover { color: var(--neutral-800); }
+.pgm-modal__close { display: flex; padding: 6px !important; border-radius: 50%; background: var(--neutral-100) !important; }
+.pgm-modal__close img { width: 16px; height: 16px; }
+.pgm-modal__body { display: flex; flex-direction: column; gap: 12px; }
+.pgm-modal__body h2 { font-family: var(--font-lato); font-weight: 700; font-size: 18px; letter-spacing: 0.36px; line-height: 1.5; color: var(--neutral-900); }
+.pgm-modal__body p { font-size: 14px; letter-spacing: 0.28px; line-height: 1.6; color: var(--neutral-800); }
+.pgm-modal__kicker { font-family: var(--font-lato); font-style: italic; font-size: 14px !important; color: var(--caarya-red-500) !important; }
+.pgm-modal__body .pgm-modal__q { font-weight: 400; font-size: 18px; }
+.pgm-modal__q b { font-weight: 700; }
+.pgm-options { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+.pgm-option { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 16px !important; border: 1px solid var(--neutral-200) !important; border-radius: 8px; background: var(--shades-50) !important; text-align: left; transition: border-color 0.15s, background 0.15s; }
+.pgm-option:hover { border-color: var(--neutral-400) !important; }
+.pgm-option.is-on { border-color: var(--neutral-900) !important; background: var(--neutral-50) !important; box-shadow: inset 0 0 0 1px var(--neutral-900); }
+.pgm-option > span:first-child { display: flex; flex-direction: column; gap: 2px; }
+.pgm-option b { font-weight: 500; font-size: 14px; letter-spacing: 0.28px; color: var(--neutral-900); }
+.pgm-option small { font-size: 12px; letter-spacing: 0.24px; color: var(--neutral-500); }
+.pgm-option__emoji { font-size: 24px; line-height: 1; }
+.pgm-modal__error { min-height: 18px; font-size: 12px !important; color: var(--caarya-red-500) !important; }
+.pgm-modal__foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.pgm-modal__foot--center { justify-content: center; flex-wrap: wrap; }
+.pgm-btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px !important; border-radius: 64px; background: linear-gradient(#282724, #0f0f0f) !important; box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.25), 0 4px 6px -2px rgba(0, 0, 0, 0.2); font-weight: 700; font-size: 12px; letter-spacing: 0.36px; text-transform: uppercase; color: #fff !important; }
+.pgm-btn:hover { filter: brightness(1.2); }
+.pgm-ghost { padding: 12px 24px !important; border-radius: 64px; background: var(--neutral-100) !important; font-weight: 700; font-size: 12px; letter-spacing: 0.36px; text-transform: uppercase; color: var(--neutral-800); }
+.pgm-prev { display: inline-flex; align-items: center; gap: 8px; padding: 8px !important; font-weight: 700; font-size: 12px; letter-spacing: 0.36px; text-transform: uppercase; color: var(--neutral-500); }
+.pgm-prev:disabled { color: var(--neutral-300); cursor: default; }
+
+/* Sections a new user hasn't unlocked yet (camp.js) */
+.menu-section[hidden] { display: none; }
+.menu-section--camp { padding-bottom: 4px; }

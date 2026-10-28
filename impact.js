@@ -231,6 +231,7 @@ function openAssetModal(existing) {
     state.assets.unshift(asset);
     state.justAddedAsset = asset.id;
     go("proof");
+    if (campFirstAsset(asset)) return; // camp.js: the PGM takes over after the first proof of work
     showToast("Asset added to your proof of work", { label: "Create Achievement Card", onClick: () => startWizard(asset.id) });
   }
 

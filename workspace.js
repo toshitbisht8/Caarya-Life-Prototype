@@ -2,6 +2,7 @@
 
 // Which menu item / breadcrumb each workspace route belongs to.
 const PAGE_FOR = {
+  camp: { page: "camp", menu: "camp", crumb: ["Caarya Life", "Camp"] },
   assessments: { page: "assessments", menu: "assessments", crumb: ["Your Unique Identity", "Assessments"] },
   growth: { page: "growth", menu: "growth", crumb: ["Your Career", "Growth Track"] },
   explore: { page: "growth", menu: "growth", crumb: ["Your Career", "Growth Track"] },
@@ -59,7 +60,13 @@ function renderSoon(route) {
 }
 
 function renderWorkspace(route, param) {
+  // New users unlock menu sections as they go (camp.js); a locked page sends them back to Camp.
+  if (!isUnlocked(route)) {
+    showToast("Finish the next step in Camp to unlock this section");
+    return go("camp");
+  }
   const info = PAGE_FOR[route];
+  document.querySelectorAll("[data-menu-section]").forEach((s) => (s.hidden = !state.camp.unlocked.has(s.dataset.menuSection)));
   document.querySelectorAll("[data-page]").forEach((p) => (p.hidden = p.dataset.page !== info.page));
   document.querySelector("[data-crumb-section]").textContent = info.crumb[0];
   document.querySelector("[data-crumb-page]").textContent = info.crumb[1];
@@ -80,6 +87,8 @@ function renderWorkspace(route, param) {
   if (info.page === "profile") renderProfile(); // profile.js
   if (info.page === "assessments") syncAssessmentCards(); // riasec.js
   if (info.page === "soon") renderSoon(route);
+  if (info.page === "camp") renderCamp(); // camp.js
+  syncInbox(); // camp.js
 }
 
 // Coin balance bar (Figma 1013:45188)
@@ -111,12 +120,12 @@ function renderCoins() {
   }
 
   const MENU = [
-    { title: "Your Career", color: "#f57d34", icon: "section-career.png", items: [
+    { key: "career", title: "Your Career", color: "#f57d34", icon: "section-career.png", items: [
       ["Growth Track", whole("growth-track.svg"), "growth", "growth-track-focus.svg"],
       ["Domain Affinity", whole("domain-affinity.svg"), "domain-affinity"],
       ["Industry Affinity", whole("industry-affinity.svg"), "industry-affinity"],
     ] },
-    { title: "Your Work", color: "#eea638", icon: "section-work.png", items: [
+    { key: "work", title: "Your Work", color: "#eea638", icon: "section-work.png", items: [
       ["Desk", [
         { file: "desk-g1.svg", inset: "40.9% 64.27% 12.2% 0" },
         { file: "desk-g2.svg", inset: "12.2% 0 49.4% 24.35%" },
@@ -125,30 +134,38 @@ function renderCoins() {
       ], "desk", ["desk-g1-focus.svg", "desk-g2-focus.svg", "desk-g3-focus.svg", "desk-g4-focus.svg"]],
       ["Session Logs", [{ file: "session-logs.svg", inset: "5.21%" }], "session-logs"],
     ] },
-    { title: "Your Impact Journal", color: "#6775f5", icon: "section-impact.svg", items: [
+    { key: "impact", title: "Your Impact Journal", color: "#6775f5", icon: "section-impact.svg", items: [
       ["Achievements", [{ file: "achievements.svg", inset: "0 6.05%" }], "achievements"],
       ["Competencies", whole("competencies-idle.svg"), "competencies", "competencies-focus.svg"],
       ["Proof", whole("proof.svg"), "proof"],
       ["Journal", [{ file: "journal.svg", inset: "6.11% 5.97% 6.41% 12.76%" }], "journal", "journal-focus.svg"],
     ] },
-    { title: "Your Unique Identity", color: "#4ca6e5", icon: "section-identity.png", items: [
+    { key: "identity", title: "Your Unique Identity", color: "#4ca6e5", icon: "section-identity.png", items: [
       ["Profile", whole("profile.svg"), "profile"],
       ["Assessments", [{ file: "assessments-idle.svg", inset: "5.21% 13.54% 5.22% 13.54%" }], "assessments", "assessments-focus.svg"],
     ] },
-    { title: "Your Knowledge Space", color: "#c44eb9", icon: "section-knowledge.png", items: [
+    { key: "knowledge", title: "Your Knowledge Space", color: "#c44eb9", icon: "section-knowledge.png", items: [
       ["Daily Gains", whole("daily-gains.svg"), "daily-gains"],
       ["Exchange", whole("exchange.svg"), "exchange"],
     ] },
-    { title: "Your Network", color: "#0497ae", icon: "section-network.svg", items: [
+    { key: "network", title: "Your Network", color: "#0497ae", icon: "section-network.svg", items: [
       ["Rolodex", whole("rolodex.svg"), "rolodex"],
       ["Profile", whole("network-profile.svg"), "network-profile"],
     ] },
   ];
 
   const menuEl = document.getElementById("menu-sections");
+  // Camp: the landing page and inbox, always first and always open.
+  const camp = document.createElement("div");
+  camp.className = "menu-section menu-section--camp";
+  camp.innerHTML = `<div class="menu-section__items"><a class="menu-item menu-item--tint menu-item--camp" href="#camp" data-route="camp"
+    data-icon-idle="${M}camp.svg" data-icon-focus="${M}camp.svg"></a></div>`;
+  camp.querySelector("a").append(iconEl("menu-item__icon", whole("camp.svg")), Object.assign(document.createElement("span"), { textContent: "Camp" }));
+  menuEl.append(camp);
   MENU.forEach((section) => {
     const sec = document.createElement("div");
     sec.className = "menu-section";
+    sec.dataset.menuSection = section.key;
     sec.innerHTML = `
       <p class="menu-section__title" style="color:${section.color}">
         <img src="${M}${section.icon}" alt="" /><span></span>

@@ -19,6 +19,12 @@ const demoLog = (day, mins, notes, moments = []) => {
   const end = daysAgo(day, 20);
   return { start: end - mins * 60000, end, durationMs: mins * 60000, journal: true, notes, moments: moments.map((type) => ({ type, fields: {} })) };
 };
+// Mentor slot label in the session's format ("Thursday, 30th Oct · 6:00 PM"), `days` from today.
+const slotIn = (days, time) => {
+  const d = new Date(Date.now() + days * DAY), n = d.getDate();
+  const suf = [11, 12, 13].includes(n % 100) ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th";
+  return `${d.toLocaleDateString("en-GB", { weekday: "long" })}, ${n}${suf} ${d.toLocaleDateString("en-GB", { month: "short" })} · ${time}`;
+};
 const graded = (title, link, level, primary = true) => ({ title, link, status: "graded", level, primary });
 const pending = (title, link, primary = false) => ({ title, link, status: "pending", primary });
 
@@ -41,6 +47,17 @@ function loadDemoUser() {
 
   // ---------- Career stage per role, coins ----------
   state.roleStages = { [DEMO_ROLES.interaction]: 4, [DEMO_ROLES.content]: 3, [DEMO_ROLES.campaign]: 2 };
+
+  // ---------- Camp (camp.js): a seasoned user with everything unlocked and set up ----------
+  Object.assign(state.camp, {
+    fresh: false, unlocked: ALL_UNLOCKED(), expDone: true, introShown: true, mentorCall: null, priority: "Industrial work",
+    experience: { [DEMO_ROLES.interaction]: 2, [DEMO_ROLES.content]: 2, [DEMO_ROLES.campaign]: 1 },
+    services: {
+      [DEMO_ROLES.interaction]: ["Interaction Design", "Interactive Prototype Design"],
+      [DEMO_ROLES.content]: ["Campaign Content Creation", "Copywriting & Ad Creative Development"],
+      [DEMO_ROLES.campaign]: ["Integrated Campaign Planning & Execution"],
+    },
+  });
   Object.assign(state, { coins: 3850, coinsMax: 5000 });
 
   // ---------- Growth tracks and the desk ----------
@@ -92,7 +109,7 @@ function loadDemoUser() {
         1: { mentor: null, artefacts: [graded("Hopon booking flow: interaction audit", "https://www.notion.so/demo-hopon-audit", 3)], logs: [demoLog(8, 85, "Logged 14 silent moments in the current booking flow.", ["Insights"])] },
         2: { mentor: null, artefacts: [graded("Edge-case map: sold out, lost signal, cancelled", "https://www.figma.com/board/demo-hopon-flow", 4)], logs: [demoLog(6, 130, "Mapped recovery paths for the five worst edge cases.", ["Judgment & Decision-Making"])] },
         3: { mentor: null, artefacts: [pending("Component state model v1", "https://www.figma.com/file/demo-hopon-states", true)], logs: [demoLog(3, 110, "Modelled seat picker and booking button states; seat collisions are tricky.", ["Working in Ambiguity"])] },
-        6: { mentor: "Thursday, 9th Oct · 6:00 PM", artefacts: [], logs: [demoLog(1, 60, "Started the prototype: smart animate on the bottom sheet.", ["Learning"])] },
+        6: { mentor: slotIn(2, "6:00 PM"), artefacts: [], logs: [demoLog(1, 60, "Started the prototype: smart animate on the bottom sheet.", ["Learning"])] },
       },
     },
     // Refillo campaign: started.
