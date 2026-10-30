@@ -50,7 +50,7 @@ function loadDemoUser() {
 
   // ---------- Camp (camp.js): a seasoned user with everything unlocked and set up ----------
   Object.assign(state.camp, {
-    fresh: false, unlocked: ALL_UNLOCKED(), expDone: true, introShown: true, mentorCall: null, priority: "Industrial work",
+    fresh: false, unlocked: ALL_UNLOCKED(), expDone: true, introShown: true, profileSeen: true, priority: "Industrial work",
     experience: { [DEMO_ROLES.interaction]: 2, [DEMO_ROLES.content]: 2, [DEMO_ROLES.campaign]: 1 },
     services: {
       [DEMO_ROLES.interaction]: ["Interaction Design", "Interactive Prototype Design"],
@@ -135,6 +135,7 @@ function loadDemoUser() {
     { name: "Campaign planning", status: "pending" },
     { name: "Google Analytics", status: "new" },
   ];
+  state.tools = ["Figma", "Miro", "Dovetail", "Canva", "Google Analytics", "Lovable", "Adobe Suite"];
   state.tSkills = {
     "Effective Listening": 6, "Giving Feedback": 5, "Intentional Learning": 6,
     "Research & Analysis": 5, "Problem Solving": 6, "Critical Thinking": 5,

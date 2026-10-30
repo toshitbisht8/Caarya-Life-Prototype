@@ -198,7 +198,6 @@ wepScreen.addEventListener("click", (e) => {
       w.missing = false;
       if (n < WEP_QUESTIONS.length) return go(`wep/${n + 1}`);
       w.result = { answers: { ...w.answers }, completedAt: new Date() };
-      campGoalsDone(); // camp.js: career goals in, Growth Track opens, mentor call booked
       go("wep/result");
       showToast("Work preferences saved to your profile");
     }

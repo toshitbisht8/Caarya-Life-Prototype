@@ -76,7 +76,6 @@ const COLLEGES = [
 
 // ---------- State ----------
 const state = {
-  authTab: "login",
   name: "",
   email: "",
   roles: new Set(),
@@ -151,8 +150,7 @@ function animateIn(el) {
 }
 
 function renderAuth(view) {
-  if (view !== "otp") state.authTab = view;
-  $$(".tabs__tab").forEach((t) => t.classList.toggle("is-active", t.dataset.tab === state.authTab));
+  if (view === "signup") return startProfiling(); // camp.js: signup is the profiling flow
   $$(".auth__form").forEach((f) => f.classList.toggle("is-active", f.dataset.view === view));
   $$("[data-error]").forEach((e) => (e.textContent = ""));
 
@@ -208,7 +206,6 @@ function stopConfirm() {
 window.addEventListener("hashchange", render);
 
 // ---------- Auth ----------
-$$(".tabs__tab").forEach((tab) => tab.addEventListener("click", () => go(tab.dataset.tab)));
 
 $('[data-view="login"]').addEventListener("submit", (e) => {
   e.preventDefault();
@@ -228,17 +225,6 @@ $('[data-view="login"]').addEventListener("submit", (e) => {
   go("otp");
 });
 
-$('[data-view="signup"]').addEventListener("submit", (e) => {
-  e.preventDefault();
-  const f = e.target;
-  const name = f.name.value.trim();
-  const email = f.email.value.trim();
-  if (!name) return ($("[data-error]", f).textContent = "Enter your full name.");
-  if (!/^\S+@\S+\.\S+$/.test(email)) return ($("[data-error]", f).textContent = "Enter a valid email address.");
-  state.name = name;
-  state.email = email;
-  go("otp");
-});
 
 // OTP boxes: one digit each, auto-advance, backspace goes back.
 // Multi-digit input (paste, SMS autofill) spreads across the following boxes.
@@ -271,9 +257,7 @@ $('[data-view="otp"]').addEventListener("submit", (e) => {
     $("[data-error]", e.target).textContent = "Enter all 6 digits. Any code works in this prototype.";
     return;
   }
-  // Signing up continues into the profiling flow (profiling.html, skills version), which hands back to Camp.
   // Logging in lands in Camp; a returning user's saved profile is picked up when it's theirs.
-  if (state.authTab !== "login") return startProfiling(); // camp.js
   const saved = savedProfile();
   const who = (state.name || state.email).toLowerCase();
   if (saved && [saved.about?.name, saved.contact?.email].some((v) => v && v.toLowerCase() === who)) applyProfile(saved, false);

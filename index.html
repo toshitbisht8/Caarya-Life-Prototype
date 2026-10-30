@@ -44,11 +44,6 @@
             <p class="heading__sub">Sign in to your student workspace</p>
           </div>
 
-          <div class="tabs" role="tablist">
-            <button class="tabs__tab" role="tab" data-tab="login">Login</button>
-            <button class="tabs__tab" role="tab" data-tab="signup">Signup</button>
-          </div>
-
           <!-- Login -->
           <form class="auth__form" data-view="login" novalidate>
             <div class="fields">
@@ -65,24 +60,8 @@
             <button class="btn btn--primary btn--lg btn--block" type="submit">
               Login <img src="assets/icons/next-link-20.svg" alt="" />
             </button>
-          </form>
-
-          <!-- Signup (not in Figma: collects the details the OTP + About screens rely on) -->
-          <form class="auth__form" data-view="signup" novalidate>
-            <div class="fields">
-              <label class="field">
-                <span class="field__label">Full Name</span>
-                <input class="input" name="name" placeholder="your full name" autocomplete="name" />
-              </label>
-              <label class="field">
-                <span class="field__label">Email</span>
-                <input class="input" name="email" type="email" placeholder="email@domain.com" autocomplete="email" />
-              </label>
-              <p class="error" data-error></p>
-            </div>
-            <button class="btn btn--primary btn--lg btn--block" type="submit">
-              Send OTP <img src="assets/icons/next-link-20.svg" alt="" />
-            </button>
+            <!-- Signing up happens in the profiling flow (profiling.html), which hands the new user back to Camp -->
+            <p class="auth__switch">Don’t have an account?<a href="#signup" data-signup>Sign Up</a></p>
           </form>
 
           <!-- OTP -->

@@ -13,7 +13,7 @@ const PAGE_FOR = {
   "proof-asset": { page: "impact", menu: "proof", crumb: ["Your Impact Journal", "Proof"] },
   achievements: { page: "impact", menu: "achievements", crumb: ["Your Impact Journal", "Achievements"] },
   competencies: { page: "competencies", menu: "competencies", crumb: ["Your Impact Journal", "Competencies"] },
-  profile: { page: "profile", menu: "profile", crumb: ["Your Unique Identity", "Profile"] },
+  profile: { page: "profile", menu: "profile", crumb: ["Your Unique Identity", "Measured Excellence"] },
   journal: { page: "soon", menu: "journal", crumb: ["Your Impact Journal", "Journal"] },
   "domain-affinity": { page: "soon", menu: "domain-affinity", crumb: ["Your Career", "Domain Affinity"] },
   "industry-affinity": { page: "soon", menu: "industry-affinity", crumb: ["Your Career", "Industry Affinity"] },
@@ -60,13 +60,15 @@ function renderSoon(route) {
 }
 
 function renderWorkspace(route, param) {
-  // New users unlock menu sections as they go (camp.js); a locked page sends them back to Camp.
+  // New users unlock menu items as they go (camp.js); a locked page sends them back to Camp.
+  if (route === "profile" && isUnlocked(route)) state.camp.profileSeen = true; // the Talent Manager's message has done its job
+  syncCampUnlocks();
   if (!isUnlocked(route)) {
     showToast("Finish the next step in Camp to unlock this section");
     return go("camp");
   }
   const info = PAGE_FOR[route];
-  document.querySelectorAll("[data-menu-section]").forEach((s) => (s.hidden = !state.camp.unlocked.has(s.dataset.menuSection)));
+  syncMenuLocks();
   document.querySelectorAll("[data-page]").forEach((p) => (p.hidden = p.dataset.page !== info.page));
   document.querySelector("[data-crumb-section]").textContent = info.crumb[0];
   document.querySelector("[data-crumb-page]").textContent = info.crumb[1];
@@ -141,7 +143,7 @@ function renderCoins() {
       ["Journal", [{ file: "journal.svg", inset: "6.11% 5.97% 6.41% 12.76%" }], "journal", "journal-focus.svg"],
     ] },
     { key: "identity", title: "Your Unique Identity", color: "#4ca6e5", icon: "section-identity.png", items: [
-      ["Profile", whole("profile.svg"), "profile"],
+      ["Measured Excellence", whole("profile.svg"), "profile"],
       ["Assessments", [{ file: "assessments-idle.svg", inset: "5.21% 13.54% 5.22% 13.54%" }], "assessments", "assessments-focus.svg"],
     ] },
     { key: "knowledge", title: "Your Knowledge Space", color: "#c44eb9", icon: "section-knowledge.png", items: [

@@ -1,39 +1,48 @@
-// Camp: the landing page after sign-in and Life's inbox. Not a message box: each card is an update from one of
-// the AI manager personas, with the action it asks for. Below them sits the setup checklist.
-// Also here: progressive menu unlocks for new users, the signup handoff from profiling.html, and the PGM's
-// "where do you stand in your roles" flow (Figma 1299:25773, journey map FigJam 366:1220).
+// Camp: the landing page after sign-in and Life's inbox (Figma 1326:53131). Not a message box: each card is an
+// update from one of the AI manager personas, with the action it asks for. Below them sits the Road To Career
+// Acceleration checklist.
+// Also here: progressive menu unlocks for new users, the signup handoff from profiling.html, and the PGM's flows:
+// where you stand in your roles (1299:25773), transferable skills (1326:55276) and tool stack (1326:58143).
 
-const CAMP_SECTIONS = ["career", "work", "impact", "identity", "knowledge", "network"];
-const ALL_UNLOCKED = () => new Set(CAMP_SECTIONS);
+// Menu items a new user unlocks one by one; returning users see them all.
+const CAMP_ITEMS = ["growth", "domain-affinity", "industry-affinity", "desk", "session-logs", "achievements", "competencies", "proof", "journal", "profile", "assessments", "daily-gains", "exchange", "rolodex", "network-profile"];
+const ALL_UNLOCKED = () => new Set(CAMP_ITEMS);
 
 state.camp = {
-  fresh: false, // true for someone who just signed up: menu sections unlock as they progress
-  unlocked: ALL_UNLOCKED(), // returning users see everything
+  fresh: false, // true for someone who just signed up: menu items unlock as they progress
+  unlocked: ALL_UNLOCKED(),
   services: {}, // role id -> business services picked in signup
   priority: "", // career priority picked in signup
   experience: {}, // role id -> 0 none, 1 own / college work, 2 real client or organisation
   expDone: false,
   introShown: false, // the PGM pops up once on the first visit to Camp
   holdIntro: false, // wait for the logging-in loader before popping up
-  mentorCall: null, // set when the career goals assessment is done
+  profileSeen: false, // the Talent Manager's "Measured Excellence" message stays until it's opened
 };
 
-// Which menu section each workspace route belongs to (Camp itself is always open).
-const SECTION_OF = {
-  growth: "career", explore: "career", "explore-all": "career", "work-order": "career", "domain-affinity": "career", "industry-affinity": "career",
-  desk: "work", "session-logs": "work",
-  proof: "impact", "proof-asset": "impact", achievements: "impact", competencies: "impact", journal: "impact",
-  profile: "identity", assessments: "identity",
-  "daily-gains": "knowledge", exchange: "knowledge",
-  rolodex: "network", "network-profile": "network",
+// Pages that live under a menu item (Camp itself is always open).
+const ITEM_OF = { explore: "growth", "explore-all": "growth", "work-order": "growth", "proof-asset": "proof" };
+const isUnlocked = (route) => {
+  const item = ITEM_OF[route] || route;
+  return !CAMP_ITEMS.includes(item) || state.camp.unlocked.has(item);
 };
-const isUnlocked = (route) => !SECTION_OF[route] || state.camp.unlocked.has(SECTION_OF[route]);
-const unlock = (...sections) => sections.forEach((s) => state.camp.unlocked.add(s));
+const unlock = (...items) => items.forEach((i) => state.camp.unlocked.add(i));
+
+// Shows only unlocked menu items, and only the section headers that still have one.
+function syncMenuLocks() {
+  document.querySelectorAll("[data-menu-section]").forEach((sec) => {
+    let any = false;
+    sec.querySelectorAll(".menu-item[data-route]").forEach((item) => {
+      item.hidden = !isUnlocked(item.dataset.route);
+      any ||= !item.hidden;
+    });
+    sec.hidden = !any;
+  });
+}
 
 const MANAGERS = {
   pgm: ["Professional Growth Manager", `<span class="camp-avatar camp-avatar--pgm"><img src="${G}growth-manager.png" alt="" /></span>`],
   talent: ["Talent Manager", `<span class="camp-avatar camp-avatar--talent"><img src="${G}talent-star.svg" alt="" /></span>`],
-  brand: ["Brand Manager", `<span class="camp-avatar camp-avatar--brand"><img src="${G}brand-star.svg" alt="" /></span>`],
 };
 
 // ---------- Experience claims ----------
@@ -58,55 +67,51 @@ function claimText() {
 }
 const hasExperience = () => myRoles().some((r) => state.camp.experience[r] > 0);
 
-// ---------- Setup checklist ----------
+// ---------- Road To Career Acceleration ----------
 const redoProfiling = () => startProfiling();
+const added = (n, word = "added") => (n ? `${n} ${word}` : "");
+const addProof = () => {
+  if (!isUnlocked("proof")) return openPgmFlow(); // proof of work opens after the experience questions
+  go("proof");
+  setTimeout(() => openAssetModal(), 50); // impact.js
+};
+// [title, status label ("" = not done yet), action]
 const CAMP_STEPS = [
-  ["Set up role preferences", () => state.roles.size > 0, redoProfiling],
-  ["Set up industry preferences", () => state.industries.size > 0, redoProfiling],
-  ["Set up business service preferences", () => Object.values(state.camp.services).some((s) => s.length), redoProfiling],
-  ["Declare your current skill capabilities", () => state.techSkills.length > 0, () => { unlock("impact"); state.compTab = "technical"; go("competencies"); }],
-  ["Declare your past work experience", () => state.camp.expDone, () => openPgmFlow()],
-  ["Set up your career goals", () => !!state.wep?.result, () => go("wep")],
-  ["Map your work personality", () => !!state.riasec?.result, () => go("riasec")],
+  ["Set up role preferences", () => added(state.roles.size, "selected"), redoProfiling],
+  ["Set up industry preferences", () => added(state.industries.size), redoProfiling],
+  ["Set Up Business Service Preferences", () => added(Object.values(state.camp.services).flat().length), redoProfiling],
+  ["Set up technical skills", () => added(state.techSkills.length), () => openManageTech()], // competencies.js
+  ["Declare past work experience", () => (state.camp.expDone ? "Complete" : ""), () => openPgmFlow()],
+  ["Add proof of work", () => added(state.assets.length), addProof],
+  ["Set up transferable skills", () => added(Object.keys(state.tSkills).length, "rated"), () => openTransferableFlow()],
+  ["Set up tool stack", () => added(state.tools.length), () => openToolsFlow()],
 ];
+const setupDone = () => CAMP_STEPS.every(([, status]) => status());
 
 // ---------- Messages ----------
-// One current message per manager, following each one's sequence; then activity updates from the work itself.
+// The PGM walks a new user through setup; once it's all done, the Talent Manager opens Measured Excellence.
+// Then activity updates from the work itself.
 function campMessages() {
   const msgs = [];
-  const first = displayName().split(" ")[0];
-
-  // Professional Growth Manager: experience -> proof of work -> achievements
   if (!state.camp.expDone) {
-    msgs.push(["pgm", "Good job adding your role preferences. Now let’s understand where you stand in those roles.", "Let’s go", "pgm-flow"]);
-  } else if (!state.assets.length) {
-    msgs.push(hasExperience()
-      ? ["pgm", `You claimed ${claimText()}. Verify that by adding proof of your work.`, "Add proof of work", "add-proof"]
-      : ["pgm", `Once you gain your first experience, I’ll help you add its proof of work, ${first}. Until then, explore your proof of work section.`, "Explore proof of work", "proof"]);
-  } else if (!state.achievements.length) {
-    msgs.push(["pgm", "Your proof of work is coming together. You can convert your assets into achievements from here.", "Create an achievement", "achievement"]);
+    msgs.push(["pgm", "Good job setting up your role preferences. Now, let’s understand where you currently stand with those roles.", "Start now", "pgm-flow"]);
   } else {
-    msgs.push(["pgm", "Get your assets verified by an industry expert for more credibility with recruiters, or keep adding proof of your work.", "Add more proof", "proof"]);
+    if (!state.assets.length) msgs.push(["pgm", "I’ve unlocked the proof of work section for you. You can validate your work experience and track your growth here by adding proof of the work you do.", "Start now", "add-proof"]);
+    if (!Object.keys(state.tSkills).length) msgs.push(["pgm", "Set up how you interact with transferable skills.", "Start now", "transferable"]);
+    if (!state.tools.length) msgs.push(["pgm", "Add your tool stack and let recruiters know which tools you’re proficient with.", "Start now", "tools"]);
   }
-
-  // Talent Manager: career goals -> mentor call -> work opportunities
-  if (!state.wep?.result) {
-    msgs.push(["talent", "You’re almost done. Help us understand your goals so I can recommend work opportunities that suit you.", "Take the brief assessment", "goals"]);
-  } else if (state.camp.mentorCall && state.camp.mentorCall > Date.now()) {
-    msgs.push(["talent", `Your mentor call is scheduled for ${fmtCall(state.camp.mentorCall)}. You’ll get your career report from your mentor. Explore available work opportunities in the meantime.`, "Explore work", "explore"]);
-  } else {
-    const fresh = myRoles().flatMap(catalogFor).filter((id) => !myRoles().some((r) => trackFor(r).includes(id))).length;
-    msgs.push(["talent", fresh
-      ? `There ${fresh === 1 ? "is 1 work order" : `are ${fresh} work orders`} recommended for your roles that you haven’t picked up yet.`
-      : "You’ve picked up every work order recommended for your roles so far. Explore all work to find more.", "Explore work", "explore"]);
-  }
-
-  // Brand Manager: appears once the career goals are in (after the mentor call is booked)
-  if (state.wep?.result) {
-    const pct = Math.round((CAMP_STEPS.filter(([, done]) => done()).length / CAMP_STEPS.length) * 100);
-    msgs.push(["brand", pct < 100
-      ? `Your career report is ${pct}% done. You can check out how things add up on your profile here.`
-      : "Your career report is complete. See how your work, skills and preferences add up on your profile.", "View your profile", "profile"]);
+  if (setupDone()) {
+    if (!state.camp.profileSeen) {
+      msgs.push(["talent", `You’re all set up, ${displayName().split(" ")[0]}. I’ve unlocked your Measured Excellence profile. See how your work, skills and preferences add up for recruiters.`, "View now", "profile"]);
+    } else {
+      const fresh = myRoles().flatMap(catalogFor).filter((id) => !myRoles().some((r) => trackFor(r).includes(id))).length;
+      const started = myRoles().some((r) => trackFor(r).length);
+      msgs.push(["talent", !started && !fresh
+        ? "Your Growth Track is open. Explore work opportunities for your roles and pick up your first work order."
+        : fresh
+        ? `There ${fresh === 1 ? "is 1 work order" : `are ${fresh} work orders`} recommended for your roles that you haven’t picked up yet.`
+        : "You’ve picked up every work order recommended for your roles so far. Explore all work to find more.", "Explore work", "explore"]);
+    }
   }
 
   // Activity updates from the desk
@@ -117,61 +122,57 @@ function campMessages() {
   if (booked) msgs.push(["pgm", `Your mentor session for ‘${vcInfo(booked.wo, booked.vc).name}’ is booked for ${booked.v.mentor}.`, "Open desk", "desk"]);
   return msgs;
 }
-// "Friday, 30 Oct at 6 pm"
-const fmtCall = (t) => {
-  const d = new Date(t);
-  const h = d.getHours(), m = d.getMinutes();
-  const time = `${h % 12 || 12}${m ? `:${String(m).padStart(2, "0")}` : ""} ${h < 12 ? "am" : "pm"}`;
-  return `${d.toLocaleDateString("en-GB", { weekday: "long" })}, ${d.getDate()} ${d.toLocaleDateString("en-GB", { month: "short" })} at ${time}`;
-};
 
 const CAMP_ACTIONS = {
   "pgm-flow": () => openPgmFlow(),
-  "add-proof": () => { unlock("impact"); go("proof"); setTimeout(() => openAssetModal(), 50); },
-  proof: () => { unlock("impact"); go("proof"); },
-  achievement: () => { unlock("impact"); startWizard(state.assets[0].id); },
-  goals: () => go("wep"),
+  "add-proof": addProof,
+  transferable: () => openTransferableFlow(),
+  tools: () => openToolsFlow(),
+  profile: () => { state.camp.profileSeen = true; go("profile"); },
   explore: () => go("explore"),
-  profile: () => go("profile"),
   desk: () => go("desk"),
 };
 
+// Once setup is done, the Talent Manager opens Measured Excellence; once that's been seen, the rest of Life opens.
+function syncCampUnlocks() {
+  if (setupDone()) unlock("profile");
+  if (state.camp.profileSeen) unlock(...CAMP_ITEMS);
+}
+
 // ---------- Page ----------
+const CAMP_SHOWN = 3; // message cards on the page; View All lists the rest
+const msgCard = ([who, text, cta, action]) => `
+  <article class="camp-msg">
+    <p class="camp-msg__from">${MANAGERS[who][1]}${MANAGERS[who][0]}</p>
+    <p class="camp-msg__text">${esc(text)}</p>
+    <button type="button" class="camp-msg__cta" data-camp-action="${action}">${esc(cta)}<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </article>`;
+
 const campPage = document.getElementById("camp-page");
 function renderCamp() {
   closeAllOverlays();
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
   const first = displayName().split(" ")[0];
-  const steps = CAMP_STEPS.map(([title, done], i) => ({ title, done: done(), i }));
-  const current = steps.find((s) => !s.done);
-  const doneCount = steps.filter((s) => s.done).length;
-  const stepRow = (s) => {
-    const mark = s.done ? `<span class="camp-step__mark is-done" aria-label="Done">✓</span>`
-      : `<span class="camp-step__mark${s === current ? " is-current" : ""}">${s.i + 1}</span>`;
-    return s.done
-      ? `<li class="camp-step is-done">${mark}<span class="camp-step__title">${s.title}</span></li>`
-      : `<li><button type="button" class="camp-step${s === current ? " is-current" : ""}" data-camp-step="${s.i}">${mark}<span class="camp-step__title">${s.title}</span><span class="camp-step__go">${s === current ? "Start" : "Go"} <img src="${G}arrow-back.svg" alt="" /></span></button></li>`;
-  };
+  const msgs = campMessages();
+  const steps = CAMP_STEPS.map(([title, status], i) => ({ title, status: status(), i }));
   campPage.innerHTML = `
     <div class="camp-head">
       <h1>${greeting}, ${esc(first)}</h1>
       <p>Here’s what you need to catch up with</p>
     </div>
     <section class="camp-block">
-      <p class="camp-kicker">Your Messages</p>
-      <div class="camp-msgs">${campMessages().map(([who, text, cta, action]) => `
-        <article class="camp-msg">
-          <p class="camp-msg__from">${MANAGERS[who][1]}${MANAGERS[who][0]}</p>
-          <p class="camp-msg__text">${esc(text)}</p>
-          <button type="button" class="camp-msg__cta" data-camp-action="${action}">${esc(cta)} <span aria-hidden="true">→</span></button>
-        </article>`).join("")}</div>
+      <div class="camp-block__head"><p class="camp-kicker">Your Messages</p>${msgs.length > 1 ? `<button type="button" class="camp-all" data-camp-all>View All</button>` : ""}</div>
+      ${msgs.length ? `<div class="camp-msgs">${msgs.slice(0, CAMP_SHOWN).map(msgCard).join("")}</div>` : `<p class="camp-empty">You’re all caught up.</p>`}
     </section>
     <section class="camp-block">
-      <p class="camp-kicker">${doneCount === steps.length ? "You’re all set up" : `Getting set up · ${doneCount} of ${steps.length} done`}</p>
-      ${doneCount === steps.length
-        ? `<details class="camp-setup-done"><summary>All ${steps.length} setup steps done. Show them</summary><ol class="camp-steps">${steps.map(stepRow).join("")}</ol></details>`
-        : `<ol class="camp-steps">${steps.map(stepRow).join("")}</ol>`}
+      <p class="camp-kicker">Road To Career Acceleration</p>
+      <ol class="camp-steps">${steps.map((s) => `
+        <li><button type="button" class="camp-step${s.status ? " is-done" : ""}" data-camp-step="${s.i}">
+          <span class="camp-step__mark" aria-label="${s.status ? "Done" : "Not done"}">${s.status ? `<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>` : ""}</span>
+          <span class="camp-step__text"><span class="camp-step__title">${s.title}</span><span class="camp-step__sub">${s.status || "! Not Added"}</span></span>
+          ${s.status ? `<img class="camp-step__edit" src="${CP}edit.svg" alt="Edit" />` : `<span class="camp-step__go">Start <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`}
+        </button></li>`).join("")}</ol>
     </section>`;
   // First visit after signing up: the PGM pops up (FigJam 339:990).
   if (state.camp.fresh && !state.camp.expDone && !state.camp.introShown && !state.camp.holdIntro) {
@@ -180,9 +181,24 @@ function renderCamp() {
   }
 }
 
+function openAllMessages() {
+  const ov = openOverlay(`
+    <aside class="drawer" role="dialog" aria-modal="true" aria-label="Your Messages">
+      <header class="drawer__head"><button type="button" data-close aria-label="Close"><img src="${G}drawer-close.svg" alt="" /></button><h2>Your Messages</h2></header>
+      <div class="drawer__body camp-drawer">${campMessages().map(msgCard).join("")}</div>
+    </aside>`, "drawer");
+  ov.addEventListener("click", (e) => {
+    const a = e.target.closest("[data-camp-action]");
+    if (!a) return;
+    closeOverlay();
+    CAMP_ACTIONS[a.dataset.campAction]();
+  });
+}
+
 campPage.addEventListener("click", (e) => {
   const a = e.target.closest("[data-camp-action]");
   if (a) return CAMP_ACTIONS[a.dataset.campAction]();
+  if (e.target.closest("[data-camp-all]")) return openAllMessages();
   const s = e.target.closest("[data-camp-step]");
   if (s) CAMP_STEPS[Number(s.dataset.campStep)][2]();
 });
@@ -195,14 +211,26 @@ function syncInbox() {
 }
 document.querySelector(".inbox").addEventListener("click", () => go("camp"));
 
-// ---------- PGM flow: where do you stand in your roles? (Figma 1299:25773) ----------
+// ---------- PGM modals ----------
+const ICON_SKIP = `<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M6 18l8.5-6L6 6v12zm10-12v12h2V6h-2z" fill="currentColor"/></svg>`;
 const pgmHead = (right) => `
   <header class="pgm-modal__head">
     <span class="pgm-modal__from">${MANAGERS.pgm[1]}Professional Growth Manager</span>
-    ${right === "skip" ? `<button type="button" class="pgm-modal__skip" data-pgm="skip">Skip for now <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M6 18l8.5-6L6 6v12zm10-12v12h2V6h-2z" fill="currentColor"/></svg></button>`
+    ${right === "skip" ? `<button type="button" class="pgm-modal__skip" data-pgm="skip">Skip for now ${ICON_SKIP}</button>`
       : right === "close" ? `<button type="button" class="pgm-modal__close" data-pgm="skip" aria-label="Close"><img src="${G}close-dark.svg" alt="" /></button>` : ""}
   </header>`;
+// Intro card shared by the PGM's flows.
+const pgmIntro = (title, text) => `${pgmHead("skip")}
+  <div class="pgm-modal__body"><h2>${title}</h2><p>${text}</p></div>
+  <footer class="pgm-modal__foot pgm-modal__foot--center"><button type="button" class="pgm-btn" data-pgm="next">Start now <span aria-hidden="true">→</span></button></footer>`;
+const pgmFoot = (first, last) => `
+  <footer class="pgm-modal__foot">
+    <button type="button" class="pgm-prev" data-pgm="prev" ${first ? "disabled" : ""}><span aria-hidden="true">←</span> Previous</button>
+    <button type="button" class="pgm-btn" data-pgm="next">${last ? "Finish <span aria-hidden=\"true\">✓</span>" : "Next <span aria-hidden=\"true\">→</span>"}</button>
+  </footer>`;
+const pgmProgress = (step, total) => `<div class="pgm-progress" aria-hidden="true"><i style="width:${(step / total) * 100}%"></i></div>`;
 
+// ---------- Where do you stand in your roles? (Figma 1299:25773) ----------
 function openPgmFlow() {
   const roles = myRoles();
   if (!roles.length) return startProfiling();
@@ -214,16 +242,11 @@ function openPgmFlow() {
   function draw() {
     if (step === 0) {
       box.className = "pgm-modal pgm-modal--intro";
-      box.innerHTML = `${pgmHead("skip")}
-        <div class="pgm-modal__body">
-          <h2>Good job setting up your role preferences. Now, let’s understand where you currently stand with those roles</h2>
-          <p>In the upcoming screens, answer a few questions to help us understand where you stand with the roles of your choice. We’ll go through each of them one at a time.</p>
-        </div>
-        <footer class="pgm-modal__foot pgm-modal__foot--center"><button type="button" class="pgm-btn" data-pgm="next">Start now <span aria-hidden="true">→</span></button></footer>`;
+      box.innerHTML = pgmIntro("Good job setting up your role preferences. Now, let’s understand where you currently stand with those roles",
+        "In the upcoming screens, answer a few questions to help us understand where you stand with the roles of your choice. We’ll go through each of them one at a time.");
     } else {
       const role = roles[step - 1];
       const name = roleName(role);
-      const last = step === roles.length;
       box.className = "pgm-modal";
       box.innerHTML = `${pgmHead("close")}
         <div class="pgm-modal__body">
@@ -235,10 +258,7 @@ function openPgmFlow() {
             </button>`).join("")}</div>
           <p class="pgm-modal__error" role="alert">${error}</p>
         </div>
-        <footer class="pgm-modal__foot">
-          <button type="button" class="pgm-prev" data-pgm="prev" ${step === 1 ? "disabled" : ""}><span aria-hidden="true">←</span> Previous</button>
-          <button type="button" class="pgm-btn" data-pgm="next">${last ? "Finish <span aria-hidden=\"true\">✓</span>" : "Next <span aria-hidden=\"true\">→</span>"}</button>
-        </footer>`;
+        ${pgmFoot(step === 1, step === roles.length)}`;
     }
   }
   ov.addEventListener("click", (e) => {
@@ -250,11 +270,13 @@ function openPgmFlow() {
     if (act === "next") {
       if (step > 0 && choices[roles[step - 1]] === undefined) { error = "Pick the option that fits you best to continue."; return draw(); }
       if (step < roles.length) { step++; return draw(); }
-      // Finish: the PGM unlocks Proof of Work and takes the user there (FigJam 339:1035).
+      // Finish: the PGM unlocks Proof of Work (with Achievements and Journal) and takes the user there (FigJam 339:1035).
+      const first = !state.camp.expDone;
       state.camp.experience = choices;
       state.camp.expDone = true;
-      unlock("impact");
+      unlock("proof", "achievements", "journal");
       closeOverlay();
+      if (!first) return render();
       go("proof");
       setTimeout(openProofUnlocked, 300);
     }
@@ -290,7 +312,7 @@ function openProofUnlocked() {
   });
 }
 
-// After the first proof of work, the PGM points to verification and achievements (FigJam 342:1267).
+// After the first proof of work, the PGM points to achievements and back to Camp (FigJam 342:1267).
 // Returns true when it took over from the usual "asset added" toast.
 function campFirstAsset(asset) {
   if (state.assets.length !== 1) return false;
@@ -303,27 +325,126 @@ function campFirstAsset(asset) {
         <p>You can also turn this asset into an achievement card that shows the skills and impact behind it.</p>
       </div>
       <footer class="pgm-modal__foot pgm-modal__foot--center">
-        <button type="button" class="pgm-ghost" data-pgm="skip">Keep adding proof</button>
+        <button type="button" class="pgm-ghost" data-pgm="camp">Back to Camp</button>
         <button type="button" class="pgm-btn" data-pgm="card">Create achievement card <span aria-hidden="true">→</span></button>
       </footer>
     </div>`, "modal");
   ov.addEventListener("click", (e) => {
     const act = e.target.closest("[data-pgm]")?.dataset.pgm;
-    if (act === "skip") closeOverlay();
+    if (act === "camp") { closeOverlay(); go("camp"); }
     if (act === "card") { closeOverlay(); startWizard(asset.id); } // impact.js
   });
   return true;
 }
 
-// Career goals done (Work Environment Preferences): growth track and the rest of Life open up, and the
-// Talent Manager books a mentor call (two days out, 6 pm).
-function campGoalsDone() {
-  unlock(...CAMP_SECTIONS);
-  if (!state.camp.mentorCall) {
-    const t = new Date(Date.now() + 2 * 86400000);
-    t.setHours(18, 0, 0, 0);
-    state.camp.mentorCall = t.getTime();
+// Finishing either flow lands on Competencies; the first time, the PGM says it's open (Figma 1326:55276).
+function landOnCompetencies(tab, toast) {
+  const first = !isUnlocked("competencies");
+  unlock("competencies");
+  state.compTab = tab;
+  state.tDraft = null;
+  closeOverlay();
+  go("competencies");
+  if (!first) return showToast(toast);
+  setTimeout(() => {
+    const ov = openOverlay(`
+      <div class="pgm-modal pgm-modal--note" role="dialog" aria-modal="true" aria-labelledby="pgm-comp">
+        ${pgmHead("")}
+        <div class="pgm-modal__body">
+          <h2 id="pgm-comp">I’ve unlocked the competencies section for you.</h2>
+          <p>You can manage your technical skills, transferable skills and tools from here.</p>
+        </div>
+        <footer class="pgm-modal__foot pgm-modal__foot--center"><button type="button" class="pgm-btn" data-close>Done <span aria-hidden="true">✓</span></button></footer>
+      </div>`, "modal");
+  }, 300);
+}
+
+// ---------- Transferable skills (Figma 1326:55276) ----------
+// One screen per category, every skill on a 1–7 comfort slider.
+function openTransferableFlow() {
+  const draft = Object.fromEntries(TRANSFERABLE.flatMap(([, skills]) => skills.map((s) => [s, state.tSkills[s] || 1])));
+  let step = 0; // 0 = intro, 1..6 = categories
+  const total = TRANSFERABLE.length;
+  const ov = openOverlay(`<div class="pgm-modal" role="dialog" aria-modal="true" aria-label="Transferable skills"></div>`, "modal");
+  const box = ov.querySelector(".pgm-modal");
+  function draw() {
+    if (step === 0) {
+      box.className = "pgm-modal pgm-modal--intro";
+      box.innerHTML = pgmIntro("Set up how you interact with transferable skills.", "In the upcoming screens, talk about your level of comfort with different transferable skills.");
+      return;
+    }
+    const [cat, skills, line] = TRANSFERABLE[step - 1];
+    box.className = "pgm-modal pgm-modal--flow";
+    box.innerHTML = `${pgmHead("close")}
+      <div class="pgm-modal__body pgm-modal__scroll">
+        <h2 class="pgm-modal__q">Rate each skill on your level of comfort with using it</h2>
+        <section class="pgm-cat" style="--cat-line:${line};--cat-text:${CAT_TEXT[step - 1]}">
+          <p class="pgm-cat__head">${esc(cat)}</p>
+          ${skills.map((s) => `<div class="pgm-cat__skill"><h3>${esc(s)}</h3>${scale(s, 7, draft[s], "comfort", 2)}</div>`).join("")}
+        </section>
+      </div>
+      ${pgmProgress(step, total)}
+      ${pgmFoot(step === 1, step === total)}`;
+    box.querySelectorAll("[data-scale]").forEach(paintScale);
   }
+  const onInput = (e) => {
+    if (!e.target.matches("[data-scale]")) return;
+    draft[e.target.dataset.scale] = Number(e.target.value);
+    paintScale(e.target);
+  };
+  ov.addEventListener("input", onInput);
+  ov.addEventListener("click", (e) => {
+    const act = e.target.closest("[data-pgm]")?.dataset.pgm;
+    if (act === "skip") return closeOverlay();
+    if (act === "prev") { step--; return draw(); }
+    if (act !== "next") return;
+    if (step < total) { step++; return draw(); }
+    state.tSkills = draft;
+    landOnCompetencies("transferable", "Transferable skill ratings saved");
+  });
+  draw();
+}
+
+// ---------- Tool stack (Figma 1326:58143) ----------
+function openToolsFlow() {
+  const picked = new Set(state.tools);
+  const options = toolOptions(); // competencies.js
+  let step = 0;
+  const ov = openOverlay(`<div class="pgm-modal" role="dialog" aria-modal="true" aria-label="Tool stack"></div>`, "modal");
+  const box = ov.querySelector(".pgm-modal");
+  function draw() {
+    if (step === 0) {
+      box.className = "pgm-modal pgm-modal--intro";
+      box.innerHTML = pgmIntro("Add your tool stack and let recruiters know which tools you’re proficient with", "In the upcoming screen, add all the tools that you’re proficient with.");
+      return;
+    }
+    box.className = "pgm-modal pgm-modal--flow";
+    box.innerHTML = `${pgmHead("close")}
+      <div class="pgm-modal__body pgm-modal__scroll">
+        <h2 class="pgm-modal__q">Add all the tools you’re proficient in</h2>
+        ${pickList(options, picked, "Add new tool...")}
+      </div>
+      ${pgmFoot(false, true)}`;
+  }
+  ov.addEventListener("click", (e) => {
+    const chip = e.target.closest("[data-mt]");
+    if (chip) { picked.has(chip.dataset.mt) ? picked.delete(chip.dataset.mt) : picked.add(chip.dataset.mt); return draw(); }
+    const act = e.target.closest("[data-pgm]")?.dataset.pgm;
+    if (act === "skip") return closeOverlay();
+    if (act === "prev") { step = 0; return draw(); }
+    if (act !== "next") return;
+    if (step === 0) { step = 1; return draw(); }
+    if (!picked.size) return showToast("Pick at least one tool to finish");
+    state.tools = [...picked];
+    landOnCompetencies("tools", "Tool stack saved");
+  });
+  ov.addEventListener("submit", (e) => {
+    e.preventDefault();
+    addToPicks(ov, options, picked);
+    draw();
+    ov.querySelector("[data-mt-add] input").focus();
+  });
+  draw();
 }
 
 // ---------- Signup handoff (profiling.html) ----------

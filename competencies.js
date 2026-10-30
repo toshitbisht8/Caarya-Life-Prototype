@@ -1,12 +1,26 @@
-// Competencies (Figma 1073:25397 technical, 1045:34295 transferable): add technical skills and ask a
-// community mentor to verify them, rate comfort with transferable skills. Ratings feed the Profile page.
+// Competencies (Figma 1073:25397 technical, 1045:34295 transferable, 1326:53620 tools): add technical skills and
+// ask a community mentor to verify them, rate comfort with transferable skills, list the tools you use.
+// Ratings feed the Measured Excellence page.
 const CP = "assets/competencies/";
+const TL = "assets/tools/";
 
 // [{ name, status, level }] — status "new" | "pending" | "verified"; a mentor sets the 1–5 level on verifying.
 state.techSkills = [];
 state.tSkills = {}; // { skill name: comfort 1–7 }; missing = not rated yet
 state.tDraft = null; // transferable ratings being edited (null = viewing)
+state.tools = []; // tool names, in the order picked
 state.compTab = "technical";
+
+// Tools with a logo in assets/tools; anything else gets its initial.
+const TOOL_LOGOS = {
+  Sketch: "sketch", Zeplin: "zeplin", Dribbble: "dribbble", Canva: "canva", "Google Analytics": "google-analytics", InVision: "invision",
+  "Adobe Suite": "adobe", Miro: "miro", UserMe: "userme", Lovable: "lovable", Figma: "figma", Dovetail: "dovetail",
+};
+const toolLogo = (name) => TOOL_LOGOS[name]
+  ? `<img src="${TL}${TOOL_LOGOS[name]}.png" alt="" />`
+  : `<span class="cp-tool__initial" aria-hidden="true">${esc(name.charAt(0).toUpperCase())}</span>`;
+// Suggestions: tools with logos, the ones used on achievement cards, and the asset form's list (impact.js).
+const toolOptions = () => [...new Set([...Object.keys(TOOL_LOGOS), ...state.achievements.flatMap((a) => a.tools), ...TOOLS, ...state.tools])];
 
 // Technical Skill Proficiency Scale (1045:37323)
 const TECH_LEVELS = [
@@ -69,6 +83,7 @@ function paintScale(input) {
 const tabIcon = (layers, cls = "") => `<span class="cp-icon ${cls}">${layers.map(([file, inset]) => `<span style="inset:${inset}"><img src="${CP}${file}" alt="" /></span>`).join("")}</span>`;
 const TECH_ICON = [["tab-technical-1.svg", "5.47%"], ["tab-technical-2.svg", "4.07%"]];
 const TRANSFER_ICON = [["tab-transferable.svg", "0.2% 10.27% 0.19% 10.23%"]];
+const TOOLS_ICON = [["../tools/tools.svg", "0"]];
 
 const cpIntro = (title, sub, action, icon, label) => `
   <div class="cp-intro"><div><h2>${title}</h2><p>${sub}</p></div>
@@ -103,20 +118,29 @@ function techRow(s) {
       : `<button type="button" class="cp-verify" data-cp-verify="${esc(s.name)}">Get Verified</button>`}</div>`;
 }
 
-// Pick which skills are on the list (1045:35589)
-function openManageTech() {
-  const picked = new Set(state.techSkills.map((s) => s.name));
-  const options = [...new Set([...techSuggestions(), ...picked])];
-  const ov = openOverlay(`<div class="cp-modal" role="dialog" aria-modal="true" aria-label="Manage Technical Skills"></div>`, "modal");
+// Chips to pick from plus an "add new" field (1045:35589). Shared with the PGM's tools flow (camp.js).
+const pickList = (options, picked, placeholder) => `
+  <div class="pick-chips cp-modal__chips">${options.map((s) => `
+    <button type="button" class="pick-chip${picked.has(s) ? " is-on" : ""}" data-mt="${esc(s)}" aria-pressed="${picked.has(s)}"><img src="${IM}${picked.has(s) ? "chip-done" : "chip-add"}.svg" alt="" />${esc(s)}</button>`).join("")}</div>
+  <form class="wz-add" data-mt-add><input placeholder="${placeholder}" aria-label="${placeholder.replace("...", "")}" /><button type="submit" aria-label="Add"><img src="${IM}add-white.svg" alt="" /></button></form>`;
+// Typed entries are picked; a new one joins the options.
+function addToPicks(ov, options, picked) {
+  const value = ov.querySelector("[data-mt-add] input").value.trim();
+  if (!value) return;
+  const existing = options.find((s) => s.toLowerCase() === value.toLowerCase());
+  if (!existing) options.push(value);
+  picked.add(existing || value);
+}
+
+// Manage modal: pick which skills or tools are on the list; onSave gets the picks.
+function openManageList(title, options, current, placeholder, onSave) {
+  const picked = new Set(current);
+  const ov = openOverlay(`<div class="cp-modal" role="dialog" aria-modal="true" aria-label="${title}"></div>`, "modal");
   const box = ov.querySelector(".cp-modal");
   function draw() {
     box.innerHTML = `
-      <header class="im-modal__head"><h2>Manage Technical Skills</h2><button type="button" data-close aria-label="Close"><img src="${IM}close.svg" alt="" /></button></header>
-      <div class="cp-modal__body">
-        <div class="pick-chips cp-modal__chips">${options.map((s) => `
-          <button type="button" class="pick-chip${picked.has(s) ? " is-on" : ""}" data-mt="${esc(s)}" aria-pressed="${picked.has(s)}"><img src="${IM}${picked.has(s) ? "chip-done" : "chip-add"}.svg" alt="" />${esc(s)}</button>`).join("")}</div>
-        <form class="wz-add" data-mt-add><input placeholder="Add new skill..." aria-label="Add new skill" /><button type="submit" aria-label="Add"><img src="${IM}add-white.svg" alt="" /></button></form>
-      </div>
+      <header class="im-modal__head"><h2>${title}</h2><button type="button" data-close aria-label="Close"><img src="${IM}close.svg" alt="" /></button></header>
+      <div class="cp-modal__body">${pickList(options, picked, placeholder)}</div>
       <footer class="im-modal__foot">
         <button type="button" class="btn btn--secondary im-back-btn" data-close>Cancel</button>
         <button type="button" class="btn btn--primary im-next" data-mt-save>Save<img src="${CP}done-white.svg" alt="" /></button>
@@ -126,22 +150,40 @@ function openManageTech() {
     const chip = e.target.closest("[data-mt]");
     if (chip) { picked.has(chip.dataset.mt) ? picked.delete(chip.dataset.mt) : picked.add(chip.dataset.mt); return draw(); }
     if (!e.target.closest("[data-mt-save]")) return;
-    // Skills that stay keep their verification status; new ones start unverified.
-    state.techSkills = [...picked].map((name) => techSkill(name) || { name, status: "new" });
+    onSave([...picked]);
     closeOverlay();
     render();
   });
   ov.addEventListener("submit", (e) => {
     e.preventDefault();
-    const value = ov.querySelector("[data-mt-add] input").value.trim();
-    if (!value) return;
-    const existing = options.find((s) => s.toLowerCase() === value.toLowerCase());
-    if (!existing) options.push(value);
-    picked.add(existing || value);
+    addToPicks(ov, options, picked);
     draw();
     ov.querySelector("[data-mt-add] input").focus();
   });
   draw();
+}
+
+function openManageTech() {
+  const current = state.techSkills.map((s) => s.name);
+  // Skills that stay keep their verification status; new ones start unverified.
+  openManageList("Manage Technical Skills", [...new Set([...techSuggestions(), ...current])], current, "Add new skill...",
+    (names) => (state.techSkills = names.map((name) => techSkill(name) || { name, status: "new" })));
+}
+const openManageTools = () => openManageList("Manage Tools", toolOptions(), state.tools, "Add new tool...", (names) => (state.tools = names));
+
+// ---------- Tools (1326:53620) ----------
+function toolsTab() {
+  if (!state.tools.length) {
+    return `
+      <div class="cp-center"><div class="cp-empty">
+        <img class="cp-empty__art" src="${TL}tools.svg" alt="" />
+        <div><h2>Add Your Tools</h2><p>Let Recruiters Know Which Tools You Can Use</p></div>
+        <button type="button" class="btn btn--primary im-add" data-cp="manage-tools"><img src="${IM}add-circle-light.svg" alt="" />Add Now</button>
+      </div></div>`;
+  }
+  return `
+    ${cpIntro("Tool Stack", "The tools I’m proficient in using", "manage-tools", "settings.svg", "Manage")}
+    <ul class="cp-tools">${state.tools.map((t) => `<li class="cp-tool">${toolLogo(t)}${esc(t)}</li>`).join("")}</ul>`;
 }
 
 // ---------- Transferable ----------
@@ -170,11 +212,11 @@ function renderCompetencies() {
   closeAllOverlays();
   const tab = state.compTab;
   competenciesPage.innerHTML = `
-    <div class="page-header"><h1 class="page-header__title">Competencies</h1><p class="page-header__sub">Add and rate the skills you bring to your work</p></div>
+    <div class="page-header"><h1 class="page-header__title">Competencies</h1><p class="page-header__sub">Rate and manage your skills</p></div>
     <div class="cp-panel">
-      <div class="cp-tabs" role="tablist">${[["technical", "Technical Skills", TECH_ICON], ["transferable", "Transferable Skills", TRANSFER_ICON]].map(([k, label, icon]) => `
+      <div class="cp-tabs" role="tablist">${[["technical", "Technical Skills", TECH_ICON], ["transferable", "Transferable Skills", TRANSFER_ICON], ["tools", "Tools", TOOLS_ICON]].map(([k, label, icon]) => `
         <button type="button" role="tab" aria-selected="${tab === k}" class="cp-tab${tab === k ? " is-on" : ""}" data-cp-tab="${k}">${tabIcon(icon)}${label}</button>`).join("")}</div>
-      <div class="cp-body">${tab === "technical" ? technicalTab() : transferableTab()}</div>
+      <div class="cp-body">${{ technical: technicalTab, transferable: transferableTab, tools: toolsTab }[tab]()}</div>
     </div>`;
   competenciesPage.querySelectorAll("[data-scale]").forEach(paintScale);
 }
@@ -195,6 +237,7 @@ competenciesPage.addEventListener("click", (e) => {
   }
   switch (e.target.closest("[data-cp]")?.dataset.cp) {
     case "manage-tech": openManageTech(); break;
+    case "manage-tools": openManageTools(); break;
     case "edit-comfort": state.tDraft = { ...state.tSkills }; renderCompetencies(); break;
     case "save-comfort":
       state.tSkills = state.tDraft;
