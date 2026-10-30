@@ -149,7 +149,7 @@ fieldset { margin: 0; min-width: 0; }
 .auth__column { flex: 1; width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 80px; }
 .auth__main { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 40px; }
 
-.auth__switch { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; font-size: 16px; letter-spacing: 0.32px; color: var(--neutral-800); }
+.auth__switch { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; font-weight: 500; font-size: 16px; letter-spacing: 0.32px; color: var(--neutral-800); }
 .auth__switch a { font-weight: 500; font-size: 14px; letter-spacing: 0.7px; text-transform: uppercase; color: var(--caarya-red-500); text-decoration: none; }
 .auth__switch a:hover { text-decoration: underline; text-underline-offset: 3px; }
 

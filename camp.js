@@ -328,11 +328,13 @@ function openPgmFlow() {
     } else {
       const role = roles[step - 1];
       const name = roleName(role);
-      box.className = "pgm-modal";
+      box.className = "pgm-modal pgm-modal--flow";
       box.innerHTML = `${pgmHead("close")}
-        <div class="pgm-modal__body">
-          <p class="pgm-modal__kicker">Role ${step}: ${esc(name)}</p>
-          <h2 class="pgm-modal__q">What kind of output have you produced as ${/^[AEIOU]/i.test(name) ? "an" : "a"} <b>${esc(name)}</b> so far?</h2>
+        <div class="pgm-modal__body pgm-modal__scroll">
+          <div class="pgm-modal__text">
+            <p class="pgm-modal__kicker">Role ${step}: ${esc(name)}</p>
+            <h2 class="pgm-modal__q">What kind of output have you produced as ${/^[AEIOU]/i.test(name) ? "an" : "a"} <b>${esc(name)}</b> so far?</h2>
+          </div>
           <div class="pgm-options" role="radiogroup">${EXPERIENCE.map(([t, d, emoji], i) => `
             <button type="button" role="radio" aria-checked="${choices[role] === i}" class="pgm-option${choices[role] === i ? " is-on" : ""}" data-pgm-pick="${i}">
               <span><b>${t}</b><small>${d}</small></span><span class="pgm-option__emoji" aria-hidden="true">${emoji}</span>
@@ -450,16 +452,16 @@ function openTransferableFlow() {
   const box = ov.querySelector(".pgm-modal");
   function draw() {
     if (step === 0) {
-      box.className = "pgm-modal pgm-modal--intro";
+      box.className = "pgm-modal pgm-modal--intro pgm-modal--sm";
       box.innerHTML = pgmIntro("Set up how you interact with transferable skills.", "In the upcoming screens, talk about your level of comfort with different transferable skills.");
       return;
     }
-    const [cat, skills, line] = TRANSFERABLE[step - 1];
+    const [cat, skills, line, bg] = TRANSFERABLE[step - 1];
     box.className = "pgm-modal pgm-modal--flow";
     box.innerHTML = `${pgmHead("close")}
       <div class="pgm-modal__body pgm-modal__scroll">
         <h2 class="pgm-modal__q">Rate each skill on your level of comfort with using it</h2>
-        <section class="pgm-cat" style="--cat-line:${line};--cat-text:${CAT_TEXT[step - 1]}">
+        <section class="pgm-cat" style="--cat-line:${line};--cat-bg:${bg};--cat-text:${CAT_TEXT[step - 1]}">
           <p class="pgm-cat__head">${esc(cat)}</p>
           ${skills.map((s) => `<div class="pgm-cat__skill"><h3>${esc(s)}</h3>${scale(s, 7, draft[s], "comfort", 2)}</div>`).join("")}
         </section>
@@ -495,7 +497,7 @@ function openToolsFlow() {
   const box = ov.querySelector(".pgm-modal");
   function draw() {
     if (step === 0) {
-      box.className = "pgm-modal pgm-modal--intro";
+      box.className = "pgm-modal pgm-modal--intro pgm-modal--sm";
       box.innerHTML = pgmIntro("Add your tool stack and let recruiters know which tools you’re proficient with", "In the upcoming screen, add all the tools that you’re proficient with.");
       return;
     }
@@ -503,7 +505,7 @@ function openToolsFlow() {
     box.innerHTML = `${pgmHead("close")}
       <div class="pgm-modal__body pgm-modal__scroll">
         <h2 class="pgm-modal__q">Add all the tools you’re proficient in</h2>
-        ${pickList(options, picked, "Add new tool...")}
+        <div class="pgm-picks">${pickList(options, picked, "Add new tool...")}</div>
       </div>
       ${pgmFoot(false, true)}`;
   }
