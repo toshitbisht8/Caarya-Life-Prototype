@@ -40,8 +40,9 @@ function syncMenuLocks() {
   });
 }
 
+const CA = "assets/camp/";
 const MANAGERS = {
-  pgm: ["Professional Growth Manager", `<span class="camp-avatar camp-avatar--pgm"><img src="${G}growth-manager.png" alt="" /></span>`],
+  pgm: ["Professional Growth Manager", `<span class="camp-avatar camp-avatar--pgm"><img src="${CA}pgm.png" alt="" /></span>`],
   talent: ["Talent Manager", `<span class="camp-avatar camp-avatar--talent"><img src="${G}talent-star.svg" alt="" /></span>`],
 };
 
@@ -68,24 +69,101 @@ function claimText() {
 const hasExperience = () => myRoles().some((r) => state.camp.experience[r] > 0);
 
 // ---------- Road To Career Acceleration ----------
-const redoProfiling = () => startProfiling();
 const added = (n, word = "added") => (n ? `${n} ${word}` : "");
 const addProof = () => {
   if (!isUnlocked("proof")) return openPgmFlow(); // proof of work opens after the experience questions
   go("proof");
   setTimeout(() => openAssetModal(), 50); // impact.js
 };
-// [title, status label ("" = not done yet), action]
+// A Competencies tab once it's unlocked, otherwise the wizard that sets it up.
+const compTabOr = (tab, wizard) => () => {
+  if (!isUnlocked("competencies")) return wizard();
+  state.compTab = tab;
+  state.tDraft = null;
+  go("competencies");
+};
+// [title, status label ("" = not done yet), start action, edit action (once done)]
 const CAMP_STEPS = [
-  ["Set up role preferences", () => added(state.roles.size, "selected"), redoProfiling],
-  ["Set up industry preferences", () => added(state.industries.size), redoProfiling],
-  ["Set Up Business Service Preferences", () => added(Object.values(state.camp.services).flat().length), redoProfiling],
-  ["Set up technical skills", () => added(state.techSkills.length), () => openManageTech()], // competencies.js
+  ["Set up role preferences", () => added(state.roles.size, "selected"), () => openManageRoles()], // growth.js
+  ["Set up industry preferences", () => added(state.industries.size), () => openManageIndustries()],
+  ["Set Up Business Service Preferences", () => added(Object.values(state.camp.services).flat().length), () => openManageServices()],
+  ["Set up technical skills", () => added(state.techSkills.length), () => openManageTech(), compTabOr("technical", () => openManageTech())], // competencies.js
   ["Declare past work experience", () => (state.camp.expDone ? "Complete" : ""), () => openPgmFlow()],
-  ["Add proof of work", () => added(state.assets.length), addProof],
-  ["Set up transferable skills", () => added(Object.keys(state.tSkills).length, "rated"), () => openTransferableFlow()],
-  ["Set up tool stack", () => added(state.tools.length), () => openToolsFlow()],
+  ["Add proof of work", () => added(state.assets.length), addProof, () => go("proof")],
+  ["Set up transferable skills", () => added(Object.keys(state.tSkills).length, "rated"), () => openTransferableFlow(), compTabOr("transferable", () => openTransferableFlow())],
+  ["Set up tool stack", () => added(state.tools.length), () => openToolsFlow(), compTabOr("tools", () => openToolsFlow())],
 ];
+
+// Edit industries: the signup industry picker in a modal (same pattern as Manage Roles in growth.js).
+function openManageIndustries() {
+  const el = document.getElementById("industries");
+  const home = el.parentElement;
+  const snapshot = new Set(state.industries);
+  let saved = false;
+  const sync = () => el.querySelectorAll(".industry").forEach((card) => {
+    const on = state.industries.has(card.textContent.trim());
+    card.classList.toggle("is-selected", on);
+    card.setAttribute("aria-pressed", String(on));
+  });
+  const ov = openOverlay(`
+    <div class="modal modal--roles" role="dialog" aria-modal="true" aria-labelledby="ind-title">
+      <button type="button" class="modal__close" data-close aria-label="Close"><img src="${G}close-dark.svg" alt="" /></button>
+      <div class="heading">
+        <p class="heading__title" id="ind-title">Which industries would you like to work in?</p>
+        <p class="heading__sub">Think of where you’d like to make an impact</p>
+      </div>
+      <div class="modal__body" data-ind-slot></div>
+      <p class="error" data-step-error></p>
+      <div class="modal__footer">
+        <button type="button" class="btn btn--secondary" data-close>Cancel</button>
+        <button type="button" class="btn btn--primary" data-save>Save industries</button>
+      </div>
+    </div>`, "modal", () => {
+      if (!saved) { state.industries = snapshot; sync(); }
+      home.append(el);
+      if (saved) render();
+    });
+  ov.querySelector("[data-ind-slot]").append(el);
+  ov.querySelector("[data-save]").addEventListener("click", () => {
+    if (!state.industries.size) return (ov.querySelector("[data-step-error]").textContent = "Pick at least one industry.");
+    saved = true;
+    closeOverlay();
+  });
+}
+
+// Edit business services: per role, pick from that role's services (role-services.js).
+function openManageServices() {
+  const roles = myRoles();
+  const picked = Object.fromEntries(roles.map((r) => [r, new Set(state.camp.services[r] || [])]));
+  const ov = openOverlay(`<div class="cp-modal" role="dialog" aria-modal="true" aria-label="Manage Business Services"></div>`, "modal");
+  const box = ov.querySelector(".cp-modal");
+  function draw() {
+    box.innerHTML = `
+      <header class="im-modal__head"><h2>Manage Business Services</h2><button type="button" data-close aria-label="Close"><img src="${IM}close.svg" alt="" /></button></header>
+      <div class="cp-modal__body camp-services">${roles.map((r) => `
+        <section><p class="camp-services__role">${esc(roleName(r))}</p>
+          <div class="pick-chips">${(ROLE_SERVICES[roleName(r)] || []).map(([s]) => `
+            <button type="button" class="pick-chip${picked[r].has(s) ? " is-on" : ""}" data-svc="${esc(s)}" data-role="${esc(r)}" aria-pressed="${picked[r].has(s)}"><img src="${IM}${picked[r].has(s) ? "chip-done" : "chip-add"}.svg" alt="" />${esc(s)}</button>`).join("")}</div>
+        </section>`).join("")}</div>
+      <footer class="im-modal__foot">
+        <button type="button" class="btn btn--secondary im-back-btn" data-close>Cancel</button>
+        <button type="button" class="btn btn--primary im-next" data-svc-save>Save<img src="${CP}done-white.svg" alt="" /></button>
+      </footer>`;
+  }
+  ov.addEventListener("click", (e) => {
+    const chip = e.target.closest("[data-svc]");
+    if (chip) {
+      const set = picked[chip.dataset.role];
+      set.has(chip.dataset.svc) ? set.delete(chip.dataset.svc) : set.add(chip.dataset.svc);
+      return draw();
+    }
+    if (!e.target.closest("[data-svc-save]")) return;
+    state.camp.services = Object.fromEntries(roles.map((r) => [r, [...picked[r]]]));
+    closeOverlay();
+    render();
+  });
+  draw();
+}
 const setupDone = () => CAMP_STEPS.every(([, status]) => status());
 
 // ---------- Messages ----------
@@ -145,7 +223,7 @@ const msgCard = ([who, text, cta, action]) => `
   <article class="camp-msg">
     <p class="camp-msg__from">${MANAGERS[who][1]}${MANAGERS[who][0]}</p>
     <p class="camp-msg__text">${esc(text)}</p>
-    <button type="button" class="camp-msg__cta" data-camp-action="${action}">${esc(cta)}<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button type="button" class="camp-msg__cta" data-camp-action="${action}">${esc(cta)}<img src="${CA}navigate-next.svg" alt="" /></button>
   </article>`;
 
 const campPage = document.getElementById("camp-page");
@@ -161,7 +239,7 @@ function renderCamp() {
       <h1>${greeting}, ${esc(first)}</h1>
       <p>Here’s what you need to catch up with</p>
     </div>
-    <section class="camp-block">
+    <section class="camp-block camp-block--msgs">
       <div class="camp-block__head"><p class="camp-kicker">Your Messages</p>${msgs.length > 1 ? `<button type="button" class="camp-all" data-camp-all>View All</button>` : ""}</div>
       ${msgs.length ? `<div class="camp-msgs">${msgs.slice(0, CAMP_SHOWN).map(msgCard).join("")}</div>` : `<p class="camp-empty">You’re all caught up.</p>`}
     </section>
@@ -169,9 +247,9 @@ function renderCamp() {
       <p class="camp-kicker">Road To Career Acceleration</p>
       <ol class="camp-steps">${steps.map((s) => `
         <li><button type="button" class="camp-step${s.status ? " is-done" : ""}" data-camp-step="${s.i}">
-          <span class="camp-step__mark" aria-label="${s.status ? "Done" : "Not done"}">${s.status ? `<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>` : ""}</span>
+          <span class="camp-step__mark" aria-label="${s.status ? "Done" : "Not done"}">${s.status ? `<img src="${CA}done.svg" alt="" />` : ""}</span>
           <span class="camp-step__text"><span class="camp-step__title">${s.title}</span><span class="camp-step__sub">${s.status || "! Not Added"}</span></span>
-          ${s.status ? `<img class="camp-step__edit" src="${CP}edit.svg" alt="Edit" />` : `<span class="camp-step__go">Start <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`}
+          ${s.status ? `<img class="camp-step__edit" src="${CA}edit.svg" alt="Edit" />` : `<span class="camp-step__go">Start <img src="${CA}navigate-next.svg" alt="" /></span>`}
         </button></li>`).join("")}</ol>
     </section>`;
   // First visit after signing up: the PGM pops up (FigJam 339:990).
@@ -200,7 +278,10 @@ campPage.addEventListener("click", (e) => {
   if (a) return CAMP_ACTIONS[a.dataset.campAction]();
   if (e.target.closest("[data-camp-all]")) return openAllMessages();
   const s = e.target.closest("[data-camp-step]");
-  if (s) CAMP_STEPS[Number(s.dataset.campStep)][2]();
+  if (s) {
+    const [, status, start, edit] = CAMP_STEPS[Number(s.dataset.campStep)];
+    (status() && edit ? edit : start)();
+  }
 });
 
 // Menu inbox widget: how many updates are waiting in Camp.

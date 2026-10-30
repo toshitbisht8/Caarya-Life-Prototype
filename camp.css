@@ -1,48 +1,56 @@
 /* Camp: landing page + inbox (camp.js, Figma 1326:53131), and the PGM's flows: role experience (1299:25773),
    transferable skills (1326:55276), tool stack (1326:58143). */
 
-.camp { gap: 56px; align-items: stretch; background: linear-gradient(135deg, #f4fdfd 0%, #fbfbfb 45%, #fdf7f5 100%); }
+.camp { gap: 40px; align-items: stretch; background: linear-gradient(105.76deg, rgba(245, 255, 255, 0.5) 0%, rgba(255, 244, 242, 0.5) 100%), #fff; }
 .camp > * { width: 100%; max-width: 1400px; margin: 0 auto; }
-.camp-head h1 { font-family: var(--font-lato); font-weight: 700; font-size: 24px; letter-spacing: 0.24px; line-height: 1.3; color: var(--neutral-900); }
-.camp-head p { margin-top: 4px; font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: var(--neutral-500); }
+.camp-head h1 { font-family: var(--font-lato); font-weight: 700; font-size: 20px; letter-spacing: 0.4px; line-height: 1.5; text-transform: capitalize; color: var(--neutral-800); }
+.camp-head p { font-family: var(--font-satoshi); font-size: 12px; letter-spacing: 0.48px; line-height: 1.5; color: var(--neutral-500); }
 .camp-block { display: flex; flex-direction: column; gap: 16px; }
+.camp-block--msgs { gap: 8px; }
 .camp-block__head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.camp-kicker { font-family: var(--font-lato); font-style: italic; font-size: 16px; letter-spacing: 0.32px; line-height: 1.5; color: var(--neutral-500); }
-.camp-all { padding: 4px 0 !important; font-weight: 700; font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--neutral-900); }
-.camp-all:hover { color: var(--caarya-red-500); }
+.camp-kicker { font-family: var(--font-lato); font-style: italic; font-weight: 400; font-size: 14px; letter-spacing: 0.56px; line-height: 1.5; color: var(--neutral-500); }
+.camp-all { padding: 8px !important; border-radius: 44px; font-family: var(--font-satoshi); font-weight: 700; font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; text-transform: uppercase; color: var(--neutral-900); }
+.camp-all:hover { background: var(--neutral-100) !important; }
 .camp-empty { font-size: 14px; color: var(--neutral-500); }
 
 /* Message cards from the manager personas */
 .camp-msgs { display: flex; flex-wrap: wrap; gap: 16px; }
 .camp-msgs .camp-msg { flex: 0 1 320px; min-width: 0; }
-.camp-msg { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px 14px; border: 1px solid var(--neutral-100); border-radius: 12px; background: var(--shades-50); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06); }
-.camp-msg__from { display: flex; align-items: center; gap: 8px; font-size: 10px; letter-spacing: 0.2px; line-height: 1.5; color: var(--neutral-500); }
-.camp-msg__text { flex: 1; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 14px; letter-spacing: 0.28px; line-height: 1.55; color: var(--neutral-800); }
-.camp-msg__cta { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; padding: 4px 0 !important; font-weight: 700; font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--neutral-900); }
-.camp-msg__cta:hover { color: var(--caarya-red-500); }
-.camp-avatar { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; flex-shrink: 0; border-radius: 120px; overflow: hidden; }
-.camp-avatar img { width: 11px; height: 11px; object-fit: contain; }
+.camp-msg { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 13px; border: 1px solid var(--neutral-100); border-radius: 12px; background: var(--shades-50); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1); }
+.camp-msg__from { width: 100%; display: flex; align-items: center; gap: 8px; font-family: var(--font-lato); font-size: 10px; line-height: 1.5; text-transform: capitalize; color: var(--neutral-400); }
+.camp-msg__text { width: 100%; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-family: var(--font-satoshi); font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: var(--neutral-800); }
+.camp-msg__cta { display: inline-flex; align-items: center; gap: 8px; padding: 8px !important; border-radius: 44px; font-family: var(--font-satoshi); font-weight: 700; font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; text-transform: uppercase; color: var(--neutral-900); }
+.camp-msg__cta:hover { background: var(--neutral-100) !important; }
+.camp-msg__cta img { width: 16px; height: 16px; }
+.camp-avatar { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; flex-shrink: 0; border-radius: 120px; overflow: hidden; }
+.camp-avatar img { width: 8px; height: 8px; object-fit: cover; }
 .camp-avatar--pgm { background: #ffe9e5; }
 .camp-avatar--talent { background: #edffff; }
 .pgm-modal__from .camp-avatar { width: 24px; height: 24px; }
-.pgm-modal__from .camp-avatar img { width: 14px; height: 14px; }
+.pgm-modal__from .camp-avatar img { width: 12px; height: 12px; }
 /* View All drawer: full text, no clamp */
 .camp-drawer { gap: 16px; }
 .camp-drawer .camp-msg__text { display: block; }
 
 /* Road To Career Acceleration */
-.camp-steps { max-width: 560px; display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 12px; list-style: none; border: 1px solid var(--neutral-100); border-radius: 16px; background: var(--shades-50); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04); }
-.camp-step { width: 100%; display: flex; align-items: center; gap: 16px; padding: 8px 8px !important; border-radius: 10px; text-align: left; }
-.camp-step:hover { background: var(--neutral-50) !important; }
-.camp-step__mark { width: 24px; height: 24px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border: 1.5px dashed var(--neutral-300); border-radius: 50%; }
-.camp-step.is-done .camp-step__mark { border: 1.5px solid #2bb656; color: #2bb656; }
-.camp-step__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.camp-step__title { font-weight: 500; font-size: 14px; letter-spacing: 0.28px; line-height: 1.4; color: var(--neutral-900); }
-.camp-step__sub { font-size: 10px; letter-spacing: 0.3px; line-height: 1.5; color: var(--neutral-400); }
-.camp-step__edit { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.55; }
-.camp-step:hover .camp-step__edit { opacity: 1; }
-.camp-step__go { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--neutral-900); opacity: 0; transition: opacity 0.15s; }
+.camp-steps { max-width: 560px; display: flex; flex-direction: column; gap: 16px; margin: 0; padding: 16px; list-style: none; border-radius: 20px; background: var(--shades-50); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1); }
+.camp-step { width: 100%; display: flex; align-items: center; gap: 16px; margin: -4px 0; padding: 4px 0 !important; border-radius: 8px; text-align: left; }
+.camp-step__mark { width: 24px; height: 24px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px dashed var(--neutral-400); border-radius: 136px; }
+.camp-step.is-done .camp-step__mark { border: 1px solid #2bb656; }
+.camp-step__mark img { width: 16px; height: 16px; }
+.camp-step__text { flex: 1; min-width: 0; display: flex; flex-direction: column; font-family: var(--font-satoshi); line-height: 1.5; }
+.camp-step__title { font-weight: 500; font-size: 14px; letter-spacing: 0.28px; color: var(--neutral-800); }
+.camp-step__sub { font-size: 10px; letter-spacing: 0.2px; color: var(--neutral-400); }
+.camp-step__edit { width: 14px; height: 14px; flex-shrink: 0; }
+.camp-step:hover .camp-step__title { text-decoration: underline; text-underline-offset: 3px; }
+.camp-step__go { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-satoshi); font-weight: 700; font-size: 12px; letter-spacing: 0.24px; text-transform: uppercase; color: var(--neutral-900); opacity: 0; transition: opacity 0.15s; }
+.camp-step__go img { width: 16px; height: 16px; }
 .camp-step:hover .camp-step__go, .camp-step:focus-visible .camp-step__go { opacity: 1; }
+
+/* Manage Business Services */
+.camp-services { display: flex; flex-direction: column; gap: 24px; }
+.camp-services section { display: flex; flex-direction: column; gap: 12px; }
+.camp-services__role { font-family: var(--font-lato); font-style: italic; font-size: 14px; letter-spacing: 0.56px; color: var(--neutral-500); }
 
 /* ---------- PGM modal ---------- */
 .pgm-modal { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); display: flex; flex-direction: column; gap: 24px; padding: 20px 24px 24px; border-radius: 24px; background: var(--shades-50); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
