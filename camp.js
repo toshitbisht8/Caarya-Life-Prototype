@@ -349,7 +349,7 @@ function openRow(row, e) {
   openMessage(m);
 }
 // Messages that open a screen designed for them (PGM intros, asset modal, asset picker): no extra modal before it.
-const FLOW_ACTIONS = ["pgm-flow", "add-proof", "transferable", "tools", "achievement"];
+const FLOW_ACTIONS = ["pgm-flow", "add-proof", "transferable", "tools"]; // the achievement message opens in full first
 campPage.addEventListener("click", (e) => {
   const row = e.target.closest("[data-msg]");
   if (row) openRow(row, e);
