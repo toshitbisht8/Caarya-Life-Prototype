@@ -187,7 +187,7 @@ const MESSAGE_DEFS = [
   ["tools", () => isFresh() && state.camp.expDone, "pgm", () => "Add your tool stack and let recruiters know which tools you’re proficient with.", "Start now", "tools", () => state.tools.length > 0],
   ["first-asset", () => isFresh() && state.assets.length > 0, "pgm", () => `Congratulations on adding your first proof of work, ${firstName()}! If you want to, you can also turn your assets into achievement cards that show the skills and impact behind them.`, "Create achievement card", "achievement", () => state.achievements.length > 0],
   ["tm-done", () => isFresh() && setupDone(), "talent", () => TM_DONE[0], "Details", "talent-details"],
-  ["assessments", () => isFresh() && setupDone(), "pgm", () => "While your career report is being generated, complete some basic assessments. They’ll help enhance your ME profile.", "Take assessments", "assessments", null, () => unlock("assessments")],
+  ["assessments", () => isFresh() && setupDone(), "pgm", () => "While your career report is being generated, you can take a few basic assessments if you like. They’re optional, and they help enhance your ME profile.", "Explore assessments", "assessments", null, () => unlock("assessments")],
   ["synergy", () => isFresh() && setupDone(), "talent", () => "Unlock Synergy Intelligence? See your network: the people you’ve worked with, how you work together and who can open doors for you.", "Unlock", "synergy", () => SYNERGY.every((i) => state.camp.unlocked.has(i))],
   ["community", () => isFresh() && setupDone(), "pgm", () => "Unlock Community Intelligence? Grow with the community through daily knowledge gains and an exchange of ideas with your peers.", "Unlock", "community", () => COMMUNITY.every((i) => state.camp.unlocked.has(i))],
   // Returning users: the Talent Manager's pointer to work
@@ -225,8 +225,17 @@ function syncMessages(quiet = false) {
   });
   deskEvents().forEach(([id, who, text, cta, action]) => postMessage(id, who, text, cta, action, quiet) && posted++);
   state.camp.inbox.forEach((m) => !m.read && msgDone(m) && (m.read = true)); // nothing left to do there
-  if (posted && !quiet) notifyNew(posted);
+  if (!posted || quiet) return;
+  // Profiling complete: the Talent Manager's congratulations opens by itself, instead of a toast.
+  const tm = state.camp.inbox.find((m) => m.id === "tm-done" && !m.read);
+  if (tm && !tmShown) {
+    tmShown = true;
+    tm.read = true;
+    return whenClear(() => { openMessage(tm); syncInbox(); });
+  }
+  notifyNew(posted);
 }
+let tmShown = false;
 const unreadCount = () => state.camp.inbox.filter((m) => !m.read).length;
 const msgDone = (m) => MESSAGE_DEFS.find(([id]) => id === m.id)?.[6]?.() || false;
 
@@ -271,7 +280,7 @@ const CAMP_ACTIONS = {
   "add-proof": addProof,
   transferable: () => openTransferableFlow(),
   tools: () => openToolsFlow(),
-  achievement: () => { const a = state.assets[state.assets.length - 1]; a ? startWizard(a.id) : go("proof"); }, // impact.js
+  achievement: () => openAssetPicker(startWizard), // impact.js: "Adding New Achievement", pick the asset first
   "talent-details": () => openMessage(state.camp.inbox.find((m) => m.id === "tm-done")),
   assessments: () => go("assessments"),
   synergy: () => unlockAndGo(SYNERGY, "Synergy Intelligence unlocked: find Your Network in the menu"),
@@ -323,7 +332,7 @@ function renderCamp() {
   // First visit after signing up: the PGM pops up (FigJam 339:990).
   if (state.camp.fresh && !state.camp.expDone && !state.camp.introShown && !state.camp.holdIntro) {
     state.camp.introShown = true;
-    setTimeout(() => currentBase() === "camp" && openPgmFlow(), 350);
+    afterAction(() => currentBase() === "camp" && !document.querySelector(".overlay") && openPgmFlow());
   }
 }
 // Opening a message marks it read. Its CTA acts straight away; anywhere else on the row opens it in full.
@@ -336,8 +345,11 @@ function openRow(row, e) {
     syncInbox();
   }
   const a = e.target.closest("[data-camp-action]");
-  a ? CAMP_ACTIONS[a.dataset.campAction]() : openMessage(m);
+  if (a || (FLOW_ACTIONS.includes(m.action) && !msgDone(m))) return CAMP_ACTIONS[m.action]();
+  openMessage(m);
 }
+// Messages that open a screen designed for them (PGM intros, asset modal, asset picker): no extra modal before it.
+const FLOW_ACTIONS = ["pgm-flow", "add-proof", "transferable", "tools", "achievement"];
 campPage.addEventListener("click", (e) => {
   const row = e.target.closest("[data-msg]");
   if (row) openRow(row, e);
@@ -453,7 +465,7 @@ function openPgmFlow() {
       closeOverlay();
       if (!first) return render();
       go("proof");
-      setTimeout(openProofUnlocked, 300);
+      afterAction(openProofUnlocked);
     }
   });
   draw();
@@ -514,7 +526,7 @@ function landOnCompetencies(tab, toast) {
         </div>
         <footer class="pgm-modal__foot pgm-modal__foot--center"><button type="button" class="pgm-btn" data-close>Done <span aria-hidden="true">✓</span></button></footer>
       </div>`, "modal");
-  }, 300);
+  }, POPUP_DELAY_MS);
 }
 
 // ---------- Transferable skills (Figma 1326:55276) ----------
@@ -592,7 +604,7 @@ function openToolsFlow() {
     if (act === "prev") { step = 0; return draw(); }
     if (act !== "next") return;
     if (step === 0) { step = 1; return draw(); }
-    if (!picked.size) return showToast("Pick at least one tool to finish");
+    if (!picked.size) return showToast("Pick at least one tool to finish", undefined, 0); // a hint, not a result
     state.tools = [...picked];
     landOnCompetencies("tools", "Tool stack saved");
   });

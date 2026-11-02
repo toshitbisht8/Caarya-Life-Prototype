@@ -536,8 +536,15 @@ document.addEventListener("keydown", (e) => {
 });
 
 // ---------- Toast (Figma 1022:4293) ----------
-let toastTimer;
-function showToast(text, action) {
+let toastTimer, toastShowTimer;
+// Toasts and pop-ups that follow an action wait this long, so they don't land on top of the action itself.
+const POPUP_DELAY_MS = 800;
+const afterAction = (fn) => setTimeout(fn, POPUP_DELAY_MS);
+// Same, but waits for any open pop-up to close first, so two never stack.
+const whenClear = (fn) => afterAction(function tryOpen() { overlays.length ? setTimeout(tryOpen, 400) : fn(); });
+function showToast(text, action, delay = POPUP_DELAY_MS) {
+  clearTimeout(toastShowTimer);
+  if (delay) return void (toastShowTimer = setTimeout(() => showToast(text, action, 0), delay));
   document.querySelector(".toast")?.remove();
   clearTimeout(toastTimer);
   const t = document.createElement("div");
