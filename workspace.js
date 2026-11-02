@@ -67,7 +67,7 @@ function renderWorkspace(route, param) {
     showToast("Finish the next step in Camp to unlock this section");
     return go("camp");
   }
-  const info = PAGE_FOR[route];
+  const info = route === "growth" && state.camp.fresh ? { page: "road", menu: "growth", crumb: PAGE_FOR.growth.crumb } : PAGE_FOR[route];
   syncMenuLocks();
   document.querySelectorAll("[data-page]").forEach((p) => (p.hidden = p.dataset.page !== info.page));
   document.querySelector("[data-crumb-section]").textContent = info.crumb[0];
@@ -90,18 +90,53 @@ function renderWorkspace(route, param) {
   if (info.page === "assessments") syncAssessmentCards(); // riasec.js
   if (info.page === "soon") renderSoon(route);
   if (info.page === "camp") renderCamp(); // camp.js
+  if (info.page === "road") renderRoad(); // camp.js
+  document.querySelector(".inbox").classList.toggle("is-focus", info.page === "camp");
   syncInbox(); // camp.js
+  closeUserMenu();
 }
 
-// Coin balance bar (Figma 1013:45188)
+// Credit balance: the ring round the avatar in the nav bar, and the full numbers in the account menu.
 function renderCoins() {
   const pct = Math.max(0, Math.min(1, state.coins / state.coinsMax));
-  document.querySelector(".coins__fill").style.width = pct * 100 + "%";
-  document.querySelector("[data-coins]").textContent = `${state.coins} / ${state.coinsMax}`;
-  const meter = document.querySelector(".coins");
-  meter.setAttribute("aria-valuenow", state.coins);
-  meter.setAttribute("aria-valuemax", state.coinsMax);
+  document.querySelector(".user-ring__fill").style.strokeDasharray = `${pct * 100} 100`;
+  const ring = document.querySelector(".user-ring");
+  ring.setAttribute("aria-valuenow", state.coins);
+  ring.setAttribute("aria-valuemax", state.coinsMax);
+  ring.title = `${state.coins} of ${state.coinsMax} credits left`;
+  document.querySelector(".user-menu .coins__fill").style.width = pct * 100 + "%";
+  document.querySelector("[data-credits-spent]").textContent = state.coinsMax - state.coins;
+  document.querySelector("[data-credits-left]").textContent = `${state.coins} / ${state.coinsMax}`;
+  document.querySelector("[data-user-email]").textContent = state.email || "";
 }
+
+// ---------- Account menu (opens from the user profile in the nav bar) ----------
+const userChip = document.querySelector("[data-user-chip]");
+const userMenu = document.getElementById("user-menu");
+function closeUserMenu() {
+  userMenu.hidden = true;
+  userChip.setAttribute("aria-expanded", "false");
+}
+userChip.addEventListener("click", () => {
+  const open = userMenu.hidden;
+  userMenu.hidden = !open;
+  userChip.setAttribute("aria-expanded", String(open));
+  if (open) { renderCoins(); userMenu.querySelector("[role=menuitem]").focus(); }
+});
+document.addEventListener("click", (e) => !userMenu.hidden && !e.target.closest(".user-menu-wrap") && closeUserMenu());
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape" || userMenu.hidden) return;
+  closeUserMenu();
+  userChip.focus();
+});
+userMenu.addEventListener("click", (e) => {
+  const action = e.target.closest("[data-user-action]")?.dataset.userAction;
+  if (!action) return;
+  closeUserMenu();
+  if (action === "camp") go("camp");
+  if (action === "settings") showToast("Account settings are coming soon");
+  if (action === "logout") { location.hash = "#login"; location.reload(); } // all state is in memory, so this signs out
+});
 
 (function () {
   const M = "assets/menu/";
@@ -137,9 +172,9 @@ function renderCoins() {
       ["Session Logs", [{ file: "session-logs.svg", inset: "5.21%" }], "session-logs"],
     ] },
     { key: "impact", title: "Your Impact Journal", color: "#6775f5", icon: "section-impact.svg", items: [
-      ["Achievements", [{ file: "achievements.svg", inset: "0 6.05%" }], "achievements"],
-      ["Competencies", whole("competencies-idle.svg"), "competencies", "competencies-focus.svg"],
       ["Proof", whole("proof.svg"), "proof"],
+      ["Competencies", whole("competencies-idle.svg"), "competencies", "competencies-focus.svg"],
+      ["Achievements", [{ file: "achievements.svg", inset: "0 6.05%" }], "achievements"],
       ["Journal", [{ file: "journal.svg", inset: "6.11% 5.97% 6.41% 12.76%" }], "journal", "journal-focus.svg"],
     ] },
     { key: "identity", title: "Your Unique Identity", color: "#4ca6e5", icon: "section-identity.png", items: [
@@ -157,13 +192,6 @@ function renderCoins() {
   ];
 
   const menuEl = document.getElementById("menu-sections");
-  // Camp: the landing page and inbox, always first and always open.
-  const camp = document.createElement("div");
-  camp.className = "menu-section menu-section--camp";
-  camp.innerHTML = `<div class="menu-section__items"><a class="menu-item menu-item--tint menu-item--camp" href="#camp" data-route="camp"
-    data-icon-idle="${M}camp.svg" data-icon-focus="${M}camp.svg"></a></div>`;
-  camp.querySelector("a").append(iconEl("menu-item__icon", whole("camp.svg")), Object.assign(document.createElement("span"), { textContent: "Camp" }));
-  menuEl.append(camp);
   MENU.forEach((section) => {
     const sec = document.createElement("div");
     sec.className = "menu-section";

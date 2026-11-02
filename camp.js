@@ -7,6 +7,8 @@
 // Menu items a new user unlocks one by one; returning users see them all.
 const CAMP_ITEMS = ["growth", "domain-affinity", "industry-affinity", "desk", "session-logs", "achievements", "competencies", "proof", "journal", "profile", "assessments", "daily-gains", "exchange", "rolodex", "network-profile"];
 const ALL_UNLOCKED = () => new Set(CAMP_ITEMS);
+// A new user starts with Growth Track (the Road To Career Acceleration) and ends set-up with these (Figma 1365:42807).
+const FRESH_START = () => new Set(["growth"]);
 
 state.camp = {
   fresh: false, // true for someone who just signed up: menu items unlock as they progress
@@ -17,7 +19,7 @@ state.camp = {
   expDone: false,
   introShown: false, // the PGM pops up once on the first visit to Camp
   holdIntro: false, // wait for the logging-in loader before popping up
-  profileSeen: false, // the Talent Manager's "Measured Excellence" message stays until it's opened
+  profileSeen: false, // has opened Measured Excellence since the Talent Manager unlocked it
 };
 
 // Pages that live under a menu item (Camp itself is always open).
@@ -179,8 +181,8 @@ function campMessages() {
     if (!state.tools.length) msgs.push(["pgm", "Add your tool stack and let recruiters know which tools you’re proficient with.", "Start now", "tools"]);
   }
   if (setupDone()) {
-    if (!state.camp.profileSeen) {
-      msgs.push(["talent", `You’re all set up, ${displayName().split(" ")[0]}. I’ve unlocked your Measured Excellence profile. See how your work, skills and preferences add up for recruiters.`, "View now", "profile"]);
+    if (state.camp.fresh) {
+      msgs.push(["talent", TM_DONE[0], "Details", "talent-details"]);
     } else {
       const fresh = myRoles().flatMap(catalogFor).filter((id) => !myRoles().some((r) => trackFor(r).includes(id))).length;
       const started = myRoles().some((r) => trackFor(r).length);
@@ -201,28 +203,49 @@ function campMessages() {
   return msgs;
 }
 
+// [summary shown in Camp, the rest shown under Details]
+const TM_DONE = [
+  "Congratulations on completing the second phase of profiling. We’ll go through your submissions and a ‘pod member role’ will soon reach out to you.",
+  "In the meantime, I’ve unlocked your Measured Excellence profile. It shows recruiters how your work, skills and preferences add up, so keep it current as you add proof of your work.",
+];
+function openTalentDetails() {
+  const ov = openOverlay(`
+    <div class="pgm-modal pgm-modal--note" role="dialog" aria-modal="true" aria-labelledby="tm-done">
+      <header class="pgm-modal__head">
+        <span class="pgm-modal__from">${MANAGERS.talent[1]}${MANAGERS.talent[0]}</span>
+        <button type="button" class="pgm-modal__close" data-close aria-label="Close"><img src="${G}close-dark.svg" alt="" /></button>
+      </header>
+      <div class="pgm-modal__body">
+        <h2 id="tm-done">Second phase of profiling complete</h2>
+        ${TM_DONE.map((p) => `<p>${esc(p)}</p>`).join("")}
+      </div>
+      <footer class="pgm-modal__foot pgm-modal__foot--center"><button type="button" class="pgm-btn" data-tm="profile">View Measured Excellence <span aria-hidden="true">→</span></button></footer>
+    </div>`, "modal");
+  ov.querySelector("[data-tm]").addEventListener("click", () => { closeOverlay(); go("profile"); });
+}
+
 const CAMP_ACTIONS = {
   "pgm-flow": () => openPgmFlow(),
   "add-proof": addProof,
   transferable: () => openTransferableFlow(),
   tools: () => openToolsFlow(),
-  profile: () => { state.camp.profileSeen = true; go("profile"); },
+  "talent-details": openTalentDetails,
   explore: () => go("explore"),
   desk: () => go("desk"),
 };
 
-// Once setup is done, the Talent Manager opens Measured Excellence; once that's been seen, the rest of Life opens.
+// Once set-up is done, the Talent Manager opens Measured Excellence. The rest of Life stays closed for new users.
 function syncCampUnlocks() {
   if (setupDone()) unlock("profile");
-  if (state.camp.profileSeen) unlock(...CAMP_ITEMS);
 }
 
-// ---------- Page ----------
-const CAMP_SHOWN = 3; // message cards on the page; View All lists the rest
-const msgCard = ([who, text, cta, action]) => `
+// ---------- Page (Figma 1353:12201) ----------
+const msgRow = ([who, text, cta, action]) => `
   <article class="camp-msg">
-    <p class="camp-msg__from">${MANAGERS[who][1]}${MANAGERS[who][0]}</p>
-    <p class="camp-msg__text">${esc(text)}</p>
+    <div class="camp-msg__body">
+      <p class="camp-msg__from">${MANAGERS[who][1]}${MANAGERS[who][0]}</p>
+      <p class="camp-msg__text">${esc(text)}</p>
+    </div>
     <button type="button" class="camp-msg__cta" data-camp-action="${action}">${esc(cta)}<img src="${CA}navigate-next.svg" alt="" /></button>
   </article>`;
 
@@ -233,18 +256,35 @@ function renderCamp() {
   const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
   const first = displayName().split(" ")[0];
   const msgs = campMessages();
-  const steps = CAMP_STEPS.map(([title, status], i) => ({ title, status: status(), i }));
   campPage.innerHTML = `
     <div class="camp-head">
       <h1>${greeting}, ${esc(first)}</h1>
       <p>Here’s what you need to catch up with</p>
     </div>
-    <section class="camp-block camp-block--msgs">
-      <div class="camp-block__head"><p class="camp-kicker">Your Messages</p>${msgs.length > 1 ? `<button type="button" class="camp-all" data-camp-all>View All</button>` : ""}</div>
-      ${msgs.length ? `<div class="camp-msgs">${msgs.slice(0, CAMP_SHOWN).map(msgCard).join("")}</div>` : `<p class="camp-empty">You’re all caught up.</p>`}
-    </section>
-    <section class="camp-block">
-      <p class="camp-kicker">Road To Career Acceleration</p>
+    ${msgs.length ? `<div class="camp-msgs">${msgs.map(msgRow).join("")}</div>` : `<p class="camp-empty">You’re all caught up.</p>`}`;
+  // First visit after signing up: the PGM pops up (FigJam 339:990).
+  if (state.camp.fresh && !state.camp.expDone && !state.camp.introShown && !state.camp.holdIntro) {
+    state.camp.introShown = true;
+    setTimeout(() => currentBase() === "camp" && openPgmFlow(), 350);
+  }
+}
+campPage.addEventListener("click", (e) => {
+  const a = e.target.closest("[data-camp-action]");
+  if (a) CAMP_ACTIONS[a.dataset.campAction]();
+});
+
+// ---------- Growth Track for new users: Road To Career Acceleration (Figma 1353:12726) ----------
+const roadPage = document.getElementById("road-page");
+function renderRoad() {
+  closeAllOverlays();
+  const steps = CAMP_STEPS.map(([title, status], i) => ({ title, status: status(), i }));
+  roadPage.innerHTML = `
+    <section class="road">
+      <div class="road__head">
+        <h1>Growth Track</h1>
+        <p>Choose how you want your career to grow here. Enroll in a program to get started with your career acceleration.</p>
+        <p>We’ll reach out to you with appropriate programs once your career report is complete</p>
+      </div>
       <ol class="camp-steps">${steps.map((s) => `
         <li><button type="button" class="camp-step${s.status ? " is-done" : ""}" data-camp-step="${s.i}">
           <span class="camp-step__mark" aria-label="${s.status ? "Done" : "Not done"}">${s.status ? `<img src="${CA}done.svg" alt="" />` : ""}</span>
@@ -252,36 +292,12 @@ function renderCamp() {
           ${s.status ? `<img class="camp-step__edit" src="${CA}edit.svg" alt="Edit" />` : `<span class="camp-step__go">Start <img src="${CA}navigate-next.svg" alt="" /></span>`}
         </button></li>`).join("")}</ol>
     </section>`;
-  // First visit after signing up: the PGM pops up (FigJam 339:990).
-  if (state.camp.fresh && !state.camp.expDone && !state.camp.introShown && !state.camp.holdIntro) {
-    state.camp.introShown = true;
-    setTimeout(() => currentBase() === "camp" && openPgmFlow(), 350);
-  }
 }
-
-function openAllMessages() {
-  const ov = openOverlay(`
-    <aside class="drawer" role="dialog" aria-modal="true" aria-label="Your Messages">
-      <header class="drawer__head"><button type="button" data-close aria-label="Close"><img src="${G}drawer-close.svg" alt="" /></button><h2>Your Messages</h2></header>
-      <div class="drawer__body camp-drawer">${campMessages().map(msgCard).join("")}</div>
-    </aside>`, "drawer");
-  ov.addEventListener("click", (e) => {
-    const a = e.target.closest("[data-camp-action]");
-    if (!a) return;
-    closeOverlay();
-    CAMP_ACTIONS[a.dataset.campAction]();
-  });
-}
-
-campPage.addEventListener("click", (e) => {
-  const a = e.target.closest("[data-camp-action]");
-  if (a) return CAMP_ACTIONS[a.dataset.campAction]();
-  if (e.target.closest("[data-camp-all]")) return openAllMessages();
+roadPage.addEventListener("click", (e) => {
   const s = e.target.closest("[data-camp-step]");
-  if (s) {
-    const [, status, start, edit] = CAMP_STEPS[Number(s.dataset.campStep)];
-    (status() && edit ? edit : start)();
-  }
+  if (!s) return;
+  const [, status, start, edit] = CAMP_STEPS[Number(s.dataset.campStep)];
+  (status() && edit ? edit : start)();
 });
 
 // Menu inbox widget: how many updates are waiting in Camp.
@@ -290,7 +306,6 @@ function syncInbox() {
   document.querySelector(".inbox__sub").textContent = n ? `${n} New Message${n === 1 ? "" : "s"}` : "All caught up";
   document.querySelector(".inbox__dot").hidden = !n;
 }
-document.querySelector(".inbox").addEventListener("click", () => go("camp"));
 
 // ---------- PGM modals ----------
 const ICON_SKIP = `<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M6 18l8.5-6L6 6v12zm10-12v12h2V6h-2z" fill="currentColor"/></svg>`;
@@ -353,11 +368,11 @@ function openPgmFlow() {
     if (act === "next") {
       if (step > 0 && choices[roles[step - 1]] === undefined) { error = "Pick the option that fits you best to continue."; return draw(); }
       if (step < roles.length) { step++; return draw(); }
-      // Finish: the PGM unlocks Proof of Work (with Achievements and Journal) and takes the user there (FigJam 339:1035).
+      // Finish: the PGM unlocks Proof of Work (with Achievements) and takes the user there (FigJam 339:1035).
       const first = !state.camp.expDone;
       state.camp.experience = choices;
       state.camp.expDone = true;
-      unlock("proof", "achievements", "journal");
+      unlock("proof", "achievements");
       closeOverlay();
       if (!first) return render();
       go("proof");
@@ -561,7 +576,7 @@ function applyProfile(p, fresh) {
   state.techSkills = skills.map((name) => ({ name, status: "new" })); // declared, not yet verified
   state.growth.activeRole = roles[0]?.[0] || null;
   state.camp.fresh = !!fresh;
-  state.camp.unlocked = fresh ? new Set() : ALL_UNLOCKED();
+  state.camp.unlocked = fresh ? FRESH_START() : ALL_UNLOCKED();
   syncRoleChips(); // app.js
   document.querySelectorAll("#industries .industry").forEach((card) => {
     const on = state.industries.has(card.textContent.trim());
