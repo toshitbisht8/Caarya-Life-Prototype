@@ -242,20 +242,27 @@ const TM_DONE = [
   "Congratulations on completing the second phase of profiling. We’ll go through your submissions and a ‘pod member role’ will soon reach out to you.",
   "In the meantime, I’ve unlocked your Measured Excellence profile. It shows recruiters how your work, skills and preferences add up, so keep it current as you add proof of your work.",
 ];
-function openTalentDetails() {
+// A message in full, with its action (Figma pattern of the PGM notes). The Talent Manager's "second phase" message
+// carries more than fits a row, and its action is Measured Excellence.
+function openMessage(m) {
+  const tm = m.id === "tm-done";
+  const done = msgDone(m);
   const ov = openOverlay(`
-    <div class="pgm-modal pgm-modal--note" role="dialog" aria-modal="true" aria-labelledby="tm-done">
+    <div class="pgm-modal pgm-modal--note" role="dialog" aria-modal="true" aria-label="Message from your ${MANAGERS[m.who][0]}">
       <header class="pgm-modal__head">
-        <span class="pgm-modal__from">${MANAGERS.talent[1]}${MANAGERS.talent[0]}</span>
+        <span class="pgm-modal__from">${MANAGERS[m.who][1]}${MANAGERS[m.who][0]}<span class="camp-msg__time">${msgTime(m.at)}</span></span>
         <button type="button" class="pgm-modal__close" data-close aria-label="Close"><img src="${G}close-dark.svg" alt="" /></button>
       </header>
-      <div class="pgm-modal__body">
-        <h2 id="tm-done">Second phase of profiling complete</h2>
-        ${TM_DONE.map((p) => `<p>${esc(p)}</p>`).join("")}
-      </div>
-      <footer class="pgm-modal__foot pgm-modal__foot--center"><button type="button" class="pgm-btn" data-tm="profile">View Measured Excellence <span aria-hidden="true">→</span></button></footer>
+      <div class="pgm-modal__body">${(tm ? TM_DONE : [m.text]).map((p) => `<p>${esc(p)}</p>`).join("")}</div>
+      <footer class="pgm-modal__foot pgm-modal__foot--center">
+        ${done ? `<span class="camp-msg__done"><img src="${CA}done.svg" alt="" />Done</span>`
+          : `<button type="button" class="pgm-btn" data-msg-go>${tm ? "View Measured Excellence" : esc(m.cta)} <span aria-hidden="true">→</span></button>`}
+      </footer>
     </div>`, "modal");
-  ov.querySelector("[data-tm]").addEventListener("click", () => { closeOverlay(); go("profile"); });
+  ov.querySelector("[data-msg-go]")?.addEventListener("click", () => {
+    closeOverlay();
+    tm ? go("profile") : CAMP_ACTIONS[m.action]();
+  });
 }
 
 const unlockAndGo = (items, toast) => { unlock(...items); render(); showToast(toast); };
@@ -265,7 +272,7 @@ const CAMP_ACTIONS = {
   transferable: () => openTransferableFlow(),
   tools: () => openToolsFlow(),
   achievement: () => { const a = state.assets[state.assets.length - 1]; a ? startWizard(a.id) : go("proof"); }, // impact.js
-  "talent-details": openTalentDetails,
+  "talent-details": () => openMessage(state.camp.inbox.find((m) => m.id === "tm-done")),
   assessments: () => go("assessments"),
   synergy: () => unlockAndGo(SYNERGY, "Synergy Intelligence unlocked: find Your Network in the menu"),
   community: () => unlockAndGo(COMMUNITY, "Community Intelligence unlocked: find Your Knowledge Space in the menu"),
@@ -290,7 +297,7 @@ function msgTime(t) {
   return new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 const msgRow = (m) => `
-  <article class="camp-msg${m.read ? "" : " is-new"}" data-msg="${m.id}">
+  <article class="camp-msg${m.read ? "" : " is-new"}" data-msg="${m.id}" tabindex="0" aria-label="Open message from your ${MANAGERS[m.who][0]}">
     <div class="camp-msg__body">
       <p class="camp-msg__from">${MANAGERS[m.who][1]}${MANAGERS[m.who][0]}<span class="camp-msg__time">${msgTime(m.at)}</span>${m.read ? "" : `<span class="camp-msg__new">New</span>`}</p>
       <p class="camp-msg__text">${esc(m.text)}</p>
@@ -319,10 +326,8 @@ function renderCamp() {
     setTimeout(() => currentBase() === "camp" && openPgmFlow(), 350);
   }
 }
-// Opening a message (its row or its CTA) marks it read.
-campPage.addEventListener("click", (e) => {
-  const row = e.target.closest("[data-msg]");
-  if (!row) return;
+// Opening a message marks it read. Its CTA acts straight away; anywhere else on the row opens it in full.
+function openRow(row, e) {
   const m = state.camp.inbox.find((x) => x.id === row.dataset.msg);
   if (!m.read) {
     m.read = true;
@@ -331,7 +336,15 @@ campPage.addEventListener("click", (e) => {
     syncInbox();
   }
   const a = e.target.closest("[data-camp-action]");
-  if (a) CAMP_ACTIONS[a.dataset.campAction]();
+  a ? CAMP_ACTIONS[a.dataset.campAction]() : openMessage(m);
+}
+campPage.addEventListener("click", (e) => {
+  const row = e.target.closest("[data-msg]");
+  if (row) openRow(row, e);
+});
+campPage.addEventListener("keydown", (e) => {
+  const row = e.target.closest("[data-msg]");
+  if (row && e.target === row && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openRow(row, e); }
 });
 
 // ---------- Growth Track for new users: Road To Career Acceleration (Figma 1353:12726) ----------

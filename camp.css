@@ -12,9 +12,13 @@
 .camp-msg { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--shades-50); }
 .camp-msg__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
 .camp-msg__from { display: flex; align-items: center; gap: 8px; font-family: var(--font-lato); font-size: 10px; line-height: 1.5; text-transform: capitalize; color: var(--neutral-400); }
-.camp-msg__text { font-family: var(--font-satoshi); font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: var(--neutral-800); }
+.camp-msg__text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-satoshi); font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: var(--neutral-800); }
 /* Unread: tinted row with a red rule and a "New" tag; read on open */
-.camp-msg { position: relative; cursor: default; transition: background 0.2s; }
+.camp-msg { position: relative; cursor: pointer; transition: background 0.2s; }
+.camp-msg:hover { background: var(--neutral-50); }
+.camp-msg.is-new:hover { background: #fff1ef; }
+.camp-msg:focus-visible { outline: 2px solid var(--neutral-800); outline-offset: -2px; }
+.pgm-modal__from .camp-msg__time { margin-left: 4px; }
 .camp-msg.is-new { background: #fff8f7; box-shadow: inset 3px 0 0 var(--caarya-red-500); }
 .camp-msg__time { text-transform: none; color: var(--neutral-400); }
 .camp-msg__time::before { content: "•"; margin-right: 8px; }
