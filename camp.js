@@ -578,6 +578,8 @@ const savedProfile = () => { try { return JSON.parse(localStorage.getItem("caary
   const p = flag && savedProfile();
   if (!p) return;
   applyProfile(p, flag === "new");
+  // New users go through onboarding first (onboarding.js); returning ones land in Camp.
+  if (flag === "new") return history.replaceState(null, "", "#welcome");
   state.camp.holdIntro = true;
   history.replaceState(null, "", "#camp");
   document.addEventListener("DOMContentLoaded", () => loggingIn(() => { state.camp.holdIntro = false; go("camp"); })); // app.js

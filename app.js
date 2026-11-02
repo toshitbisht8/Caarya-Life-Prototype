@@ -90,11 +90,13 @@ const ROUTES = [
   "assessments", "growth", "explore", "explore-all", "work-order", "desk", "session",
   "proof", "proof-asset", "achievements", "achievement-new", "journal", "competencies", "profile", "riasec", "wep",
   "domain-affinity", "industry-affinity", "session-logs", "daily-gains", "exchange", "rolodex", "network-profile", "camp",
+  "welcome", "first-things", "meet-team",
 ];
 const STEPS = ["about", "roles", "industries"];
 const WORKSPACE_ROUTES = ["camp", "assessments", "growth", "explore", "explore-all", "work-order", "desk", "proof", "proof-asset", "achievements", "journal", "competencies", "profile",
   "domain-affinity", "industry-affinity", "session-logs", "daily-gains", "exchange", "rolodex", "network-profile"];
-const SCREEN_FOR = { login: "auth", signup: "auth", otp: "auth", confirm: "confirm", session: "session", "achievement-new": "wizard", riasec: "riasec", wep: "wep" };
+const SCREEN_FOR = { login: "auth", signup: "auth", otp: "auth", confirm: "confirm", session: "session", "achievement-new": "wizard", riasec: "riasec", wep: "wep",
+  welcome: "intro", "first-things": "intro", "meet-team": "intro" };
 WORKSPACE_ROUTES.forEach((r) => (SCREEN_FOR[r] = "workspace"));
 const displayName = () => state.name || state.email.split("@")[0];
 
@@ -129,6 +131,7 @@ function render() {
   if (screen === "auth") renderAuth(route);
   else if (screen === "onboarding") renderOnboarding(route);
   else if (screen === "confirm") startConfirm();
+  else if (screen === "intro") renderIntro(route, param); // onboarding.js
   else if (screen === "session") renderSession(); // session.js
   else if (screen === "wizard") renderWizard(); // impact.js
   else if (screen === "riasec") renderRiasec(param); // riasec.js
@@ -182,7 +185,7 @@ function renderOnboarding(step) {
 // smart-animating the line list up one row (37px) with ease-out 0.3s — see CSS.
 // Its last variant has no auto-advance in Figma; we hold it for one more beat, then
 // land on Assessments (that hand-off isn't wired in the prototype).
-const TICKER_STEP_MS = 3000;
+const TICKER_STEP_MS = 1400;
 const TICKER_LINES = 5;
 let confirmTimers = [];
 
@@ -195,7 +198,7 @@ function startConfirm() {
   for (let i = 1; i < TICKER_LINES; i++) {
     confirmTimers.push(setTimeout(() => track.style.setProperty("--step", i), i * TICKER_STEP_MS));
   }
-  confirmTimers.push(setTimeout(() => go("assessments"), TICKER_LINES * TICKER_STEP_MS));
+  confirmTimers.push(setTimeout(() => go("camp"), TICKER_LINES * TICKER_STEP_MS)); // then the PGM pops up in Camp
 }
 
 function stopConfirm() {

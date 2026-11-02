@@ -1,0 +1,88 @@
+/* Onboarding after signup (onboarding.js, Figma 4QrfNXX0SjTt7aug0ZjQ8z 1:1225). Colours, radii and spacing follow the
+   frames; type uses Life's own scale (Lato headings, Satoshi body). */
+
+.intro { min-height: 100vh; flex-direction: column; align-items: center; background: var(--neutral-50); }
+
+/* ---------- Welcome to Life ---------- */
+.intro--welcome { justify-content: center; background: #fff; }
+.ob-welcome { display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 40px !important; background: none; border: 0; cursor: pointer; }
+.ob-welcome__logo { width: 56px; height: 56px; border-radius: 224px; object-fit: cover; animation: ob-pop 0.6s ease-out both; }
+.ob-welcome__text { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--neutral-800); text-align: center; animation: ob-rise 0.6s ease-out 0.7s both; }
+.ob-welcome__hello { font-family: var(--font-satoshi); font-weight: 300; font-size: 24px; letter-spacing: 1.2px; line-height: 1.5; }
+.ob-welcome__title { font-family: var(--font-lato); font-weight: 700; font-size: 28px; letter-spacing: 0.56px; line-height: 1.5; }
+.ob-welcome__title b { color: var(--caarya-red-500); }
+@keyframes ob-pop { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: none; } }
+@keyframes ob-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ob-welcome__logo, .ob-welcome__text { animation: none; } }
+
+/* ---------- First Things First ---------- */
+.ob-page { width: 100%; max-width: 760px; display: flex; flex-direction: column; gap: 40px; padding: 48px 24px 64px; }
+.ob-page .heading__title--red { color: var(--caarya-red-500); }
+.ob-dots { display: flex; justify-content: center; gap: 24px; }
+.ob-dots i { width: 8px; height: 8px; border: 1px solid var(--neutral-300); border-radius: 50%; }
+.ob-dots i.is-next { border-color: var(--caarya-red-500); }
+.ob-dots i.is-on { border-color: var(--caarya-red-500); background: var(--caarya-red-500); }
+.ob-doc { display: flex; flex-direction: column; align-items: flex-start; gap: 32px; }
+.ob-doc__title { width: 100%; }
+.ob-doc__title { margin: 0; font-family: var(--font-lato); font-weight: 700; font-size: 20px; letter-spacing: 0.4px; line-height: 1.5; text-transform: capitalize; color: var(--neutral-900); text-align: center; }
+.ob-card { width: 100%; border-radius: 16px; background: #fff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); }
+
+/* Code of conduct: icon + title, text below */
+.ob-rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 48px 40px; padding: 32px; }
+.ob-rule { display: flex; flex-direction: column; gap: 12px; }
+.ob-rule__title { display: flex; align-items: center; gap: 12px; font-family: var(--font-satoshi); font-weight: 700; font-size: 16px; letter-spacing: 0.32px; line-height: 1.5; color: var(--neutral-800); }
+.ob-rule__icon { display: flex; padding: 6px; border-radius: 8px; background: #fff6f5; }
+.ob-rule__icon img { width: 20px; height: 20px; }
+.ob-rule__text { font-family: var(--font-satoshi); font-size: 14px; letter-spacing: 0.28px; line-height: 1.6; color: var(--neutral-500); }
+
+/* Workplace guidelines: illustration + text */
+.ob-guides { display: flex; flex-direction: column; gap: 56px; padding: 40px 32px; }
+.ob-guide { display: flex; align-items: center; gap: 32px; }
+.ob-guide:nth-child(even) { flex-direction: row-reverse; }
+.ob-guide__art { width: 220px; height: 144px; flex-shrink: 0; object-fit: contain; }
+.ob-guide__text { flex: 1; min-width: 0; font-family: var(--font-satoshi); font-size: 14px; letter-spacing: 0.28px; line-height: 1.6; color: var(--neutral-500); }
+.ob-guide__text b { font-weight: 700; color: var(--caarya-red-500); }
+
+/* Signature: dashed line, the name writes in letter by letter (Mr De Haviland, as in the component) */
+.ob-sign { width: 100%; max-width: 360px; padding: 0 40px; border-bottom: 1px dashed var(--neutral-400); }
+.ob-sign__pad { position: relative; width: 100%; min-height: 64px; display: flex; align-items: center; padding: 8px !important; background: none; border: 0; cursor: pointer; text-align: left; }
+.ob-sign__pad:disabled { cursor: default; }
+.ob-sign__name { font-family: "Mr De Haviland", cursive; font-size: 32px; letter-spacing: 1.6px; line-height: 1.5; color: #000; white-space: nowrap; }
+.ob-sign__name i { font-style: normal; opacity: 0; transition: opacity 0.08s linear; }
+.ob-sign__name i.is-on, .ob-sign.is-signed .ob-sign__name i { opacity: 1; }
+.ob-sign__hint { position: absolute; left: 8px; bottom: 6px; font-family: var(--font-satoshi); font-size: 12px; letter-spacing: 0.24px; color: var(--neutral-400); transition: opacity 0.15s; }
+.ob-sign__pad:hover .ob-sign__hint { color: var(--neutral-800); }
+.ob-sign.is-signing .ob-sign__hint, .ob-sign.is-signed .ob-sign__hint { opacity: 0; }
+
+/* "I have read…" checkbox: double teal ring */
+.ob-check { width: 100%; display: flex; align-items: center; gap: 16px; padding: 0 !important; background: none; border: 0; border-radius: 4px; text-align: left; cursor: pointer; }
+.ob-check__box { display: flex; padding: 8px; border-radius: 192px; background: rgba(51, 214, 225, 0.08); }
+.ob-check__box > span { display: flex; padding: 12px; border-radius: 80px; background: rgba(51, 214, 225, 0.08); }
+.ob-check__box img { width: 16px; height: 16px; }
+.ob-check__text { flex: 1; min-width: 0; font-family: var(--font-satoshi); font-weight: 500; font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: var(--neutral-800); }
+
+/* Red pill button (grey until signed) */
+.ob-btn { width: 100%; max-width: 360px; display: inline-flex; align-items: center; justify-content: center; gap: 12px; padding: 16px 24px 16px 32px !important; border: 0; border-radius: 224px; background: var(--caarya-red-500) !important; font-family: var(--font-satoshi); font-weight: 700; font-size: 14px; letter-spacing: 0.42px; line-height: 1.5; text-transform: uppercase; color: #fff !important; transition: background 0.15s, filter 0.15s; }
+.ob-btn:not(:disabled):hover { filter: brightness(1.06); }
+.ob-btn:disabled { background: var(--neutral-400) !important; cursor: not-allowed; }
+.ob-btn img { width: 16px; height: 16px; }
+.ob-doc .ob-btn { margin-bottom: 40px; }
+
+/* ---------- Meet your managers (1:1422) ---------- */
+.intro--meet-team { background: #1f2426; background-image: radial-gradient(circle at 50% 22%, rgba(51, 214, 225, 0.1), transparent 34%), radial-gradient(circle at 50% 62%, rgba(51, 214, 225, 0.08), transparent 30%); }
+.ob-team { width: 100%; max-width: 640px; display: flex; flex-direction: column; align-items: center; gap: 80px; padding: 48px 24px 64px; }
+.ob-mgr { width: 100%; display: flex; flex-direction: column; gap: 16px; }
+.ob-mgr h2 { margin: 0 0 8px; font-family: var(--font-lato); font-weight: 700; font-size: 20px; letter-spacing: 0.4px; line-height: 1.5; text-transform: capitalize; color: var(--neutral-50); }
+.ob-mgr__icon { width: 32px; height: 32px; }
+.ob-mgr p { font-family: var(--font-satoshi); font-size: 16px; letter-spacing: 0.64px; line-height: 1.5; color: var(--neutral-100); }
+.ob-video { height: 240px; display: flex; align-items: center; justify-content: center; margin: 8px 0; border-radius: 16px; background: #3a4042; }
+.ob-video img { width: 40px; height: 40px; }
+.ob-cards { display: flex; gap: 24px; margin: 8px 0; overflow-x: auto; scrollbar-width: none; }
+.ob-info { width: 200px; height: 240px; flex-shrink: 0; display: flex; align-items: flex-end; padding: 16px; border-radius: 16px; background: #3a4042; font-family: var(--font-lato); font-weight: 700; font-size: 16px; letter-spacing: 0.32px; line-height: 1.5; text-transform: capitalize; color: var(--neutral-50); }
+.ob-team .ob-btn { max-width: none; padding: 16px 24px !important; }
+
+@media (max-width: 900px) {
+  .ob-rules { grid-template-columns: minmax(0, 1fr); }
+  .ob-guide, .ob-guide:nth-child(even) { flex-direction: column; }
+  .ob-guide__art { width: 100%; }
+}
