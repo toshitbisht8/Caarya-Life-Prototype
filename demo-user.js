@@ -169,4 +169,14 @@ function loadDemoUser() {
   const picks = [2, 0, 1, 0, 1, 1, 1, 0, 1, 2, 2, 1, 1];
   state.wep.answers = Object.fromEntries(WEP_QUESTIONS.map((q, i) => [q[0], q[5][Math.min(picks[i] ?? 0, q[5].length - 1)][0]]));
   state.wep.result = { answers: { ...state.wep.answers }, completedAt: new Date(daysAgo(68)) }; // wep.js
+
+  // ---------- Camp inbox (camp.js): history, then what's current; the newest two still unread ----------
+  const hoursAgo = (h) => Date.now() - h * 3600000;
+  state.camp.inbox = [
+    ["welcome", "pgm", "Welcome to Life, Arjun. I’ll walk with you as you grow across your three roles.", "Open Growth Track", "explore", daysAgo(72)],
+    ["first-card", "pgm", "Your first achievement card is live. Recruiters can now see the skills and impact behind your Tiffinly prototype.", "Explore work", "explore", daysAgo(40)],
+    ["graded", "pgm", "A community mentor graded your ‘Refillo launch targets’ artefact. Open the desk to see their feedback.", "Open desk", "desk", daysAgo(3)],
+  ].map(([id, who, text, cta, action, at]) => ({ id, who, text, cta, action, at: typeof at === "number" ? at : at.getTime(), read: true }));
+  syncMessages(true); // camp.js: the current Talent Manager and desk updates
+  state.camp.inbox.slice(-2).forEach((m, i) => Object.assign(m, { read: false, at: hoursAgo(i ? 1 : 5) }));
 }

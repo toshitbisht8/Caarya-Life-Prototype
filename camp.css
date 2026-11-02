@@ -12,7 +12,16 @@
 .camp-msg { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--shades-50); }
 .camp-msg__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
 .camp-msg__from { display: flex; align-items: center; gap: 8px; font-family: var(--font-lato); font-size: 10px; line-height: 1.5; text-transform: capitalize; color: var(--neutral-400); }
-.camp-msg__text { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-family: var(--font-satoshi); font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: var(--neutral-800); }
+.camp-msg__text { font-family: var(--font-satoshi); font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: var(--neutral-800); }
+/* Unread: tinted row with a red rule and a "New" tag; read on open */
+.camp-msg { position: relative; cursor: default; transition: background 0.2s; }
+.camp-msg.is-new { background: #fff8f7; box-shadow: inset 3px 0 0 var(--caarya-red-500); }
+.camp-msg__time { text-transform: none; color: var(--neutral-400); }
+.camp-msg__time::before { content: "•"; margin-right: 8px; }
+.camp-msg__new { padding: 0 6px; border-radius: 40px; background: var(--caarya-red-500); font-family: var(--font-satoshi); font-weight: 700; font-size: 9px; letter-spacing: 0.36px; line-height: 16px; text-transform: uppercase; color: #fff; }
+.camp-msg:not(.is-new) .camp-msg__text { color: var(--neutral-500); }
+.camp-msg__done { flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; padding: 8px; font-family: var(--font-satoshi); font-weight: 700; font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; text-transform: uppercase; color: #2bb656; }
+.camp-msg__done img { width: 16px; height: 16px; }
 .camp-msg__cta { flex-shrink: 0; display: inline-flex; align-items: center; gap: 8px; padding: 8px !important; border-radius: 44px; font-family: var(--font-satoshi); font-weight: 700; font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; text-transform: uppercase; color: var(--neutral-900); }
 .camp-msg__cta:hover { background: var(--neutral-100) !important; }
 .camp-msg__cta img { width: 16px; height: 16px; }
@@ -124,6 +133,13 @@
 .menu__camp { width: 100%; padding: 8px; }
 .menu__camp .inbox { background: var(--shades-50); text-decoration: none; transition: background 0.15s; }
 .menu__camp .inbox:hover, .menu__camp .inbox.is-focus { background: linear-gradient(to right, #dcf1ff, #ffffff); }
+.menu__camp .inbox { position: relative; flex-wrap: nowrap; align-items: center; }
+.menu__camp .inbox__text { background: none; }
+/* Unread count beside CAMP */
+.inbox__badge { margin-left: auto; min-width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; padding: 0 6px; border-radius: 40px; background: var(--caarya-red-500); font-family: var(--font-satoshi); font-weight: 700; font-size: 10px; letter-spacing: 0.2px; color: #fff; animation: inbox-pop 0.3s ease-out; }
+.inbox__badge[hidden] { display: none; }
+@keyframes inbox-pop { from { transform: scale(0.4); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .inbox__badge { animation: none; } }
 
 /* ---------- Nav bar user profile (Figma 1353:12845): credit ring round the avatar, account menu ---------- */
 .user-menu-wrap { position: relative; }

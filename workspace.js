@@ -63,6 +63,7 @@ function renderWorkspace(route, param) {
   // New users unlock menu items as they go (camp.js); a locked page sends them back to Camp.
   if (route === "profile" && isUnlocked(route)) state.camp.profileSeen = true; // the Talent Manager's message has done its job
   syncCampUnlocks();
+  syncMessages(); // camp.js: anything newly due lands in Camp
   if (!isUnlocked(route)) {
     showToast("Finish the next step in Camp to unlock this section");
     return go("camp");

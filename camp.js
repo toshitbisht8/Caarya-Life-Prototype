@@ -169,38 +169,72 @@ function openManageServices() {
 const setupDone = () => CAMP_STEPS.every(([, status]) => status());
 
 // ---------- Messages ----------
-// The PGM walks a new user through setup; once it's all done, the Talent Manager opens Measured Excellence.
-// Then activity updates from the work itself.
-function campMessages() {
-  const msgs = [];
-  if (!state.camp.expDone) {
-    msgs.push(["pgm", "Good job setting up your role preferences. Now, let’s understand where you currently stand with those roles.", "Start now", "pgm-flow"]);
-  } else {
-    if (!state.assets.length) msgs.push(["pgm", "I’ve unlocked the proof of work section for you. You can validate your work experience and track your growth here by adding proof of the work you do.", "Start now", "add-proof"]);
-    if (!Object.keys(state.tSkills).length) msgs.push(["pgm", "Set up how you interact with transferable skills.", "Start now", "transferable"]);
-    if (!state.tools.length) msgs.push(["pgm", "Add your tool stack and let recruiters know which tools you’re proficient with.", "Start now", "tools"]);
-  }
-  if (setupDone()) {
-    if (state.camp.fresh) {
-      msgs.push(["talent", TM_DONE[0], "Details", "talent-details"]);
-    } else {
-      const fresh = myRoles().flatMap(catalogFor).filter((id) => !myRoles().some((r) => trackFor(r).includes(id))).length;
-      const started = myRoles().some((r) => trackFor(r).length);
-      msgs.push(["talent", !started && !fresh
-        ? "Your Growth Track is open. Explore work opportunities for your roles and pick up your first work order."
-        : fresh
-        ? `There ${fresh === 1 ? "is 1 work order" : `are ${fresh} work orders`} recommended for your roles that you haven’t picked up yet.`
-        : "You’ve picked up every work order recommended for your roles so far. Explore all work to find more.", "Explore work", "explore"]);
-    }
-  }
+// Camp is an inbox: each message is posted once, when its moment comes, and stays there. New ones are unread
+// (highlighted) until opened; posting one lights the dot by CAMP and shows a toast pointing to Camp.
+// { id, who, text, cta, action, at, read }
+state.camp.inbox = [];
 
-  // Activity updates from the desk
+const SYNERGY = ["rolodex", "network-profile"];
+const COMMUNITY = ["daily-gains", "exchange"];
+const firstName = () => displayName().split(" ")[0];
+const isFresh = () => state.camp.fresh;
+
+// [id, when to post, manager, text, CTA label, action, done (CTA replaced by a tick), on post]
+const MESSAGE_DEFS = [
+  ["exp", () => isFresh(), "pgm", () => "Good job setting up your role preferences. Now, let’s understand where you currently stand with those roles.", "Start now", "pgm-flow", () => state.camp.expDone],
+  ["proof", () => isFresh() && state.camp.expDone, "pgm", () => "I’ve unlocked the proof of work section for you. You can validate your work experience and track your growth here by adding proof of the work you do.", "Add proof", "add-proof", () => state.assets.length > 0],
+  ["transferable", () => isFresh() && state.camp.expDone, "pgm", () => "Set up how you interact with transferable skills.", "Start now", "transferable", () => Object.keys(state.tSkills).length > 0],
+  ["tools", () => isFresh() && state.camp.expDone, "pgm", () => "Add your tool stack and let recruiters know which tools you’re proficient with.", "Start now", "tools", () => state.tools.length > 0],
+  ["first-asset", () => isFresh() && state.assets.length > 0, "pgm", () => `Congratulations on adding your first proof of work, ${firstName()}! If you want to, you can also turn your assets into achievement cards that show the skills and impact behind them.`, "Create achievement card", "achievement", () => state.achievements.length > 0],
+  ["tm-done", () => isFresh() && setupDone(), "talent", () => TM_DONE[0], "Details", "talent-details"],
+  ["assessments", () => isFresh() && setupDone(), "pgm", () => "While your career report is being generated, complete some basic assessments. They’ll help enhance your ME profile.", "Take assessments", "assessments", null, () => unlock("assessments")],
+  ["synergy", () => isFresh() && setupDone(), "talent", () => "Unlock Synergy Intelligence? See your network: the people you’ve worked with, how you work together and who can open doors for you.", "Unlock", "synergy", () => SYNERGY.every((i) => state.camp.unlocked.has(i))],
+  ["community", () => isFresh() && setupDone(), "pgm", () => "Unlock Community Intelligence? Grow with the community through daily knowledge gains and an exchange of ideas with your peers.", "Unlock", "community", () => COMMUNITY.every((i) => state.camp.unlocked.has(i))],
+  // Returning users: the Talent Manager's pointer to work
+  ["explore", () => !isFresh(), "talent", () => {
+    const open = myRoles().flatMap(catalogFor).filter((id) => !myRoles().some((r) => trackFor(r).includes(id))).length;
+    return open ? `There ${open === 1 ? "is 1 work order" : `are ${open} work orders`} recommended for your roles that you haven’t picked up yet.`
+      : "You’ve picked up every work order recommended for your roles so far. Explore all work to find more.";
+  }, "Explore work", "explore"],
+];
+
+// Activity from the desk becomes a message each time something new happens.
+function deskEvents() {
   const vcs = Object.entries(state.deskData).flatMap(([wo, p]) => Object.entries(p.vcs).map(([vc, v]) => ({ wo: Number(wo), vc: Number(vc), v })));
+  const events = [];
   const pending = vcs.flatMap(({ v }) => v.artefacts).filter((a) => !a.level).length;
-  if (pending) msgs.push(["pgm", `${pending} of your submissions ${pending === 1 ? "is" : "are"} waiting for a community mentor’s review. I’ll let you know when ${pending === 1 ? "it’s" : "they’re"} graded.`, "Open desk", "desk"]);
-  const booked = vcs.find(({ wo, v }) => v.mentor && state.growth.desk.has(wo)); // the work order in focus
-  if (booked) msgs.push(["pgm", `Your mentor session for ‘${vcInfo(booked.wo, booked.vc).name}’ is booked for ${booked.v.mentor}.`, "Open desk", "desk"]);
-  return msgs;
+  if (pending) events.push([`pending-${pending}`, "pgm", `${pending} of your submissions ${pending === 1 ? "is" : "are"} waiting for a community mentor’s review. I’ll let you know when ${pending === 1 ? "it’s" : "they’re"} graded.`, "Open desk", "desk"]);
+  vcs.filter(({ wo, v }) => v.mentor && state.growth.desk.has(wo)).forEach(({ wo, vc, v }) =>
+    events.push([`mentor-${wo}-${vc}`, "pgm", `Your mentor session for ‘${vcInfo(wo, vc).name}’ is booked for ${v.mentor}.`, "Open desk", "desk"]));
+  return events;
+}
+
+function postMessage(id, who, text, cta, action, quiet) {
+  if (state.camp.inbox.some((m) => m.id === id)) return false;
+  state.camp.inbox.push({ id, who, text, cta, action, at: Date.now(), read: !!quiet });
+  return true;
+}
+
+// Posts whatever is now due. `quiet` posts as already read, with no toast (used when seeding the demo's history).
+function syncMessages(quiet = false) {
+  let posted = 0;
+  MESSAGE_DEFS.forEach(([id, when, who, text, cta, action, , onPost]) => {
+    if (!when() || !postMessage(id, who, text(), cta, action, quiet)) return;
+    posted++;
+    onPost?.();
+  });
+  deskEvents().forEach(([id, who, text, cta, action]) => postMessage(id, who, text, cta, action, quiet) && posted++);
+  state.camp.inbox.forEach((m) => !m.read && msgDone(m) && (m.read = true)); // nothing left to do there
+  if (posted && !quiet) notifyNew(posted);
+}
+const unreadCount = () => state.camp.inbox.filter((m) => !m.read).length;
+const msgDone = (m) => MESSAGE_DEFS.find(([id]) => id === m.id)?.[6]?.() || false;
+
+// A toast with a way into Camp (not while Camp is open: the new rows are highlighted there already).
+function notifyNew(n) {
+  if (currentBase() === "camp") return;
+  const latest = state.camp.inbox.reduce((a, b) => (b.at >= a.at ? b : a));
+  showToast(n > 1 ? `${n} new messages in Camp` : `New message from your ${MANAGERS[latest.who][0]}`, { label: "Go to Camp", onClick: () => go("camp") });
 }
 
 // [summary shown in Camp, the rest shown under Details]
@@ -224,29 +258,46 @@ function openTalentDetails() {
   ov.querySelector("[data-tm]").addEventListener("click", () => { closeOverlay(); go("profile"); });
 }
 
+const unlockAndGo = (items, toast) => { unlock(...items); render(); showToast(toast); };
 const CAMP_ACTIONS = {
   "pgm-flow": () => openPgmFlow(),
   "add-proof": addProof,
   transferable: () => openTransferableFlow(),
   tools: () => openToolsFlow(),
+  achievement: () => { const a = state.assets[state.assets.length - 1]; a ? startWizard(a.id) : go("proof"); }, // impact.js
   "talent-details": openTalentDetails,
+  assessments: () => go("assessments"),
+  synergy: () => unlockAndGo(SYNERGY, "Synergy Intelligence unlocked: find Your Network in the menu"),
+  community: () => unlockAndGo(COMMUNITY, "Community Intelligence unlocked: find Your Knowledge Space in the menu"),
   explore: () => go("explore"),
   desk: () => go("desk"),
 };
 
-// Once set-up is done, the Talent Manager opens Measured Excellence. The rest of Life stays closed for new users.
+// Measured Excellence opens once set-up is done; Achievements once the first card exists.
 function syncCampUnlocks() {
   if (setupDone()) unlock("profile");
+  if (state.achievements.length) unlock("achievements");
 }
 
 // ---------- Page (Figma 1353:12201) ----------
-const msgRow = ([who, text, cta, action]) => `
-  <article class="camp-msg">
+// "Just now", "5 min ago", "3 h ago", "Yesterday", "28 Oct"
+function msgTime(t) {
+  const mins = Math.round((Date.now() - t) / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins} min ago`;
+  if (mins < 24 * 60) return `${Math.round(mins / 60)} h ago`;
+  if (mins < 48 * 60) return "Yesterday";
+  return new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+const msgRow = (m) => `
+  <article class="camp-msg${m.read ? "" : " is-new"}" data-msg="${m.id}">
     <div class="camp-msg__body">
-      <p class="camp-msg__from">${MANAGERS[who][1]}${MANAGERS[who][0]}</p>
-      <p class="camp-msg__text">${esc(text)}</p>
+      <p class="camp-msg__from">${MANAGERS[m.who][1]}${MANAGERS[m.who][0]}<span class="camp-msg__time">${msgTime(m.at)}</span>${m.read ? "" : `<span class="camp-msg__new">New</span>`}</p>
+      <p class="camp-msg__text">${esc(m.text)}</p>
     </div>
-    <button type="button" class="camp-msg__cta" data-camp-action="${action}">${esc(cta)}<img src="${CA}navigate-next.svg" alt="" /></button>
+    ${msgDone(m)
+      ? `<span class="camp-msg__done"><img src="${CA}done.svg" alt="" />Done</span>`
+      : `<button type="button" class="camp-msg__cta" data-camp-action="${m.action}">${esc(m.cta)}<img src="${CA}navigate-next.svg" alt="" /></button>`}
   </article>`;
 
 const campPage = document.getElementById("camp-page");
@@ -255,7 +306,7 @@ function renderCamp() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
   const first = displayName().split(" ")[0];
-  const msgs = campMessages();
+  const msgs = [...state.camp.inbox].sort((a, b) => b.at - a.at); // newest first
   campPage.innerHTML = `
     <div class="camp-head">
       <h1>${greeting}, ${esc(first)}</h1>
@@ -268,7 +319,17 @@ function renderCamp() {
     setTimeout(() => currentBase() === "camp" && openPgmFlow(), 350);
   }
 }
+// Opening a message (its row or its CTA) marks it read.
 campPage.addEventListener("click", (e) => {
+  const row = e.target.closest("[data-msg]");
+  if (!row) return;
+  const m = state.camp.inbox.find((x) => x.id === row.dataset.msg);
+  if (!m.read) {
+    m.read = true;
+    row.classList.remove("is-new");
+    row.querySelector(".camp-msg__new")?.remove();
+    syncInbox();
+  }
   const a = e.target.closest("[data-camp-action]");
   if (a) CAMP_ACTIONS[a.dataset.campAction]();
 });
@@ -300,11 +361,14 @@ roadPage.addEventListener("click", (e) => {
   (status() && edit ? edit : start)();
 });
 
-// Menu inbox widget: how many updates are waiting in Camp.
+// CAMP card in the menu: unread count, the dot on its icon and the badge beside it.
 function syncInbox() {
-  const n = campMessages().length;
+  const n = unreadCount();
   document.querySelector(".inbox__sub").textContent = n ? `${n} New Message${n === 1 ? "" : "s"}` : "All caught up";
   document.querySelector(".inbox__dot").hidden = !n;
+  const badge = document.querySelector(".inbox__badge");
+  badge.hidden = !n;
+  badge.textContent = n > 9 ? "9+" : n;
 }
 
 // ---------- PGM modals ----------
@@ -368,11 +432,11 @@ function openPgmFlow() {
     if (act === "next") {
       if (step > 0 && choices[roles[step - 1]] === undefined) { error = "Pick the option that fits you best to continue."; return draw(); }
       if (step < roles.length) { step++; return draw(); }
-      // Finish: the PGM unlocks Proof of Work (with Achievements) and takes the user there (FigJam 339:1035).
+      // Finish: the PGM unlocks Proof of Work and takes the user there (FigJam 339:1035).
       const first = !state.camp.expDone;
       state.camp.experience = choices;
       state.camp.expDone = true;
-      unlock("proof", "achievements");
+      unlock("proof");
       closeOverlay();
       if (!first) return render();
       go("proof");
@@ -410,28 +474,11 @@ function openProofUnlocked() {
   });
 }
 
-// After the first proof of work, the PGM points to achievements and back to Camp (FigJam 342:1267).
-// Returns true when it took over from the usual "asset added" toast.
-function campFirstAsset(asset) {
-  if (state.assets.length !== 1) return false;
-  const ov = openOverlay(`
-    <div class="pgm-modal pgm-modal--note" role="dialog" aria-modal="true" aria-labelledby="pgm-first-proof">
-      ${pgmHead("")}
-      <div class="pgm-modal__body">
-        <h2 id="pgm-first-proof">Your first proof of work is in.</h2>
-        <p>You can get your assets verified by an industry expert for more credibility with recruiters, or keep adding proof of your work.</p>
-        <p>You can also turn this asset into an achievement card that shows the skills and impact behind it.</p>
-      </div>
-      <footer class="pgm-modal__foot pgm-modal__foot--center">
-        <button type="button" class="pgm-ghost" data-pgm="camp">Back to Camp</button>
-        <button type="button" class="pgm-btn" data-pgm="card">Create achievement card <span aria-hidden="true">→</span></button>
-      </footer>
-    </div>`, "modal");
-  ov.addEventListener("click", (e) => {
-    const act = e.target.closest("[data-pgm]")?.dataset.pgm;
-    if (act === "camp") { closeOverlay(); go("camp"); }
-    if (act === "card") { closeOverlay(); startWizard(asset.id); } // impact.js
-  });
+// After the first proof of work the PGM sends a message (see MESSAGE_DEFS); nothing pops up.
+// Returns true when that message takes over from the usual "asset added" toast.
+function campFirstAsset() {
+  if (!isFresh() || state.assets.length !== 1) return false;
+  syncMessages(); // posts it and shows the "new message" toast
   return true;
 }
 
