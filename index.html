@@ -6,7 +6,7 @@
   <title>Caarya Life — Sign up</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Lato:ital,wght@0,400;0,700;1,700&family=Mr+De+Haviland&family=Poppins:wght@300;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Lato:ital,wght@0,400;0,700;1,400;1,700&family=Mr+De+Haviland&family=Poppins:wght@300;600&display=swap" rel="stylesheet" />
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,701&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="workspace.css" />
@@ -16,6 +16,8 @@
   <link rel="stylesheet" href="impact.css" />
   <link rel="stylesheet" href="identity.css" />
   <link rel="stylesheet" href="riasec.css" />
+  <link rel="stylesheet" href="camp.css" />
+  <link rel="stylesheet" href="onboarding.css" />
   <link rel="stylesheet" href="responsive.css" />
 </head>
 <body>
@@ -43,11 +45,6 @@
             <p class="heading__sub">Sign in to your student workspace</p>
           </div>
 
-          <div class="tabs" role="tablist">
-            <button class="tabs__tab" role="tab" data-tab="login">Login</button>
-            <button class="tabs__tab" role="tab" data-tab="signup">Signup</button>
-          </div>
-
           <!-- Login -->
           <form class="auth__form" data-view="login" novalidate>
             <div class="fields">
@@ -64,24 +61,8 @@
             <button class="btn btn--primary btn--lg btn--block" type="submit">
               Login <img src="assets/icons/next-link-20.svg" alt="" />
             </button>
-          </form>
-
-          <!-- Signup (not in Figma: collects the details the OTP + About screens rely on) -->
-          <form class="auth__form" data-view="signup" novalidate>
-            <div class="fields">
-              <label class="field">
-                <span class="field__label">Full Name</span>
-                <input class="input" name="name" placeholder="your full name" autocomplete="name" />
-              </label>
-              <label class="field">
-                <span class="field__label">Email</span>
-                <input class="input" name="email" type="email" placeholder="email@domain.com" autocomplete="email" />
-              </label>
-              <p class="error" data-error></p>
-            </div>
-            <button class="btn btn--primary btn--lg btn--block" type="submit">
-              Send OTP <img src="assets/icons/next-link-20.svg" alt="" />
-            </button>
+            <!-- Signing up happens in the profiling flow (profiling.html), which hands the new user back to Camp -->
+            <p class="auth__switch">Don’t have an account?<a href="#signup" data-signup>Sign Up</a></p>
           </form>
 
           <!-- OTP -->
@@ -223,6 +204,9 @@
   </section>
 
   <!-- ============ CONFIRMATION (Figma 1010:40639) ============ -->
+  <!-- ============ ONBOARDING after signup: welcome, first things first, meet the managers (onboarding.js) ============ -->
+  <section class="screen intro" data-screen="intro"></section>
+
   <section class="screen confirm" data-screen="confirm">
     <div class="confirm__content">
       <div class="heading confirm__heading">
@@ -306,6 +290,9 @@
       <!-- Profile (Figma 1007:33866), rendered by profile.js -->
       <main class="workspace__main gt profile" data-page="profile" id="profile-page"></main>
 
+      <!-- Camp: landing page + inbox, rendered by camp.js -->
+      <main class="workspace__main gt camp" data-page="camp" id="camp-page" hidden></main>
+
       <!-- Coming-soon sections (Figma 1102:37515), rendered by workspace.js -->
       <main class="workspace__main gt impact" data-page="soon" id="soon-page" hidden></main>
     </div>
@@ -343,6 +330,8 @@
   <script src="riasec.js"></script>
   <script src="wep.js"></script>
   <script src="particles.js"></script>
+  <script src="camp.js"></script>
+  <script src="onboarding.js"></script>
   <script src="demo-user.js"></script>
   <script src="mentor-sim.js"></script>
 </body>

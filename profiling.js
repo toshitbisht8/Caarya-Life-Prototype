@@ -90,6 +90,17 @@ const freshState = () => ({
 });
 let state = freshState();
 
+// Signing up from Caarya Life (index.html): prefill what Life already knows, and hand the result back to Life
+// (camp.js reads it and lands the new user in Camp). Opened on its own, the flow ends on its usual done screen.
+const FROM_LIFE = (() => { try { return JSON.parse(sessionStorage.getItem("caarya-life-signup") || "null"); } catch { return null; } })();
+function handToLife() {
+  try {
+    sessionStorage.setItem("caarya-life-handoff", "new");
+    sessionStorage.removeItem("caarya-life-signup");
+  } catch {}
+  location.href = "index.html#camp";
+}
+
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 const el = (tag, cls, text) => {
@@ -698,6 +709,7 @@ function submit() {
   try {
     localStorage.setItem("caarya-profiling-last", JSON.stringify(payload));
   } catch {}
+  if (FROM_LIFE) return handToLife();
   go("done");
 }
 
@@ -710,12 +722,26 @@ $("[data-retake]").addEventListener("click", () => {
   skillsEl.replaceChildren();
   artefactsEl.replaceChildren();
   resetWelcome();
+  prefillFromLife();
   syncRoles();
   syncPriority();
   syncGigs();
   syncNano();
   go("welcome");
 });
+
+// "Visit Caarya Life" on the done screen signs the new user straight into Life.
+$("[data-visit-life]").addEventListener("click", () => {
+  try { sessionStorage.setItem("caarya-life-handoff", "new"); } catch {}
+});
+
+// Prefill from Life's signup form.
+function prefillFromLife() {
+  if (!FROM_LIFE) return;
+  $('[data-step="about"]').elements.name.value = FROM_LIFE.name || "";
+  $('[data-step="contact"]').elements.email.value = FROM_LIFE.email || "";
+}
+prefillFromLife();
 
 // ---------- Back to top ----------
 const toTop = $(".pf-to-top");

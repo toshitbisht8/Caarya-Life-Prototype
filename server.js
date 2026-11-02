@@ -27,7 +27,7 @@ http
         res.writeHead(404).end("Not found");
         return;
       }
-      res.writeHead(200, { "Content-Type": TYPES[path.extname(file)] || "application/octet-stream" });
+      res.writeHead(200, { "Content-Type": TYPES[path.extname(file)] || "application/octet-stream", "Cache-Control": "no-cache" }); // revalidate so edits show on reload
       res.end(data);
     });
   })

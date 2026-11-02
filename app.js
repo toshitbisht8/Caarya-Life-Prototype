@@ -76,7 +76,6 @@ const COLLEGES = [
 
 // ---------- State ----------
 const state = {
-  authTab: "login",
   name: "",
   email: "",
   roles: new Set(),
@@ -90,12 +89,14 @@ const ROUTES = [
   "login", "signup", "otp", "about", "roles", "industries", "confirm",
   "assessments", "growth", "explore", "explore-all", "work-order", "desk", "session",
   "proof", "proof-asset", "achievements", "achievement-new", "journal", "competencies", "profile", "riasec", "wep",
-  "domain-affinity", "industry-affinity", "session-logs", "daily-gains", "exchange", "rolodex", "network-profile",
+  "domain-affinity", "industry-affinity", "session-logs", "daily-gains", "exchange", "rolodex", "network-profile", "camp",
+  "welcome", "first-things", "meet-team",
 ];
 const STEPS = ["about", "roles", "industries"];
-const WORKSPACE_ROUTES = ["assessments", "growth", "explore", "explore-all", "work-order", "desk", "proof", "proof-asset", "achievements", "journal", "competencies", "profile",
+const WORKSPACE_ROUTES = ["camp", "assessments", "growth", "explore", "explore-all", "work-order", "desk", "proof", "proof-asset", "achievements", "journal", "competencies", "profile",
   "domain-affinity", "industry-affinity", "session-logs", "daily-gains", "exchange", "rolodex", "network-profile"];
-const SCREEN_FOR = { login: "auth", signup: "auth", otp: "auth", confirm: "confirm", session: "session", "achievement-new": "wizard", riasec: "riasec", wep: "wep" };
+const SCREEN_FOR = { login: "auth", signup: "auth", otp: "auth", confirm: "confirm", session: "session", "achievement-new": "wizard", riasec: "riasec", wep: "wep",
+  welcome: "intro", "first-things": "intro", "meet-team": "intro" };
 WORKSPACE_ROUTES.forEach((r) => (SCREEN_FOR[r] = "workspace"));
 const displayName = () => state.name || state.email.split("@")[0];
 
@@ -130,6 +131,7 @@ function render() {
   if (screen === "auth") renderAuth(route);
   else if (screen === "onboarding") renderOnboarding(route);
   else if (screen === "confirm") startConfirm();
+  else if (screen === "intro") renderIntro(route, param); // onboarding.js
   else if (screen === "session") renderSession(); // session.js
   else if (screen === "wizard") renderWizard(); // impact.js
   else if (screen === "riasec") renderRiasec(param); // riasec.js
@@ -151,8 +153,7 @@ function animateIn(el) {
 }
 
 function renderAuth(view) {
-  if (view !== "otp") state.authTab = view;
-  $$(".tabs__tab").forEach((t) => t.classList.toggle("is-active", t.dataset.tab === state.authTab));
+  if (view === "signup") return startProfiling(); // camp.js: signup is the profiling flow
   $$(".auth__form").forEach((f) => f.classList.toggle("is-active", f.dataset.view === view));
   $$("[data-error]").forEach((e) => (e.textContent = ""));
 
@@ -184,7 +185,7 @@ function renderOnboarding(step) {
 // smart-animating the line list up one row (37px) with ease-out 0.3s — see CSS.
 // Its last variant has no auto-advance in Figma; we hold it for one more beat, then
 // land on Assessments (that hand-off isn't wired in the prototype).
-const TICKER_STEP_MS = 3000;
+const TICKER_STEP_MS = 1400;
 const TICKER_LINES = 5;
 let confirmTimers = [];
 
@@ -197,7 +198,7 @@ function startConfirm() {
   for (let i = 1; i < TICKER_LINES; i++) {
     confirmTimers.push(setTimeout(() => track.style.setProperty("--step", i), i * TICKER_STEP_MS));
   }
-  confirmTimers.push(setTimeout(() => go("assessments"), TICKER_LINES * TICKER_STEP_MS));
+  confirmTimers.push(setTimeout(() => go("camp"), TICKER_LINES * TICKER_STEP_MS)); // then the PGM pops up in Camp
 }
 
 function stopConfirm() {
@@ -208,7 +209,6 @@ function stopConfirm() {
 window.addEventListener("hashchange", render);
 
 // ---------- Auth ----------
-$$(".tabs__tab").forEach((tab) => tab.addEventListener("click", () => go(tab.dataset.tab)));
 
 $('[data-view="login"]').addEventListener("submit", (e) => {
   e.preventDefault();
@@ -221,24 +221,13 @@ $('[data-view="login"]').addEventListener("submit", (e) => {
   // Demo account (demo-user.js): skips the OTP and lands in a seasoned profile.
   if (DEMO_LOGINS.includes(username.toLowerCase())) {
     loadDemoUser();
-    return loggingIn(() => go("growth"));
+    return loggingIn(() => go("camp"));
   }
   state.name = username.includes("@") ? "" : username;
   state.email = username.includes("@") ? username : "";
   go("otp");
 });
 
-$('[data-view="signup"]').addEventListener("submit", (e) => {
-  e.preventDefault();
-  const f = e.target;
-  const name = f.name.value.trim();
-  const email = f.email.value.trim();
-  if (!name) return ($("[data-error]", f).textContent = "Enter your full name.");
-  if (!/^\S+@\S+\.\S+$/.test(email)) return ($("[data-error]", f).textContent = "Enter a valid email address.");
-  state.name = name;
-  state.email = email;
-  go("otp");
-});
 
 // OTP boxes: one digit each, auto-advance, backspace goes back.
 // Multi-digit input (paste, SMS autofill) spreads across the following boxes.
@@ -271,7 +260,11 @@ $('[data-view="otp"]').addEventListener("submit", (e) => {
     $("[data-error]", e.target).textContent = "Enter all 6 digits. Any code works in this prototype.";
     return;
   }
-  state.authTab === "login" ? loggingIn(() => go("about")) : go("about");
+  // Logging in lands in Camp; a returning user's saved profile is picked up when it's theirs.
+  const saved = savedProfile();
+  const who = (state.name || state.email).toLowerCase();
+  if (saved && [saved.about?.name, saved.contact?.email].some((v) => v && v.toLowerCase() === who)) applyProfile(saved, false);
+  loggingIn(() => go("camp"));
 });
 
 // "Logging in" loader after a successful sign-in: the logo pulses while a bar fills, then `next` runs.
