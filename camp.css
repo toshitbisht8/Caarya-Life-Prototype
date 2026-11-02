@@ -5,30 +5,42 @@
 .camp > * { width: 100%; max-width: 1400px; margin: 0 auto; }
 .camp-head h1 { font-family: var(--font-lato); font-weight: 700; font-size: 20px; letter-spacing: 0.4px; line-height: 1.5; text-transform: capitalize; color: var(--neutral-800); }
 .camp-head p { font-family: var(--font-satoshi); font-size: 12px; letter-spacing: 0.48px; line-height: 1.5; color: var(--neutral-500); }
-.camp-block { display: flex; flex-direction: column; gap: 16px; }
-.camp-block--msgs { gap: 8px; }
-.camp-block__head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.camp-kicker { font-family: var(--font-lato); font-style: italic; font-weight: 400; font-size: 14px; letter-spacing: 0.56px; line-height: 1.5; color: var(--neutral-500); }
-.camp-all { padding: 8px !important; border-radius: 44px; font-family: var(--font-satoshi); font-weight: 700; font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; text-transform: uppercase; color: var(--neutral-900); }
-.camp-all:hover { background: var(--neutral-100) !important; }
 .camp-empty { font-size: 14px; color: var(--neutral-500); }
 
-/* Message cards from the manager personas */
-.camp-msgs { display: flex; flex-wrap: wrap; gap: 16px; }
-.camp-msgs .camp-msg { flex: 0 1 320px; min-width: 0; }
-.camp-msg { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 13px; border: 1px solid var(--neutral-100); border-radius: 12px; background: var(--shades-50); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1); }
-.camp-msg__from { width: 100%; display: flex; align-items: center; gap: 8px; font-family: var(--font-lato); font-size: 10px; line-height: 1.5; text-transform: capitalize; color: var(--neutral-400); }
-.camp-msg__text { width: 100%; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-family: var(--font-satoshi); font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: var(--neutral-800); }
-.camp-msg__cta { display: inline-flex; align-items: center; gap: 8px; padding: 8px !important; border-radius: 44px; font-family: var(--font-satoshi); font-weight: 700; font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; text-transform: uppercase; color: var(--neutral-900); }
+/* Messages from the manager personas: one full-width row each, 1px dividers (Figma 1353:12201) */
+.camp-msgs { display: flex; flex-direction: column; gap: 1px; background: var(--neutral-100); }
+.camp-msg { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--shades-50); }
+.camp-msg__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.camp-msg__from { display: flex; align-items: center; gap: 8px; font-family: var(--font-lato); font-size: 10px; line-height: 1.5; text-transform: capitalize; color: var(--neutral-400); }
+.camp-msg__text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-satoshi); font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: var(--neutral-800); }
+/* Unread: tinted row with a red rule and a "New" tag; read on open */
+.camp-msg { position: relative; cursor: pointer; transition: background 0.2s; }
+.camp-msg:hover { background: var(--neutral-50); }
+.camp-msg.is-new:hover { background: #fff1ef; }
+.camp-msg:focus-visible { outline: 2px solid var(--neutral-800); outline-offset: -2px; }
+.pgm-modal__from .camp-msg__time { margin-left: 4px; }
+.camp-msg.is-new { background: #fff8f7; box-shadow: inset 3px 0 0 var(--caarya-red-500); }
+.camp-msg__time { text-transform: none; color: var(--neutral-400); }
+.camp-msg__time::before { content: "•"; margin-right: 8px; }
+.camp-msg__new { padding: 0 6px; border-radius: 40px; background: var(--caarya-red-500); font-family: var(--font-satoshi); font-weight: 700; font-size: 9px; letter-spacing: 0.36px; line-height: 16px; text-transform: uppercase; color: #fff; }
+.camp-msg:not(.is-new) .camp-msg__text { color: var(--neutral-500); }
+.camp-msg__done { flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; padding: 8px; font-family: var(--font-satoshi); font-weight: 700; font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; text-transform: uppercase; color: #2bb656; }
+.camp-msg__done img { width: 16px; height: 16px; }
+.camp-msg__cta { flex-shrink: 0; display: inline-flex; align-items: center; gap: 8px; padding: 8px !important; border-radius: 44px; font-family: var(--font-satoshi); font-weight: 700; font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; text-transform: uppercase; color: var(--neutral-900); }
 .camp-msg__cta:hover { background: var(--neutral-100) !important; }
 .camp-msg__cta img { width: 16px; height: 16px; }
 .camp-avatar { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; flex-shrink: 0; border-radius: 120px; overflow: hidden; }
 .camp-avatar img { width: 8px; height: 8px; object-fit: cover; }
 .camp-avatar--pgm { background: #ffe9e5; }
 .camp-avatar--talent { background: #edffff; }
-/* View All drawer: full text, no clamp */
-.camp-drawer { gap: 16px; }
-.camp-drawer .camp-msg__text { display: block; }
+
+/* Growth Track for new users (Figma 1353:12726): centred intro over the checklist */
+.road { width: 100%; max-width: 1400px; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 56px; padding: 32px; }
+.road__head { display: flex; flex-direction: column; gap: 4px; text-align: center; }
+.road__head h1 { margin: 0; font-family: var(--font-lato); font-weight: 700; font-size: 16px; letter-spacing: 0.32px; line-height: 1.5; text-transform: capitalize; color: var(--neutral-800); }
+.road__head p { font-family: var(--font-satoshi); font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; color: var(--neutral-500); }
+.road__head p + p { margin-top: 12px; }
+.road .camp-steps { width: 100%; }
 
 /* Road To Career Acceleration */
 .camp-steps { max-width: 560px; display: flex; flex-direction: column; gap: 16px; margin: 0; padding: 16px; list-style: none; border-radius: 20px; background: var(--shades-50); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1); }
@@ -120,3 +132,47 @@
 #competencies-page .page-header__sub { letter-spacing: 0.48px; }
 .cp-tab { font-size: 16px; letter-spacing: 0.64px; }
 @media (max-width: 1024px) { .cp-tab { padding: 8px 16px !important; } }
+
+/* ---------- Menu: CAMP card under the logo (Figma 1365:42807); tinted while Camp is open ---------- */
+.menu__camp { width: 100%; padding: 8px; }
+.menu__camp .inbox { background: var(--shades-50); text-decoration: none; transition: background 0.15s; }
+.menu__camp .inbox:hover, .menu__camp .inbox.is-focus { background: linear-gradient(to right, #dcf1ff, #ffffff); }
+.menu__camp .inbox { position: relative; flex-wrap: nowrap; align-items: center; }
+.menu__camp .inbox__text { background: none; }
+/* Unread count beside CAMP */
+.inbox__badge { margin-left: auto; min-width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; padding: 0 6px; border-radius: 40px; background: var(--caarya-red-500); font-family: var(--font-satoshi); font-weight: 700; font-size: 10px; letter-spacing: 0.2px; color: #fff; animation: inbox-pop 0.3s ease-out; }
+.inbox__badge[hidden] { display: none; }
+@keyframes inbox-pop { from { transform: scale(0.4); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .inbox__badge { animation: none; } }
+
+/* ---------- Nav bar user profile (Figma 1353:12845): credit ring round the avatar, account menu ---------- */
+.user-menu-wrap { position: relative; }
+.user-chip { display: flex; align-items: center; gap: 8px; padding: 4px !important; border: 0 !important; border-radius: 100px; background: none !important; cursor: pointer; }
+.user-chip:hover, .user-chip[aria-expanded="true"] { background: var(--neutral-50) !important; }
+.user-ring { position: relative; width: 40px; height: 40px; flex-shrink: 0; display: flex; padding: 4px; }
+.user-ring svg { position: absolute; inset: 0; width: 40px; height: 40px; transform: rotate(-90deg); }
+.user-ring circle { fill: none; stroke-width: 2; }
+.user-ring__track { stroke: var(--neutral-100); }
+.user-ring__fill { stroke: url(#user-ring-grad); stroke-dasharray: 0 100; transition: stroke-dasharray 0.4s ease-out; }
+.user-ring .user-chip__avatar { position: relative; width: 32px; height: 32px; }
+.user-chip .user-chip__name { font-size: 12px; letter-spacing: 0.48px; }
+.user-chip > img { width: 20px; height: 20px; }
+
+.user-menu { position: absolute; top: calc(100% + 8px); right: 0; z-index: 20; width: 320px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--neutral-100); border-radius: 16px; background: var(--shades-50); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
+.user-menu[hidden] { display: none; }
+.user-menu > * + * { border-top: 1px solid var(--neutral-100); }
+.user-menu__head { display: flex; align-items: center; gap: 12px; padding: 16px; }
+.user-menu__avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; box-shadow: var(--shadow); }
+.user-menu__head > div { min-width: 0; }
+.user-menu__name { font-family: var(--font-satoshi); font-weight: 700; font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; text-transform: capitalize; color: var(--neutral-900); }
+.user-menu__email { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; color: var(--neutral-500); }
+.user-menu__credits { display: flex; flex-direction: column; gap: 8px; padding: 16px; }
+.user-menu__label { display: flex; align-items: center; gap: 8px; font-family: var(--font-satoshi); font-weight: 700; font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; color: var(--neutral-900); }
+.user-menu__label img { width: 14px; height: 14px; }
+.user-menu__nums { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; color: var(--neutral-500); }
+.user-menu__nums b { font-weight: 700; color: var(--neutral-900); }
+.user-menu__note { font-size: 10px; letter-spacing: 0.2px; line-height: 1.5; color: var(--neutral-400); }
+.user-menu__items { display: flex; flex-direction: column; padding: 8px; }
+.user-menu__items button { display: flex; align-items: center; gap: 12px; padding: 10px 8px !important; border: 0 !important; border-radius: 8px; background: none !important; text-align: left; font-family: var(--font-satoshi); font-weight: 500; font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: var(--neutral-800); }
+.user-menu__items button:hover, .user-menu__items button:focus-visible { background: var(--neutral-50) !important; }
+.user-menu__items img { width: 16px; height: 16px; opacity: 0.8; }

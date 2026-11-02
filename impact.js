@@ -146,7 +146,7 @@ function pageAsset(a) {
     <div class="asset-head">
       <img class="asset-head__thumb" src="${esc(assetCover(a))}" alt="" />
       <div class="asset-head__text"><h2>${esc(a.title)}</h2>${typeTag(a.type, "type-tag--lg")}</div>
-      <button type="button" class="btn btn--primary im-add im-add--sm" data-im="create-card" data-id="${a.id}">Create Achievement Card<img src="${IM}auto-awesome.svg" alt="" /></button>
+      ${state.achievements.length ? `<button type="button" class="btn btn--primary im-add im-add--sm" data-im="create-card" data-id="${a.id}">Create Achievement Card<img src="${IM}auto-awesome.svg" alt="" /></button>` : ""}
       ${optionsMenu("kebab", "more-vert.svg", [`<a href="${esc(a.link)}" target="_blank" rel="noopener">Open link in new tab</a>`, ASSET_MENU[0], ASSET_MENU[2]], a.id)}
     </div>
     <div class="asset-frame">
@@ -231,8 +231,9 @@ function openAssetModal(existing) {
     state.assets.unshift(asset);
     state.justAddedAsset = asset.id;
     go("proof");
-    if (campFirstAsset(asset)) return; // camp.js: the PGM takes over after the first proof of work
-    showToast("Asset added to your proof of work", { label: "Create Achievement Card", onClick: () => startWizard(asset.id) });
+    if (campFirstAsset()) return; // camp.js: the PGM's message takes over after the first proof of work
+    // Achievement cards are offered once the first one exists (the PGM's message leads to it).
+    showToast("Asset added to your proof of work", state.achievements.length ? { label: "Create Achievement Card", onClick: () => startWizard(asset.id) } : undefined);
   }
 
   ov.addEventListener("input", (e) => {
@@ -488,7 +489,7 @@ function wizardStep(w, asset) {
 function renderWizard() {
   closeAllOverlays();
   const w = state.wizard;
-  if (!w || !assetById(w.assetId)) return go("achievements");
+  if (!w || !assetById(w.assetId)) return go(achievementsHome());
   const asset = assetById(w.assetId);
   const last = w.step === WIZARD_STEPS - 1;
   wizardScreen.innerHTML = `
@@ -549,7 +550,7 @@ wizardScreen.addEventListener("click", (e) => {
   switch (e.target.closest("[data-wz]")?.dataset.wz) {
     case "discard":
       state.wizard = null;
-      go("achievements");
+      go(achievementsHome());
       showToast(w.editId ? "Changes discarded" : "Achievement draft discarded");
       break;
     case "change-asset":
@@ -562,7 +563,7 @@ wizardScreen.addEventListener("click", (e) => {
       break;
     case "make-changes": wizardGoTo(0); break;
     case "back":
-      if (w.step === 0) { state.wizard = null; return go("achievements"); }
+      if (w.step === 0) { state.wizard = null; return go(achievementsHome()); }
       wizardGoTo(w.step - 1);
       break;
     case "next":
@@ -591,11 +592,15 @@ wizardScreen.addEventListener("submit", (e) => {
   wizardScreen.querySelector("[data-wz-add] input").focus();
 });
 
+// Where leaving the wizard lands: Achievements once it's open (camp.js), Proof before that.
+const achievementsHome = () => (isUnlocked("achievements") ? "achievements" : "proof");
+
 function saveAchievement() {
   const { assetId, editId, transferable, technical, tools, indices, env } = state.wizard;
   const fields = { assetId, transferable, technical, tools, indices, env };
   const a = editId ? Object.assign(achievementById(editId), fields) : { id: Date.now(), ...fields };
   if (!editId) state.achievements.unshift(a);
+  unlock("achievements"); // camp.js: the section appears with the first card
   state.justAddedAch = a.id;
   state.wizard = null;
   go("achievements");

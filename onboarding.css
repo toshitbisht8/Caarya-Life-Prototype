@@ -22,7 +22,7 @@
 .ob-dots i { width: 8px; height: 8px; border: 1px solid var(--neutral-300); border-radius: 50%; }
 .ob-dots i.is-next { border-color: var(--caarya-red-500); }
 .ob-dots i.is-on { border-color: var(--caarya-red-500); background: var(--caarya-red-500); }
-.ob-doc { display: flex; flex-direction: column; align-items: flex-start; gap: 32px; }
+.ob-doc { display: flex; flex-direction: column; align-items: center; gap: 32px; }
 .ob-doc__title { width: 100%; }
 .ob-doc__title { margin: 0; font-family: var(--font-lato); font-weight: 700; font-size: 20px; letter-spacing: 0.4px; line-height: 1.5; text-transform: capitalize; color: var(--neutral-900); text-align: center; }
 .ob-card { width: 100%; border-radius: 16px; background: #fff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); }
@@ -55,7 +55,7 @@
 .ob-sign.is-signing .ob-sign__hint, .ob-sign.is-signed .ob-sign__hint { opacity: 0; }
 
 /* "I have read…" checkbox: double teal ring */
-.ob-check { width: 100%; display: flex; align-items: center; gap: 16px; padding: 0 !important; background: none; border: 0; border-radius: 4px; text-align: left; cursor: pointer; }
+.ob-check { width: auto; max-width: 100%; display: flex; align-items: center; gap: 16px; padding: 0 !important; background: none; border: 0; border-radius: 4px; text-align: left; cursor: pointer; }
 .ob-check__box { display: flex; padding: 8px; border-radius: 192px; background: rgba(51, 214, 225, 0.08); }
 .ob-check__box > span { display: flex; padding: 12px; border-radius: 80px; background: rgba(51, 214, 225, 0.08); }
 .ob-check__box img { width: 16px; height: 16px; }
@@ -86,3 +86,6 @@
   .ob-guide, .ob-guide:nth-child(even) { flex-direction: column; }
   .ob-guide__art { width: 100%; }
 }
+/* Signature, checkbox and button sit centred under the document */
+.ob-sign__pad { justify-content: center; }
+.ob-sign__hint { left: 50%; transform: translateX(-50%); white-space: nowrap; }
