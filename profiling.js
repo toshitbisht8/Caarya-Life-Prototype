@@ -33,6 +33,15 @@ const COLLEGES = [
   "Symbiosis International University, Pune",
   "Ashoka University",
 ];
+// Colleges with partner clubs (dummy names for now): picking one of these asks for the student's club before
+// About You (Figma 1388:22675). Every other college goes straight to About You.
+const CLUBS = {
+  "Delhi University": ["The Marketing Collective", "Design Guild", "Entrepreneurship Cell", "Product Circle", "Media & Content Society", "Consulting Club"],
+  "Christ University, Bengaluru": ["Brand Builders Club", "UX Society", "Startup Studio", "Finance & Strategy Forum"],
+  "Ashoka University": ["Ashoka Design Collective", "Venture Lab", "Content Creators Guild", "Analytics Society", "Social Impact Circle"],
+};
+const NO_CLUB = "Not Part Of Any Club";
+
 // Welcome-screen carousel (Figma shows "Value Proposition 1" placeholders).
 const VALUE_PROPS = [
   ["Get paid for real work", "Pick up work orders from real startups and get paid for what you deliver."],
@@ -87,6 +96,8 @@ const freshState = () => ({
   industries: new Set(),
   gigs: new Set(),
   nano: "", // "yes" | "no"
+  club: "", // a partner club, NO_CLUB, or "" when the college has none
+  yearOfStudy: 0, // 1–5
 });
 let state = freshState();
 
@@ -252,6 +263,7 @@ function validate(route, quiet = false) {
     const errs = [
       check(form, "name", form.elements.name.value.trim() ? "" : "Please enter your full name."),
       check(form, "study", form.study.value.trim() ? "" : "Please enter your field of study."),
+      check(form, "yearOfStudy", state.yearOfStudy ? "" : "Please select your year of study."),
     ];
     return errs.find(Boolean) ? "Fill in the highlighted fields to continue." : "";
   }
@@ -312,6 +324,64 @@ $("[data-start-pod]").addEventListener("click", () => {
 });
 welcomeForm.addEventListener("submit", (e) => (e.preventDefault(), next()));
 
+// ---------- Partner club (1388:22675) ----------
+const clubModal = el("div", "pf-modal");
+clubModal.hidden = true;
+clubModal.innerHTML = `
+  <div class="pf-modal__box" role="dialog" aria-modal="true" aria-labelledby="pf-club-title">
+    <div class="pf-modal__body">
+      <div class="pf-club__hero">
+        <img src="${A}club-partners.svg" alt="" />
+        <p class="pf-club__congrats">Congratulations!</p>
+        <p class="pf-club__note">Your college has Industrial Pod Partners</p>
+      </div>
+      <div class="pf-club__text">
+        <h2 id="pf-club-title">Please choose if you belong to any of these clubs.</h2>
+        <p>This will help you engage with the brands the clubs engage with</p>
+      </div>
+      <div class="pf-club__list" role="radiogroup" aria-labelledby="pf-club-title"></div>
+      <p class="pf-error" data-club-error role="alert"></p>
+    </div>
+    <div class="pf-modal__foot">
+      <button class="pf-btn pf-btn--next" type="button" data-club-continue>Continue <img src="${A}chevron-right.svg" alt="" /></button>
+    </div>
+  </div>`;
+document.body.append(clubModal);
+const clubList = $(".pf-club__list", clubModal);
+function drawClubs() {
+  clubList.replaceChildren(...[NO_CLUB, ...CLUBS[chosenCollege()]].map((c) => {
+    const b = el("button", `pf-club${state.club === c ? " is-selected" : ""}`, c);
+    b.type = "button";
+    b.setAttribute("role", "radio");
+    b.setAttribute("aria-checked", String(state.club === c));
+    b.addEventListener("click", () => {
+      state.club = c;
+      $("[data-club-error]", clubModal).textContent = "";
+      drawClubs();
+    });
+    return b;
+  }));
+}
+function openClubs() {
+  if (!CLUBS[chosenCollege()]?.includes(state.club) && state.club !== NO_CLUB) state.club = "";
+  drawClubs();
+  $("[data-club-error]", clubModal).textContent = "";
+  clubModal.hidden = false;
+  document.body.classList.add("pf-no-scroll");
+  $(".pf-club", clubModal).focus();
+}
+function closeClubs() {
+  clubModal.hidden = true;
+  document.body.classList.remove("pf-no-scroll");
+}
+$("[data-club-continue]", clubModal).addEventListener("click", () => {
+  if (!state.club) return ($("[data-club-error]", clubModal).textContent = "Pick your club, or “Not Part Of Any Club”, to continue.");
+  closeClubs();
+  go(steps()[1]); // About You
+});
+clubModal.addEventListener("click", (e) => e.target === clubModal && closeClubs());
+document.addEventListener("keydown", (e) => e.key === "Escape" && !clubModal.hidden && closeClubs());
+
 function resetWelcome() {
   welcomeForm.reset();
   collegeSelect.closest(".pf-welcome__select").hidden = false;
@@ -345,6 +415,29 @@ props.addEventListener("mouseleave", () => (paused = matchMedia("(prefers-reduce
 setInterval(() => !paused && document.body.classList.contains("is-welcome") && showProp(prop + 1), 5000);
 
 // ---------- About You ----------
+const studyYear = el("div", "pf-field");
+studyYear.dataset.field = "yearOfStudy";
+studyYear.innerHTML = `<span class="pf-field__label" id="pf-study-year">Year Of Study</span>
+  <div class="pf-years" role="radiogroup" aria-labelledby="pf-study-year"></div>
+  <span class="pf-error"></span>`;
+$('[data-step="about"] [data-field="study"]').after(studyYear);
+function syncStudyYear() {
+  $(".pf-years", studyYear).replaceChildren(...[1, 2, 3, 4, 5].map((y) => {
+    const b = el("button", `pf-year${state.yearOfStudy === y ? " is-selected" : ""}`, String(y));
+    b.type = "button";
+    b.setAttribute("role", "radio");
+    b.setAttribute("aria-checked", String(state.yearOfStudy === y));
+    b.addEventListener("click", () => {
+      state.yearOfStudy = y;
+      setError("");
+      studyYear.classList.remove("has-error");
+      $(".pf-error", studyYear).textContent = "";
+      syncStudyYear();
+    });
+    return b;
+  }));
+}
+syncStudyYear();
 const yearSelect = $('[name="year"]');
 for (let y = 2020; y <= 2032; y++) yearSelect.add(new Option(y, y, false, y === 2026));
 $$(".pf-fields input").forEach((input) =>
@@ -364,11 +457,11 @@ $('[name="mobile"]').addEventListener("input", (e) => {
 });
 
 // ---------- Collapsible group (Niche Container) ----------
-function group(title, cls = "pf-group") {
-  const section = el("section", cls);
+function group(title, cls = "pf-group", collapsed = false) {
+  const section = el("section", cls + (collapsed ? " is-collapsed" : ""));
   const head = el("button", "pf-group__head");
   head.type = "button";
-  head.setAttribute("aria-expanded", "true");
+  head.setAttribute("aria-expanded", String(!collapsed));
   head.append(el("span", "", title), icon("expand-less.svg"));
   head.addEventListener("click", () => {
     const collapsed = section.classList.toggle("is-collapsed");
@@ -419,7 +512,7 @@ syncNano();
 // ---------- Roles ----------
 const rolesEl = $("#pf-roles");
 DATA.domains.forEach((domain) => {
-  const { section, body } = group(domain.name);
+  const { section, body } = group(domain.name, "pf-group", true); // domains start collapsed
   domain.roles.forEach((role) => {
     const btn = el("button", "pf-role");
     btn.type = "button";
@@ -660,6 +753,7 @@ function next() {
   const route = currentRoute();
   const err = validate(route);
   if (err) return setError(err);
+  if (route === "welcome" && CLUBS[chosenCollege()]) return openClubs();
   const list = steps();
   if (route === "contact") return submit();
   go(list[list.indexOf(route) + 1]);
@@ -679,7 +773,8 @@ function submit() {
   const payload = {
     variant: VARIANT,
     college: chosenCollege(),
-    about: { name: about.elements.name.value.trim(), fieldOfStudy: about.study.value.trim(), graduationYear: Number(about.year.value) },
+    ...(state.club ? { club: state.club === NO_CLUB ? null : state.club } : {}),
+    about: { name: about.elements.name.value.trim(), fieldOfStudy: about.study.value.trim(), yearOfStudy: state.yearOfStudy, graduationYear: Number(about.year.value) },
     careerPriority: state.priority,
     roles: state.roles.map((role) => ({
       role,
@@ -727,6 +822,7 @@ $("[data-retake]").addEventListener("click", () => {
   syncPriority();
   syncGigs();
   syncNano();
+  syncStudyYear();
   go("welcome");
 });
 
