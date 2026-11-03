@@ -232,7 +232,7 @@ body.is-done .pf-page { display: none; }
 .pf-radio img { width: 16px; height: 16px; }
 .pf-radio .is-on, .pf-radio.is-checked .is-off { display: none; }
 .pf-radio.is-checked .is-on { display: block; }
-.pf-radio.is-checked { font-weight: 700; color: #0497ae; }
+.pf-radio.is-checked { font-weight: 700; color: var(--red-500); }
 .pf-nano__fields { display: flex; flex-wrap: wrap; gap: 16px; width: 100%; }
 .pf-nano__fields[hidden] { display: none; }
 .pf-nano__fields .pf-field { flex: 1 0 0; }
