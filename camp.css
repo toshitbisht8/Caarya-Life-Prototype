@@ -234,3 +234,25 @@
 /* The workspace content is a column, so Camp's tinted main grows to the bottom of the window. */
 .workspace__content { display: flex; flex-direction: column; }
 .workspace__content > .workspace__main { flex: 1 0 auto; }
+
+/* ---------- Spotlight: guided tour and new sections (reference: Figma 1426:31062) ---------- */
+.overlay--spot { display: block; background: none; }
+.spot__hole { position: fixed; border-radius: 12px; box-shadow: 0 0 0 200vmax rgba(15, 15, 15, 0.55); pointer-events: none; transition: left 0.35s ease, top 0.35s ease, width 0.35s ease, height 0.35s ease; }
+.spot { position: fixed; width: 340px; max-width: calc(100vw - 32px); transition: left 0.35s ease, top 0.35s ease; animation: spot-in 0.3s ease-out 0.1s both; }
+@keyframes spot-in { from { opacity: 0; transform: translateY(8px); } }
+.spot__card { position: relative; display: flex; flex-direction: column; border-radius: 24px; background: #fff; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
+.spot__arrow { position: absolute; width: 14px; height: 14px; background: #fff; border-radius: 2px; transform: translate(-50%, -50%) rotate(45deg); }
+.spot[data-side="left"] .spot__arrow { left: 0; }
+.spot[data-side="top"] .spot__arrow { top: 0; }
+.spot__head { display: flex; align-items: center; justify-content: space-between; padding: 16px 16px 0; }
+.spot__avatar { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 120px; }
+.spot__avatar img { width: 16px; height: 16px; object-fit: contain; }
+.spot__body { display: flex; flex-direction: column; gap: 8px; padding: 16px 20px 24px; }
+.spot__count { font-family: var(--font-satoshi); font-weight: 500; font-style: italic; font-size: 12px; letter-spacing: 0.48px; line-height: 1.5; color: var(--caarya-red-500); }
+.spot__body h2 { font-family: var(--font-lato); font-weight: 700; font-size: 18px; letter-spacing: 0.36px; line-height: 1.5; color: var(--neutral-900); }
+.spot__body p:not(.spot__count) { font-family: var(--font-satoshi); font-size: 14px; letter-spacing: 0.56px; line-height: 1.5; color: var(--neutral-800); }
+.spot__foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 20px 20px; }
+.spot__foot .pgm-btn { padding: 10px 20px 10px 24px !important; font-size: 12px; letter-spacing: 0.24px; }
+@media (prefers-reduced-motion: reduce) {
+  .spot, .spot__hole { transition: none; animation: none; }
+}

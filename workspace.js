@@ -65,10 +65,12 @@ function renderWorkspace(route, param) {
   syncCampUnlocks();
   syncSteps(); // camp.js: a step toast when a Road step is newly done
   syncMessages(); // camp.js: anything newly due lands in Camp
+  syncSpotlights(); // camp.js: newly unlocked sections, after the messages' pop-ups
   if (!isUnlocked(route)) {
     showToast("Finish the next step in Camp to unlock this section");
     return go("camp");
   }
+  campOnRoute(route); // camp.js: e.g. the PGM's first-proof prompt on the first visit to Proof
   const info = route === "growth" && state.camp.fresh ? { page: "road", menu: "growth", crumb: PAGE_FOR.growth.crumb } : PAGE_FOR[route];
   syncMenuLocks();
   document.querySelectorAll("[data-page]").forEach((p) => (p.hidden = p.dataset.page !== info.page));

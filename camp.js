@@ -18,6 +18,8 @@ state.camp = {
   experience: {}, // role id -> 0 none, 1 own / college work, 2 real client or organisation
   expDone: false,
   introShown: false, // the PGM pops up once on the first visit to Camp
+  toured: false, // the guided tour of Camp and Growth Track, once
+  proofPrompted: false, // the PGM's "add your first proof of work" on the first visit to Proof
   holdIntro: false, // wait for the logging-in loader before popping up
   profileSeen: false, // has opened Measured Excellence since the Talent Manager unlocked it
 };
@@ -74,8 +76,9 @@ const hasExperience = () => myRoles().some((r) => state.camp.experience[r] > 0);
 const added = (n, word = "added") => (n ? `${n} ${word}` : "");
 const addProof = () => {
   if (!isUnlocked("proof")) return openPgmFlow(); // proof of work opens after the experience questions
+  if (currentBase() === "camp") return openAssetModal(); // impact.js: over Camp, which the user comes back to
   go("proof");
-  setTimeout(() => openAssetModal(), 50); // impact.js
+  setTimeout(() => openAssetModal(), 50);
 };
 // A Competencies tab once it's unlocked, otherwise the wizard that sets it up.
 const compTabOr = (tab, wizard) => () => {
@@ -185,7 +188,123 @@ function syncSteps() {
   const left = done.filter((d) => !d).length;
   if (!left) return;
   showToast(`${STEP_DONE[now[now.length - 1]]}\n${left} step${left > 1 ? "s" : ""} left to start Career Acceleration`,
-    { label: "Go to Camp", onClick: () => go("camp") }, POPUP_DELAY_MS, "step");
+    currentBase() === "camp" ? undefined : { label: "Go to Camp", onClick: () => go("camp") }, POPUP_DELAY_MS, "step");
+}
+
+// What the Talent Manager's and PGM's "Unlock" messages open (Your Network, Your Knowledge Space).
+const SYNERGY = ["rolodex", "network-profile"];
+const COMMUNITY = ["daily-gains", "exchange"];
+
+// ---------- Spotlight: the guided tour, and each section as it unlocks (reference: Figma 1426:31062) ----------
+// The screen dims except one menu item, and a card beside it says what it is. One new section: Later / Take me there.
+// Several (the tour, or what opens when set-up is done): Previous / Next / Done.
+const menuItem = (route) => document.querySelector(`.menu-item[data-route="${route}"]`);
+const TOUR = [
+  { target: () => document.querySelector(".inbox"), title: "This is Camp, your home base",
+    text: "Your Growth Manager and Talent Manager post updates here, each with the next thing to do. A red badge tells you when something new arrives." },
+  { target: () => menuItem("growth"), title: "This is your Growth Track",
+    text: "Your Road to Career Acceleration lives here: the steps to finish before you can start picking up work." },
+];
+// Keyed by the menu item whose unlock shows it; `items` when it covers a whole section.
+const SPOTS = {
+  proof: { title: "I’ve unlocked Proof of Work for you", text: "Validate your experience and track your growth by adding proof of the work you do." },
+  competencies: { title: "I’ve unlocked Competencies for you", text: "Manage your technical skills, transferable skills and tool stack from here." },
+  achievements: { title: "I’ve unlocked Achievements for you", text: "Your achievement cards live here: your assets, with the skills and impact behind them." },
+  profile: { who: "talent", title: "Your Measured Excellence profile is open", text: "It shows recruiters how your work, skills and preferences add up. Keep it current as you add proof of your work." },
+  assessments: { title: "Assessments are open", text: "Optional assessments that help enhance your ME profile while your career report is being generated." },
+  credits: { items: ["profile"], who: "talent", target: () => document.querySelector("[data-user-chip]"), title: "Your credits",
+    text: "The ring around your picture is your credit balance. The sections that open from here on use credits. Click your picture to see the balance." },
+  synergy: { items: SYNERGY, who: "talent", section: true, title: "Synergy Intelligence is unlocked",
+    text: "Your Network: the people you’ve worked with, how you work together and who can open doors for you." },
+  community: { items: COMMUNITY, section: true, title: "Community Intelligence is unlocked",
+    text: "Your Knowledge Space: daily knowledge gains and an exchange of ideas with your peers." },
+};
+const spotStop = (key) => {
+  const s = SPOTS[key];
+  const route = (s.items || [key])[0];
+  return { ...s,
+    target: s.target || (() => (s.section ? menuItem(route)?.closest("[data-menu-section]") : menuItem(route))),
+    go: s.target ? null : () => go(route) };
+};
+
+// Menu items unlocked since the last look each get a spotlight (after any toast and modal, e.g. the Talent Manager's).
+state.camp.spotSeen = null;
+function syncSpotlights() {
+  if (!isFresh()) return;
+  const un = state.camp.unlocked;
+  if (!state.camp.spotSeen) return void (state.camp.spotSeen = new Set(un));
+  const now = [...un].filter((i) => !state.camp.spotSeen.has(i));
+  if (!now.length) return;
+  now.forEach((i) => state.camp.spotSeen.add(i));
+  const stops = Object.keys(SPOTS).filter((k) => (SPOTS[k].items || [k]).some((i) => now.includes(i))).map(spotStop);
+  if (stops.length) whenClear(() => spotlight(stops));
+}
+
+function spotlight(all, onDone) {
+  const stops = all.filter((s) => s.target());
+  if (!stops.length) return onDone?.();
+  let i = 0;
+  const ov = openOverlay(`<div class="spot__hole"></div>
+    <div class="spot" role="dialog" aria-modal="true" aria-labelledby="spot-title"><span class="spot__arrow" aria-hidden="true"></span><div class="spot__card"></div></div>`,
+    "spot", () => { removeEventListener("resize", place); onDone?.(); });
+  const hole = ov.querySelector(".spot__hole");
+  const box = ov.querySelector(".spot");
+  const arrow = ov.querySelector(".spot__arrow");
+  const single = stops.length === 1;
+  function draw() {
+    const s = stops[i];
+    const who = s.who || "pgm";
+    ov.querySelector(".spot__card").innerHTML = `
+      <header class="spot__head">
+        <span class="spot__avatar camp-msg__avatar--${who}">${MSG_AVATAR[who]}</span>
+        <button type="button" class="pgm-modal__close" data-close aria-label="Close"><img src="${G}close-dark.svg" alt="" /></button>
+      </header>
+      <div class="spot__body">
+        ${single ? "" : `<p class="spot__count">${i + 1} of ${stops.length}</p>`}
+        <h2 id="spot-title">${s.title}</h2>
+        <p>${s.text}</p>
+      </div>
+      <footer class="spot__foot">
+        ${single
+          ? s.go ? `<button type="button" class="pgm-prev" data-close>Later</button>
+                    <button type="button" class="pgm-btn" data-spot="go">Take me there <span aria-hidden="true">→</span></button>`
+            : `<span></span><button type="button" class="pgm-btn" data-close>Got it <span aria-hidden="true">✓</span></button>`
+          : `<button type="button" class="pgm-prev" data-spot="prev" ${i ? "" : "disabled"}><span aria-hidden="true">←</span> Previous</button>
+             <button type="button" class="pgm-btn" data-spot="next">${i < stops.length - 1 ? "Next <span aria-hidden=\"true\">→</span>" : "Done <span aria-hidden=\"true\">✓</span>"}</button>`}
+      </footer>`;
+    place();
+    ov.querySelector(".pgm-btn").focus();
+  }
+  // The hole sits on the item; the card beside it (right of the menu, or below things on the right of the screen).
+  function place() {
+    const t = stops[i].target();
+    if (!t) return;
+    t.scrollIntoView({ block: "nearest" });
+    const r = t.getBoundingClientRect();
+    const pad = 4, gap = 16, m = 16;
+    Object.assign(hole.style, { left: `${r.left - pad}px`, top: `${r.top - pad}px`, width: `${r.width + pad * 2}px`, height: `${r.height + pad * 2}px` });
+    const w = box.offsetWidth, h = box.offsetHeight;
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(v, hi));
+    if (r.left < innerWidth / 2) {
+      box.dataset.side = "left";
+      const top = clamp(r.top + r.height / 2 - 40, m, innerHeight - h - m);
+      Object.assign(box.style, { left: `${r.right + pad + gap}px`, top: `${top}px` });
+      arrow.style.cssText = `top:${clamp(r.top + r.height / 2 - top, 24, h - 24)}px`;
+    } else {
+      box.dataset.side = "top";
+      const left = clamp(r.right - w, m, innerWidth - w - m);
+      Object.assign(box.style, { left: `${left}px`, top: `${r.bottom + pad + gap}px` });
+      arrow.style.cssText = `left:${clamp(r.left + r.width / 2 - left, 24, w - 24)}px`;
+    }
+  }
+  addEventListener("resize", place);
+  ov.addEventListener("click", (e) => {
+    const act = e.target.closest("[data-spot]")?.dataset.spot;
+    if (act === "prev" && i) { i--; draw(); }
+    if (act === "next") i < stops.length - 1 ? (i++, draw()) : closeOverlay();
+    if (act === "go") { const to = stops[i].go; closeOverlay(); to(); }
+  });
+  draw();
 }
 
 // ---------- Messages ----------
@@ -194,8 +313,6 @@ function syncSteps() {
 // { id, who, text, cta, action, at, read }
 state.camp.inbox = [];
 
-const SYNERGY = ["rolodex", "network-profile"];
-const COMMUNITY = ["daily-gains", "exchange"];
 const firstName = () => displayName().split(" ")[0];
 const isFresh = () => state.camp.fresh;
 
@@ -303,8 +420,8 @@ const CAMP_ACTIONS = {
   achievement: () => openAssetPicker(startWizard), // impact.js: "Adding New Achievement", pick the asset first
   "talent-details": () => openMessage(state.camp.inbox.find((m) => m.id === "tm-done")),
   assessments: () => go("assessments"),
-  synergy: () => unlockAndGo(SYNERGY, "Synergy Intelligence unlocked: find Your Network in the menu"),
-  community: () => unlockAndGo(COMMUNITY, "Community Intelligence unlocked: find Your Knowledge Space in the menu"),
+  synergy: () => unlockAndGo(SYNERGY, "Synergy Intelligence unlocked"),
+  community: () => unlockAndGo(COMMUNITY, "Community Intelligence unlocked"),
   explore: () => go("explore"),
   desk: () => go("desk"),
 };
@@ -352,10 +469,16 @@ function renderCamp() {
       <p>Here’s what you need to catch up with</p>
     </div>
     ${msgs.length ? `<div class="camp-msgs">${msgs.map(msgRow).join("")}</div>` : `<p class="camp-empty">You’re all caught up.</p>`}`;
-  // First visit after signing up: the PGM pops up (FigJam 339:990).
-  if (state.camp.fresh && !state.camp.expDone && !state.camp.introShown && !state.camp.holdIntro) {
-    state.camp.introShown = true;
-    whenClear(() => currentBase() === "camp" && openPgmFlow());
+  // First visit after signing up: a short tour of Camp and Growth Track, then the PGM pops up (FigJam 339:990).
+  if (state.camp.fresh && !state.camp.holdIntro) {
+    if (!state.camp.toured) {
+      state.camp.toured = true;
+      whenClear(() => currentBase() === "camp" && spotlight(TOUR));
+    }
+    if (!state.camp.expDone && !state.camp.introShown) {
+      state.camp.introShown = true;
+      whenClear(() => currentBase() === "camp" && openPgmFlow());
+    }
   }
 }
 // Opening a message marks it read. Its CTA acts straight away; anywhere else on the row opens it in full.
@@ -525,39 +648,42 @@ function openPgmFlow() {
       unlock("proof");
       closeOverlay();
       if (!first) return render();
-      go("proof");
-      whenClear(openProofUnlocked);
+      go("camp"); // the step toast, then the Proof of Work spotlight
     }
   });
   draw();
 }
 
-// "I've unlocked the proof of work section for you." Two versions: no experience / some experience.
-function openProofUnlocked() {
-  const first = displayName().split(" ")[0];
+// On the first visit to Proof (the spotlight said it's unlocked): the PGM asks for the first proof of work.
+// Two versions: some experience claimed / none.
+function openProofPrompt() {
   const exp = hasExperience();
-  const ov = openOverlay(`
-    <div class="pgm-modal pgm-modal--note" role="dialog" aria-modal="true" aria-labelledby="pgm-unlocked">
+  openOverlay(`
+    <div class="pgm-modal pgm-modal--note" role="dialog" aria-modal="true" aria-labelledby="pgm-proof">
       ${pgmHead(exp ? "skip" : "")}
       <div class="pgm-modal__body">
-        <h2 id="pgm-unlocked">I’ve unlocked the proof of work section for you.</h2>
-        <p>You can validate your work experience and track your growth here by adding proof of the work you do.</p>
         ${exp
-          ? `<p>You claimed to have ${esc(claimText())}.</p>
-             <p>Let’s verify those claims by adding proof of your work. Claims backed by evidence always work better with recruiters. Let’s start adding your first proof of work.</p>`
-          : `<p>You claimed to have no experience with any of your roles. That is perfectly fine, ${esc(first)}. Once you gain your first experience, I’ll help you add its proof of work here.</p>
-             <p>For now, you can explore this section or go back to Camp.</p>`}
+          ? `<h2 id="pgm-proof">Let’s back your experience with proof</h2>
+             <p>You claimed to have ${esc(claimText())}.</p>
+             <p>Claims backed by evidence always work better with recruiters. Let’s start by adding your first proof of work.</p>`
+          : `<h2 id="pgm-proof">No experience yet? That’s perfectly fine</h2>
+             <p>Once you gain your first experience, I’ll help you add its proof of work here. For now, you can explore this section or go back to Camp.</p>`}
       </div>
       <footer class="pgm-modal__foot pgm-modal__foot--center">
         ${exp ? `<button type="button" class="pgm-btn" data-pgm="add">Add proof of work <span aria-hidden="true">→</span></button>`
-          : `<button type="button" class="pgm-btn" data-pgm="skip">Finish <span aria-hidden="true">→</span></button>`}
+          : `<button type="button" class="pgm-btn" data-pgm="skip">Got it <span aria-hidden="true">✓</span></button>`}
       </footer>
-    </div>`, "modal");
-  ov.addEventListener("click", (e) => {
+    </div>`, "modal").addEventListener("click", (e) => {
     const act = e.target.closest("[data-pgm]")?.dataset.pgm;
     if (act === "skip") closeOverlay();
     if (act === "add") { closeOverlay(); openAssetModal(); } // impact.js
   });
+}
+// Called on every workspace page (workspace.js).
+function campOnRoute(route) {
+  if (route !== "proof" || !isFresh() || !state.camp.expDone || state.camp.proofPrompted) return;
+  state.camp.proofPrompted = true;
+  if (!state.assets.length) whenClear(() => currentBase() === "proof" && openProofPrompt());
 }
 
 // After the first proof of work the PGM sends a message (see MESSAGE_DEFS); nothing pops up.
@@ -568,27 +694,15 @@ function campFirstAsset() {
   return true;
 }
 
-// Finishing either flow lands on Competencies; the first time, the PGM says it's open (Figma 1326:55276).
-function landOnCompetencies(tab, toast) {
-  const first = !isUnlocked("competencies");
+// Finishing a flow for the first time goes back to Camp (the step toast, then the Competencies spotlight if it's new);
+// editing later stays on Competencies.
+function landOnCompetencies(tab, toast, firstTime) {
   unlock("competencies");
   state.compTab = tab;
   state.tDraft = null;
   closeOverlay();
-  go("competencies");
-  showToast(toast);
-  if (!first) return;
-  whenClear(() => {
-    openOverlay(`
-      <div class="pgm-modal pgm-modal--note" role="dialog" aria-modal="true" aria-labelledby="pgm-comp">
-        ${pgmHead("")}
-        <div class="pgm-modal__body">
-          <h2 id="pgm-comp">I’ve unlocked the competencies section for you.</h2>
-          <p>You can manage your technical skills, transferable skills and tools from here.</p>
-        </div>
-        <footer class="pgm-modal__foot pgm-modal__foot--center"><button type="button" class="pgm-btn" data-close>Done <span aria-hidden="true">✓</span></button></footer>
-      </div>`, "modal");
-  });
+  go(isFresh() && firstTime ? "camp" : "competencies");
+  showToast(toast); // the step toast stands in for it when a step is done
 }
 
 // ---------- Transferable skills (Figma 1326:55276) ----------
@@ -631,8 +745,9 @@ function openTransferableFlow() {
     if (act === "prev") { step--; return draw(); }
     if (act !== "next") return;
     if (step < total) { step++; return draw(); }
+    const firstTime = !Object.keys(state.tSkills).length;
     state.tSkills = draft;
-    landOnCompetencies("transferable", "Transferable skill ratings saved");
+    landOnCompetencies("transferable", "Transferable skill ratings saved", firstTime);
   });
   draw();
 }
@@ -667,8 +782,9 @@ function openToolsFlow() {
     if (act !== "next") return;
     if (step === 0) { step = 1; return draw(); }
     if (!picked.size) return showToast("Pick at least one tool to finish", undefined, 0); // a hint, not a result
+    const firstTime = !state.tools.length;
     state.tools = [...picked];
-    landOnCompetencies("tools", "Tool stack saved");
+    landOnCompetencies("tools", "Tool stack saved", firstTime);
   });
   ov.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -711,6 +827,7 @@ function applyProfile(p, fresh) {
   state.growth.activeRole = roles[0]?.[0] || null;
   state.camp.fresh = !!fresh;
   state.camp.stepsSeen = null;
+  state.camp.spotSeen = null;
   state.camp.unlocked = fresh ? FRESH_START() : ALL_UNLOCKED();
   syncRoleChips(); // app.js
   document.querySelectorAll("#industries .industry").forEach((card) => {

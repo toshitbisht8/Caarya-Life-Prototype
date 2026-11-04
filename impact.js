@@ -230,7 +230,7 @@ function openAssetModal(existing) {
     const asset = { id: Date.now(), ...fields };
     state.assets.unshift(asset);
     state.justAddedAsset = asset.id;
-    go("proof");
+    isFresh() && currentBase() === "camp" ? render() : go("proof"); // camp.js: added from Camp, back to Camp
     if (campFirstAsset()) return; // camp.js: the PGM's message takes over after the first proof of work
     // Achievement cards are offered once the first one exists (the PGM's message leads to it).
     showToast("Asset added to your proof of work", state.achievements.length ? { label: "Create Achievement Card", onClick: () => startWizard(asset.id) } : undefined);

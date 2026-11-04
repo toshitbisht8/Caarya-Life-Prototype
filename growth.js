@@ -514,7 +514,7 @@ function openOverlay(html, kind, onClose) {
   document.documentElement.classList.add("no-scroll");
   if (kind !== "loader") {
     el.addEventListener("click", (e) => {
-      if (e.target === el || e.target.closest("[data-close]")) closeOverlay();
+      if ((e.target === el && kind !== "spot") || e.target.closest("[data-close]")) closeOverlay();
     });
   }
   (el.querySelector("[autofocus]") || el.querySelector("button, a, input"))?.focus();
@@ -610,7 +610,7 @@ function whenClear(fn) {
 function nextModal() {
   if (!modalQueue.length) return;
   const wait = overlays.length ? 400
-    : pendingToasts.some((p) => !p.dropped) ? 100
+    : pendingToasts.some((p) => !p.dropped) || toastQueue.length ? 100
     : toastOnScreen() ? toastShownAt + MODAL_AFTER_TOAST_MS - Date.now()
     : 0;
   if (wait > 0) return setTimeout(nextModal, wait);
