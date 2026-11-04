@@ -176,3 +176,86 @@
 .user-menu__items button { display: flex; align-items: center; gap: 12px; padding: 10px 8px !important; border: 0 !important; border-radius: 8px; background: none !important; text-align: left; font-family: var(--font-satoshi); font-weight: 500; font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: var(--neutral-800); }
 .user-menu__items button:hover, .user-menu__items button:focus-visible { background: var(--neutral-50) !important; }
 .user-menu__items img { width: 16px; height: 16px; opacity: 0.8; }
+
+/* ---------- Role experience: staged transitions between roles (Figma 1391:19035) ---------- */
+/* In: the question slides and fades in (from the right going forward, the left going back); the options rise in
+   after it. Out: the options fade, then the question slides away. Timings mirror the prototype (0.4s out, 0.5s in). */
+.pgm-modal--roles .pgm-modal__body { overflow-x: hidden; }
+.pgm-enter-right { animation: pgm-text-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; --pgm-from: 56px; }
+.pgm-enter-left { animation: pgm-text-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; --pgm-from: -56px; }
+.pgm-enter-rise { animation: pgm-rise-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both; }
+/* Leaving is animated too (not a transition), so it takes over cleanly from the entrance's held end state. */
+.pgm-leave-fade { animation: pgm-fade-out 0.3s ease-out forwards; }
+.pgm-leave-left { animation: pgm-text-out 0.25s ease-in forwards; --pgm-to: -56px; }
+.pgm-leave-right { animation: pgm-text-out 0.25s ease-in forwards; --pgm-to: 56px; }
+@keyframes pgm-fade-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(8px); } }
+@keyframes pgm-text-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(var(--pgm-to)); } }
+@keyframes pgm-text-in { from { opacity: 0; transform: translateX(var(--pgm-from)); } to { opacity: 1; transform: none; } }
+@keyframes pgm-rise-in { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .pgm-enter-right, .pgm-enter-left, .pgm-enter-rise { animation: none; }
+}
+
+/* Which role is being asked about (Figma 1391:19053): soft chips for the roles, the role name on a faint band */
+.pgm-role-steps { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.pgm-role-chip { display: inline-flex; align-items: center; gap: 8px; padding: 2px 6px 2px 2px; border: 1px solid var(--neutral-100); border-radius: 32px; font-family: var(--font-satoshi); font-weight: 500; font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; color: var(--neutral-400); transition: border-color 0.4s, color 0.4s; }
+.pgm-role-chip__mark { width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 136px; background: var(--neutral-50); font-family: var(--font-lato); font-weight: 600; font-size: 10px; letter-spacing: 0.2px; color: var(--neutral-500); transition: background 0.4s, color 0.4s; }
+.pgm-role-chip.is-done .pgm-role-chip__mark { color: #2bb656; }
+.pgm-role-chip.is-current { border-color: #feb8b1; color: var(--caarya-red-500); }
+.pgm-role-chip.is-current .pgm-role-chip__mark { background: #ffe9e5; color: var(--caarya-red-500); }
+
+.pgm-modal__q .pgm-role-name { font-weight: 400; color: var(--caarya-red-500); background: linear-gradient(#fff4f2, #fff4f2) no-repeat 0 100% / 100% 100%; }
+.pgm-mark-in { animation: pgm-mark 0.6s ease-out 0.45s both; }
+@keyframes pgm-mark { from { background-size: 0% 100%; } to { background-size: 100% 100%; } }
+
+.pgm-option__icon { width: 32px; height: 32px; flex-shrink: 0; }
+
+/* First role: the question rises in, then the options (Figma motion: 300–800ms and 500–900ms, ease-out) */
+.pgm-enter-up { animation: pgm-rise-100 0.5s ease-out 0.3s both; }
+.pgm-enter-rise.is-first { animation: pgm-rise-100 0.4s ease-out 0.5s both; }
+@keyframes pgm-rise-100 { from { opacity: 0; transform: translateY(100px); } to { opacity: 1; transform: none; } }
+.pgm-modal--roles .pgm-enter-right { --pgm-from: 120px; }
+.pgm-modal--roles .pgm-enter-left { --pgm-from: -120px; }
+.pgm-modal--roles .pgm-leave-left { --pgm-to: -120px; }
+.pgm-modal--roles .pgm-leave-right { --pgm-to: 120px; }
+@media (prefers-reduced-motion: reduce) {
+  .pgm-mark-in, .pgm-enter-up, .pgm-enter-rise.is-first { animation: none; }
+}
+
+/* ---------- Camp rows (Figma 1408:19407) and a background that fills the page ---------- */
+.camp-msg { gap: 16px; }
+.camp-msg__avatar { width: 32px; height: 32px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 120px; }
+.camp-msg__avatar img { width: 16px; height: 16px; object-fit: contain; }
+.camp-msg__avatar--pgm { background: #ffe9e5; }
+.camp-msg__avatar--talent { background: #edffff; }
+.camp-msg__body { gap: 4px; }
+.camp-msg__from { gap: 4px; }
+.camp-msg__time::before { margin-right: 4px; }
+/* The workspace content is a column, so Camp's tinted main grows to the bottom of the window. */
+.workspace__content { display: flex; flex-direction: column; }
+.workspace__content > .workspace__main { flex: 1 0 auto; }
+
+/* ---------- Spotlight: guided tour and new sections (reference: Figma 1426:31062) ---------- */
+.overlay--spot { display: block; background: none; }
+.spot__hole { position: fixed; border-radius: 12px; box-shadow: 0 0 0 200vmax rgba(15, 15, 15, 0.55); pointer-events: none; transition: left 0.35s ease, top 0.35s ease, width 0.35s ease, height 0.35s ease; }
+.spot { position: fixed; width: 340px; max-width: calc(100vw - 32px); transition: left 0.35s ease, top 0.35s ease; animation: spot-in 0.3s ease-out 0.1s both; }
+@keyframes spot-in { from { opacity: 0; transform: translateY(8px); } }
+.spot__card { position: relative; display: flex; flex-direction: column; border-radius: 24px; background: #fff; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
+.spot__arrow { position: absolute; width: 14px; height: 14px; background: #fff; border-radius: 2px; transform: translate(-50%, -50%) rotate(45deg); }
+.spot[data-side="left"] .spot__arrow { left: 0; }
+.spot[data-side="top"] .spot__arrow { top: 0; }
+.spot__head { display: flex; align-items: center; justify-content: space-between; padding: 16px 16px 0; }
+.spot__avatar { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 120px; }
+.spot__avatar img { width: 16px; height: 16px; object-fit: contain; }
+.spot__body { display: flex; flex-direction: column; gap: 8px; padding: 16px 20px 24px; }
+.spot__count { font-family: var(--font-satoshi); font-weight: 500; font-style: italic; font-size: 12px; letter-spacing: 0.48px; line-height: 1.5; color: var(--caarya-red-500); }
+.spot__body h2 { font-family: var(--font-lato); font-weight: 700; font-size: 18px; letter-spacing: 0.36px; line-height: 1.5; color: var(--neutral-900); }
+.spot__body p:not(.spot__count) { font-family: var(--font-satoshi); font-size: 14px; letter-spacing: 0.56px; line-height: 1.5; color: var(--neutral-800); }
+.spot__foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 20px 20px; }
+.spot__foot .pgm-btn { padding: 10px 20px 10px 24px !important; font-size: 12px; letter-spacing: 0.24px; }
+@media (prefers-reduced-motion: reduce) {
+  .spot, .spot__hole { transition: none; animation: none; }
+}
+
+/* Credits hidden for now (workspace.js CREDITS_ON) */
+.no-credits .user-ring svg, .no-credits .user-menu__credits { display: none; }

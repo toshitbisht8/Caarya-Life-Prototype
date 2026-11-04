@@ -268,3 +268,12 @@
 .login-loader__bar i { display: block; height: 100%; border-radius: inherit; background: var(--neutral-800); transform-origin: left; animation: login-fill var(--login-ms) cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 @keyframes login-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @media (prefers-reduced-motion: reduce) { .login-loader__bar i { animation: none; transform: none; } }
+
+/* Step toast: a Road step done, and how many are left */
+.toast--step { align-items: center; padding: 8px 12px 8px 16px; border: 1px solid #feb8b1; background: #fff4f2; }
+.toast--step .toast__icon { width: 20px; height: 20px; flex-shrink: 0; }
+.toast--step .toast__text { display: flex; flex-direction: column; padding: 8px 4px; color: var(--neutral-900); }
+.toast--step .toast__text small { font-weight: 500; font-size: 12px; letter-spacing: 0.3px; color: var(--neutral-500); }
+.toast--step .toast__divider { align-self: stretch; margin: 8px 0; background: #feb8b1; }
+.toast--step .toast__action { color: var(--caarya-red-500); }
+.toast--step .toast__action:hover { background: #ffe9e5; }
