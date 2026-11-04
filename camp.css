@@ -221,3 +221,16 @@
 @media (prefers-reduced-motion: reduce) {
   .pgm-mark-in, .pgm-enter-up, .pgm-enter-rise.is-first { animation: none; }
 }
+
+/* ---------- Camp rows (Figma 1408:19407) and a background that fills the page ---------- */
+.camp-msg { gap: 16px; }
+.camp-msg__avatar { width: 32px; height: 32px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 120px; }
+.camp-msg__avatar img { width: 16px; height: 16px; object-fit: contain; }
+.camp-msg__avatar--pgm { background: #ffe9e5; }
+.camp-msg__avatar--talent { background: #edffff; }
+.camp-msg__body { gap: 4px; }
+.camp-msg__from { gap: 4px; }
+.camp-msg__time::before { margin-right: 4px; }
+/* The workspace content is a column, so Camp's tinted main grows to the bottom of the window. */
+.workspace__content { display: flex; flex-direction: column; }
+.workspace__content > .workspace__main { flex: 1 0 auto; }

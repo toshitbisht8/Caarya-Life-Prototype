@@ -45,7 +45,7 @@ function syncMenuLocks() {
 const CA = "assets/camp/";
 const MANAGERS = {
   pgm: ["Professional Growth Manager", `<span class="camp-avatar camp-avatar--pgm"><img src="${CA}pgm.png" alt="" /></span>`],
-  talent: ["Talent Manager", `<span class="camp-avatar camp-avatar--talent"><img src="${G}talent-star.svg" alt="" /></span>`],
+  talent: ["Talent Manager", `<span class="camp-avatar camp-avatar--talent"><img src="assets/camp/talent-manager.svg" alt="" /></span>`],
 };
 
 // ---------- Experience claims ----------
@@ -300,15 +300,18 @@ function syncCampUnlocks() {
 function msgTime(t) {
   const mins = Math.round((Date.now() - t) / 60000);
   if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins} min ago`;
-  if (mins < 24 * 60) return `${Math.round(mins / 60)} h ago`;
+  if (mins < 60) return `${mins}m ago`;
+  if (mins < 24 * 60) return `${Math.round(mins / 60)}h ago`;
   if (mins < 48 * 60) return "Yesterday";
   return new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
+// Row (Figma 1408:19407): the manager's avatar, "Manager • time", the message on one line, the action.
+const MSG_AVATAR = { pgm: `<img src="${CA}pgm.png" alt="" />`, talent: `<img src="${CA}talent-manager.svg" alt="" />` };
 const msgRow = (m) => `
   <article class="camp-msg${m.read ? "" : " is-new"}" data-msg="${m.id}" tabindex="0" aria-label="Open message from your ${MANAGERS[m.who][0]}">
+    <span class="camp-msg__avatar camp-msg__avatar--${m.who}">${MSG_AVATAR[m.who]}</span>
     <div class="camp-msg__body">
-      <p class="camp-msg__from">${MANAGERS[m.who][1]}${MANAGERS[m.who][0]}<span class="camp-msg__time">${msgTime(m.at)}</span>${m.read ? "" : `<span class="camp-msg__new">New</span>`}</p>
+      <p class="camp-msg__from">${MANAGERS[m.who][0]}<span class="camp-msg__time">${msgTime(m.at)}</span>${m.read ? "" : `<span class="camp-msg__new">New</span>`}</p>
       <p class="camp-msg__text">${esc(m.text)}</p>
     </div>
     ${msgDone(m)
