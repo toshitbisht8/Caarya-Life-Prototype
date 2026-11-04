@@ -168,6 +168,26 @@ function openManageServices() {
 }
 const setupDone = () => CAMP_STEPS.every(([, status]) => status());
 
+// ---------- Step toasts ----------
+// Finishing a Road step for the first time shows a step toast: what's done and how many steps are left before Career
+// Acceleration (in place of the action's own toast). The last step gets the usual toast, then the Talent Manager's
+// congratulations.
+const STEP_DONE = ["Role preferences set up", "Industry preferences set up", "Business service preferences set up", "Technical skills set up",
+  "Past work experience declared", "First proof of work added", "Transferable skills set up", "Tool stack set up"];
+state.camp.stepsSeen = null; // steps already counted as done; null until the first look
+function syncSteps() {
+  if (!isFresh()) return;
+  const done = CAMP_STEPS.map(([, status]) => !!status());
+  if (!state.camp.stepsSeen) return void (state.camp.stepsSeen = new Set(done.flatMap((d, i) => (d ? [i] : []))));
+  const now = done.flatMap((d, i) => (d && !state.camp.stepsSeen.has(i) ? [i] : []));
+  if (!now.length) return;
+  now.forEach((i) => state.camp.stepsSeen.add(i));
+  const left = done.filter((d) => !d).length;
+  if (!left) return;
+  showToast(`${STEP_DONE[now[now.length - 1]]}\n${left} step${left > 1 ? "s" : ""} left to start Career Acceleration`,
+    { label: "Go to Camp", onClick: () => go("camp") }, POPUP_DELAY_MS, "step");
+}
+
 // ---------- Messages ----------
 // Camp is an inbox: each message is posted once, when its moment comes, and stays there. New ones are unread
 // (highlighted) until opened; posting one lights the dot by CAMP and shows a toast pointing to Camp.
@@ -335,7 +355,7 @@ function renderCamp() {
   // First visit after signing up: the PGM pops up (FigJam 339:990).
   if (state.camp.fresh && !state.camp.expDone && !state.camp.introShown && !state.camp.holdIntro) {
     state.camp.introShown = true;
-    afterAction(() => currentBase() === "camp" && !document.querySelector(".overlay") && openPgmFlow());
+    whenClear(() => currentBase() === "camp" && openPgmFlow());
   }
 }
 // Opening a message marks it read. Its CTA acts straight away; anywhere else on the row opens it in full.
@@ -506,7 +526,7 @@ function openPgmFlow() {
       closeOverlay();
       if (!first) return render();
       go("proof");
-      afterAction(openProofUnlocked);
+      whenClear(openProofUnlocked);
     }
   });
   draw();
@@ -556,9 +576,10 @@ function landOnCompetencies(tab, toast) {
   state.tDraft = null;
   closeOverlay();
   go("competencies");
-  if (!first) return showToast(toast);
-  setTimeout(() => {
-    const ov = openOverlay(`
+  showToast(toast);
+  if (!first) return;
+  whenClear(() => {
+    openOverlay(`
       <div class="pgm-modal pgm-modal--note" role="dialog" aria-modal="true" aria-labelledby="pgm-comp">
         ${pgmHead("")}
         <div class="pgm-modal__body">
@@ -567,7 +588,7 @@ function landOnCompetencies(tab, toast) {
         </div>
         <footer class="pgm-modal__foot pgm-modal__foot--center"><button type="button" class="pgm-btn" data-close>Done <span aria-hidden="true">✓</span></button></footer>
       </div>`, "modal");
-  }, POPUP_DELAY_MS);
+  });
 }
 
 // ---------- Transferable skills (Figma 1326:55276) ----------
@@ -689,6 +710,7 @@ function applyProfile(p, fresh) {
   state.techSkills = skills.map((name) => ({ name, status: "new" })); // declared, not yet verified
   state.growth.activeRole = roles[0]?.[0] || null;
   state.camp.fresh = !!fresh;
+  state.camp.stepsSeen = null;
   state.camp.unlocked = fresh ? FRESH_START() : ALL_UNLOCKED();
   syncRoleChips(); // app.js
   document.querySelectorAll("#industries .industry").forEach((card) => {

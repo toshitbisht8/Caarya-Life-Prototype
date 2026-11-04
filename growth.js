@@ -536,34 +536,86 @@ document.addEventListener("keydown", (e) => {
 });
 
 // ---------- Toast (Figma 1022:4293) ----------
-let toastTimer, toastShowTimer;
-// Toasts and pop-ups that follow an action wait this long, so they don't land on top of the action itself.
-const POPUP_DELAY_MS = 1200;
+// What follows an action comes in order, one thing at a time: its toast first, then a congratulatory modal about
+// 1.5s after the toast appears (the toast stays on top of the backdrop), then any action modal once that is closed.
+// Toasts queue rather than replace each other. A step toast (camp.js) stands in for the action's own toast, and for
+// the "new message" toast, since it says the step is done and carries Go to Camp.
+const POPUP_DELAY_MS = 1200; // pop-ups wait this long after an action, so they don't land on top of it
+const MODAL_AFTER_TOAST_MS = 1500;
+const TOAST_MS = 6000;
+const TOAST_MS_QUEUED = 3500; // shorter while another toast waits behind it
 const afterAction = (fn) => setTimeout(fn, POPUP_DELAY_MS);
-// Same, but waits for any open pop-up to close first, so two never stack.
-const whenClear = (fn) => afterAction(function tryOpen() { overlays.length ? setTimeout(tryOpen, 400) : fn(); });
-function showToast(text, action, delay = POPUP_DELAY_MS) {
-  clearTimeout(toastShowTimer);
-  if (delay) return void (toastShowTimer = setTimeout(() => showToast(text, action, 0), delay));
+
+const pendingToasts = []; // scheduled, waiting out the delay
+const toastQueue = []; // ready, waiting for the one on screen
+let toastTimer, toastShownAt = 0, stepToastAt = -Infinity;
+const toastOnScreen = () => document.querySelector(".toast:not(.is-leaving)");
+
+// kind: "" (a plain toast) | "step" (a Road step done: replaces the plain toasts of the same action)
+function showToast(text, action, delay = POPUP_DELAY_MS, kind = "") {
+  const t = { text, action, kind };
+  if (kind === "step") {
+    pendingToasts.forEach((p) => p.kind || (p.dropped = true));
+    stepToastAt = Date.now();
+  } else if (delay && Date.now() - stepToastAt < 300) return; // same action: the step toast already covers it
+  if (!delay) return drawToast(t); // instant feedback (a hint) replaces whatever is showing
+  pendingToasts.push(t);
+  setTimeout(() => {
+    pendingToasts.splice(pendingToasts.indexOf(t), 1);
+    if (t.dropped) return;
+    toastQueue.push(t);
+    toastOnScreen() ? holdToast() : drawToast(toastQueue.shift());
+  }, delay);
+}
+function drawToast({ text, action, kind }) {
   document.querySelector(".toast")?.remove();
-  clearTimeout(toastTimer);
   const t = document.createElement("div");
-  t.className = "toast";
+  t.className = `toast${kind ? ` toast--${kind}` : ""}`;
   t.setAttribute("role", "status");
-  t.innerHTML = `<p class="toast__text"></p>${action ? `<span class="toast__divider"></span><button type="button" class="toast__action">${action.icon ? `<img src="${action.icon}" alt="" />` : ""}<span></span></button>` : ""}`;
-  t.querySelector(".toast__text").textContent = text;
+  const [title, sub] = text.split("\n");
+  t.innerHTML = `${kind === "step" ? `<img class="toast__icon" src="assets/camp/done.svg" alt="" />` : ""}<p class="toast__text"><span></span>${sub ? "<small></small>" : ""}</p>${action ? `<span class="toast__divider"></span><button type="button" class="toast__action">${action.icon ? `<img src="${action.icon}" alt="" />` : ""}<span></span></button>` : ""}`;
+  t.querySelector(".toast__text span").textContent = title;
+  if (sub) t.querySelector(".toast__text small").textContent = sub;
   if (action) {
     t.querySelector(".toast__action span").textContent = action.label;
     t.querySelector(".toast__action").addEventListener("click", () => { hideToast(); action.onClick(); });
   }
   document.body.append(t);
-  toastTimer = setTimeout(hideToast, 6000);
+  toastShownAt = Date.now();
+  holdToast();
+}
+function holdToast() {
+  clearTimeout(toastTimer);
+  const life = toastQueue.length ? TOAST_MS_QUEUED : TOAST_MS;
+  toastTimer = setTimeout(hideToast, Math.max(0, toastShownAt + life - Date.now()));
 }
 function hideToast() {
-  const t = document.querySelector(".toast");
+  clearTimeout(toastTimer);
+  const t = toastOnScreen();
   if (!t) return;
   t.classList.add("is-leaving");
-  setTimeout(() => t.remove(), 250);
+  setTimeout(() => {
+    t.remove();
+    if (!document.querySelector(".toast") && toastQueue.length) drawToast(toastQueue.shift());
+  }, 250);
+}
+
+// Modals that follow an action, one at a time: each waits for the toast to have been up a moment and for any open
+// pop-up to close.
+const modalQueue = [];
+function whenClear(fn) {
+  modalQueue.push(fn);
+  if (modalQueue.length === 1) afterAction(nextModal);
+}
+function nextModal() {
+  if (!modalQueue.length) return;
+  const wait = overlays.length ? 400
+    : pendingToasts.some((p) => !p.dropped) ? 100
+    : toastOnScreen() ? toastShownAt + MODAL_AFTER_TOAST_MS - Date.now()
+    : 0;
+  if (wait > 0) return setTimeout(nextModal, wait);
+  modalQueue.shift()();
+  if (modalQueue.length) setTimeout(nextModal, 400);
 }
 
 // ---------- "Adding to desk" loader, then the desk ----------
