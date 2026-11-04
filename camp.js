@@ -212,8 +212,6 @@ const SPOTS = {
   achievements: { title: "I’ve unlocked Achievements for you", text: "Your achievement cards live here: your assets, with the skills and impact behind them." },
   profile: { who: "talent", title: "Your Measured Excellence profile is open", text: "It shows recruiters how your work, skills and preferences add up. Keep it current as you add proof of your work." },
   assessments: { title: "Assessments are open", text: "Optional assessments that help enhance your ME profile while your career report is being generated." },
-  credits: { items: ["profile"], who: "talent", target: () => document.querySelector("[data-user-chip]"), title: "Your credits",
-    text: "The ring around your picture is your credit balance. The sections that open from here on use credits. Click your picture to see the balance." },
   synergy: { items: SYNERGY, who: "talent", section: true, title: "Synergy Intelligence is unlocked",
     text: "Your Network: the people you’ve worked with, how you work together and who can open doors for you." },
   community: { items: COMMUNITY, section: true, title: "Community Intelligence is unlocked",

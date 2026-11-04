@@ -256,3 +256,6 @@
 @media (prefers-reduced-motion: reduce) {
   .spot, .spot__hole { transition: none; animation: none; }
 }
+
+/* Credits hidden for now (workspace.js CREDITS_ON) */
+.no-credits .user-ring svg, .no-credits .user-menu__credits { display: none; }

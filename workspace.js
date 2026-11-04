@@ -101,10 +101,16 @@ function renderWorkspace(route, param) {
 }
 
 // Credit balance: the ring round the avatar in the nav bar, and the full numbers in the account menu.
+// Credits stay hidden (the ring round the avatar and the balance in the account menu) until the steps after set-up
+// that use them exist. Flip this to show them again.
+const CREDITS_ON = false;
 function renderCoins() {
+  const ring = document.querySelector(".user-ring");
+  document.documentElement.classList.toggle("no-credits", !CREDITS_ON);
+  if (CREDITS_ON) ring.setAttribute("role", "meter");
+  else ring.removeAttribute("role");
   const pct = Math.max(0, Math.min(1, state.coins / state.coinsMax));
   document.querySelector(".user-ring__fill").style.strokeDasharray = `${pct * 100} 100`;
-  const ring = document.querySelector(".user-ring");
   ring.setAttribute("aria-valuenow", state.coins);
   ring.setAttribute("aria-valuemax", state.coinsMax);
   ring.title = `${state.coins} of ${state.coinsMax} credits left`;
