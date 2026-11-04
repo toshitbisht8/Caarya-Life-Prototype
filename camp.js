@@ -427,6 +427,7 @@ function openPgmFlow() {
   const choices = { ...state.camp.experience };
   let step = 0; // 0 = intro, 1..n = roles
   let busy = false; // mid-transition: ignore clicks
+  let shown = 0; // the role the progress bar last showed; it grows or shrinks from there
   const ov = openOverlay(`<div class="pgm-modal" role="dialog" aria-modal="true" aria-label="Professional Growth Manager"></div>`, "modal");
   const box = ov.querySelector(".pgm-modal");
   // enter: "right" (first role, or Next) | "left" (Previous) | undefined (the intro)
@@ -440,11 +441,18 @@ function openPgmFlow() {
     const role = roles[step - 1];
     const name = roleName(role);
     box.className = "pgm-modal pgm-modal--flow pgm-modal--roles";
+    // Which role we're on, at a glance: done roles ticked, the current one filled, the rest waiting.
+    const chips = roles.map((r, i) => {
+      const n = i + 1;
+      const cls = n < step ? "is-done" : n === step ? `is-current${enter ? " pgm-chip-pop" : ""}` : "";
+      return `<li class="pgm-role-chip ${cls}" ${n === step ? 'aria-current="step"' : ""}><span class="pgm-role-chip__mark">${n < step ? "✓" : n}</span>${esc(roleName(r))}</li>`;
+    }).join("");
     box.innerHTML = `${pgmHead("close")}
+      <ol class="pgm-role-steps" aria-label="Your roles">${chips}</ol>
       <div class="pgm-modal__body pgm-modal__scroll">
         <div class="pgm-modal__text${enter ? ` pgm-enter-${enter}` : ""}">
-          <p class="pgm-modal__kicker">Role ${step}: ${esc(name)}</p>
-          <h2 class="pgm-modal__q">What kind of output have you produced as ${/^[AEIOU]/i.test(name) ? "an" : "a"} <b>${esc(name)}</b> so far?</h2>
+          <p class="pgm-modal__kicker">Role ${step} of ${roles.length}</p>
+          <h2 class="pgm-modal__q">What kind of output have you produced as ${/^[AEIOU]/i.test(name) ? "an" : "a"} <b class="pgm-role-name${enter ? " pgm-mark-in" : ""}">${esc(name)}</b> so far?</h2>
         </div>
         <div class="pgm-options${enter ? " pgm-enter-rise" : ""}" role="radiogroup">${EXPERIENCE.map(([t, d, emoji], i) => `
           <button type="button" role="radio" aria-checked="${choices[role] === i}" class="pgm-option${choices[role] === i ? " is-on" : ""}" data-pgm-pick="${i}">
@@ -452,7 +460,14 @@ function openPgmFlow() {
           </button>`).join("")}</div>
         <p class="pgm-modal__error" role="alert"></p>
       </div>
+      <div class="pgm-progress" aria-hidden="true"><i style="width:${((enter ? shown : step) / roles.length) * 100}%"></i></div>
       ${pgmFoot(step === 1, step === roles.length)}`;
+    // Move the progress bar to this role after the swap (it starts where the last role left it).
+    shown = step;
+    if (enter) setTimeout(() => {
+      const bar = box.querySelector(".pgm-progress i");
+      if (bar) bar.style.width = `${(step / roles.length) * 100}%`;
+    }, 30);
   }
   // Leave the current role (options fade, then the question slides away), then draw the new one.
   function moveTo(nextStep) {

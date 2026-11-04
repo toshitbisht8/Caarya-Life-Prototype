@@ -195,3 +195,28 @@
 @media (prefers-reduced-motion: reduce) {
   .pgm-enter-right, .pgm-enter-left, .pgm-enter-rise { animation: none; }
 }
+
+/* Making the change of role obvious: a stepper of the roles, the role name marked, a longer push, a progress bar */
+.pgm-role-steps { flex-shrink: 0; display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0 20px 4px; list-style: none; }
+.pgm-role-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px 4px 4px; border: 1px solid var(--neutral-200); border-radius: 40px; font-family: var(--font-satoshi); font-weight: 500; font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; color: var(--neutral-400); transition: background 0.3s, border-color 0.3s, color 0.3s; }
+.pgm-role-chip__mark { width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--neutral-100); font-weight: 700; font-size: 10px; color: var(--neutral-500); }
+.pgm-role-chip.is-done { color: var(--neutral-500); }
+.pgm-role-chip.is-done .pgm-role-chip__mark { background: #e3f6e5; color: #2bb656; }
+.pgm-role-chip.is-current { border-color: var(--caarya-red-500); background: #fff6f5; font-weight: 700; color: var(--caarya-red-500); }
+.pgm-role-chip.is-current .pgm-role-chip__mark { background: var(--caarya-red-500); color: #fff; }
+.pgm-chip-pop { animation: pgm-chip-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both; }
+@keyframes pgm-chip-pop { from { transform: scale(0.85); background: #fff; } 60% { transform: scale(1.08); } to { transform: none; } }
+
+.pgm-modal__q .pgm-role-name { padding: 0 2px; border-radius: 4px; color: var(--caarya-red-500); background: linear-gradient(#ffe9e5, #ffe9e5) no-repeat 0 100% / 100% 100%; }
+.pgm-mark-in { animation: pgm-mark 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both; }
+@keyframes pgm-mark { from { background-size: 0% 100%; } to { background-size: 100% 100%; } }
+
+.pgm-modal--roles .pgm-progress i { background: var(--caarya-red-500); transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.2s; }
+.pgm-modal--roles .pgm-enter-right { --pgm-from: 120px; }
+.pgm-modal--roles .pgm-enter-left { --pgm-from: -120px; }
+.pgm-modal--roles .pgm-leave-left { --pgm-to: -120px; }
+.pgm-modal--roles .pgm-leave-right { --pgm-to: 120px; }
+@media (prefers-reduced-motion: reduce) {
+  .pgm-chip-pop, .pgm-mark-in { animation: none; }
+  .pgm-modal--roles .pgm-progress i { transition: none; }
+}
