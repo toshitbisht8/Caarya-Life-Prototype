@@ -176,3 +176,22 @@
 .user-menu__items button { display: flex; align-items: center; gap: 12px; padding: 10px 8px !important; border: 0 !important; border-radius: 8px; background: none !important; text-align: left; font-family: var(--font-satoshi); font-weight: 500; font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: var(--neutral-800); }
 .user-menu__items button:hover, .user-menu__items button:focus-visible { background: var(--neutral-50) !important; }
 .user-menu__items img { width: 16px; height: 16px; opacity: 0.8; }
+
+/* ---------- Role experience: staged transitions between roles (Figma 1391:19035) ---------- */
+/* In: the question slides and fades in (from the right going forward, the left going back); the options rise in
+   after it. Out: the options fade, then the question slides away. Timings mirror the prototype (0.4s out, 0.5s in). */
+.pgm-modal--roles .pgm-modal__body { overflow-x: hidden; }
+.pgm-enter-right { animation: pgm-text-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; --pgm-from: 56px; }
+.pgm-enter-left { animation: pgm-text-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; --pgm-from: -56px; }
+.pgm-enter-rise { animation: pgm-rise-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both; }
+/* Leaving is animated too (not a transition), so it takes over cleanly from the entrance's held end state. */
+.pgm-leave-fade { animation: pgm-fade-out 0.3s ease-out forwards; }
+.pgm-leave-left { animation: pgm-text-out 0.25s ease-in forwards; --pgm-to: -56px; }
+.pgm-leave-right { animation: pgm-text-out 0.25s ease-in forwards; --pgm-to: 56px; }
+@keyframes pgm-fade-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(8px); } }
+@keyframes pgm-text-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(var(--pgm-to)); } }
+@keyframes pgm-text-in { from { opacity: 0; transform: translateX(var(--pgm-from)); } to { opacity: 1; transform: none; } }
+@keyframes pgm-rise-in { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .pgm-enter-right, .pgm-enter-left, .pgm-enter-rise { animation: none; }
+}

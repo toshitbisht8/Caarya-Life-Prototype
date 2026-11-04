@@ -416,47 +416,77 @@ const pgmFoot = (first, last) => `
 const pgmProgress = (step, total) => `<div class="pgm-progress" aria-hidden="true"><i style="width:${(step / total) * 100}%"></i></div>`;
 
 // ---------- Where do you stand in your roles? (Figma 1299:25773) ----------
+// Moving between roles is staged so each role reads as a new question (Figma 1391:19035): the options fade out, the
+// next role's question pushes in from the right, then its options rise in. The first role slides in the same way.
+const ROLE_ANIM = { optionsOut: 300, textOut: 250 }; // ms; the entrances are CSS animations (camp.css)
+const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 function openPgmFlow() {
   const roles = myRoles();
   if (!roles.length) return startProfiling();
   const choices = { ...state.camp.experience };
   let step = 0; // 0 = intro, 1..n = roles
-  let error = "";
+  let busy = false; // mid-transition: ignore clicks
   const ov = openOverlay(`<div class="pgm-modal" role="dialog" aria-modal="true" aria-label="Professional Growth Manager"></div>`, "modal");
   const box = ov.querySelector(".pgm-modal");
-  function draw() {
+  // enter: "right" (first role, or Next) | "left" (Previous) | undefined (the intro)
+  function draw(enter) {
     if (step === 0) {
       box.className = "pgm-modal pgm-modal--intro";
       box.innerHTML = pgmIntro("Good job setting up your role preferences. Now, let’s understand where you currently stand with those roles",
         "In the upcoming screens, answer a few questions to help us understand where you stand with the roles of your choice. We’ll go through each of them one at a time.");
-    } else {
-      const role = roles[step - 1];
-      const name = roleName(role);
-      box.className = "pgm-modal pgm-modal--flow";
-      box.innerHTML = `${pgmHead("close")}
-        <div class="pgm-modal__body pgm-modal__scroll">
-          <div class="pgm-modal__text">
-            <p class="pgm-modal__kicker">Role ${step}: ${esc(name)}</p>
-            <h2 class="pgm-modal__q">What kind of output have you produced as ${/^[AEIOU]/i.test(name) ? "an" : "a"} <b>${esc(name)}</b> so far?</h2>
-          </div>
-          <div class="pgm-options" role="radiogroup">${EXPERIENCE.map(([t, d, emoji], i) => `
-            <button type="button" role="radio" aria-checked="${choices[role] === i}" class="pgm-option${choices[role] === i ? " is-on" : ""}" data-pgm-pick="${i}">
-              <span><b>${t}</b><small>${d}</small></span><span class="pgm-option__emoji" aria-hidden="true">${emoji}</span>
-            </button>`).join("")}</div>
-          <p class="pgm-modal__error" role="alert">${error}</p>
-        </div>
-        ${pgmFoot(step === 1, step === roles.length)}`;
+      return;
     }
+    const role = roles[step - 1];
+    const name = roleName(role);
+    box.className = "pgm-modal pgm-modal--flow pgm-modal--roles";
+    box.innerHTML = `${pgmHead("close")}
+      <div class="pgm-modal__body pgm-modal__scroll">
+        <div class="pgm-modal__text${enter ? ` pgm-enter-${enter}` : ""}">
+          <p class="pgm-modal__kicker">Role ${step}: ${esc(name)}</p>
+          <h2 class="pgm-modal__q">What kind of output have you produced as ${/^[AEIOU]/i.test(name) ? "an" : "a"} <b>${esc(name)}</b> so far?</h2>
+        </div>
+        <div class="pgm-options${enter ? " pgm-enter-rise" : ""}" role="radiogroup">${EXPERIENCE.map(([t, d, emoji], i) => `
+          <button type="button" role="radio" aria-checked="${choices[role] === i}" class="pgm-option${choices[role] === i ? " is-on" : ""}" data-pgm-pick="${i}">
+            <span><b>${t}</b><small>${d}</small></span><span class="pgm-option__emoji" aria-hidden="true">${emoji}</span>
+          </button>`).join("")}</div>
+        <p class="pgm-modal__error" role="alert"></p>
+      </div>
+      ${pgmFoot(step === 1, step === roles.length)}`;
   }
+  // Leave the current role (options fade, then the question slides away), then draw the new one.
+  function moveTo(nextStep) {
+    const dir = nextStep > step ? "right" : "left";
+    if (step === 0 || reduceMotion()) { step = nextStep; return draw(dir); }
+    busy = true;
+    box.querySelector(".pgm-options").classList.replace("pgm-enter-rise", "pgm-leave-fade") || box.querySelector(".pgm-options").classList.add("pgm-leave-fade");
+    setTimeout(() => {
+      const text = box.querySelector(".pgm-modal__text");
+      text.classList.remove("pgm-enter-right", "pgm-enter-left");
+      text.classList.add(`pgm-leave-${dir === "right" ? "left" : "right"}`);
+      setTimeout(() => { step = nextStep; draw(dir); busy = false; }, ROLE_ANIM.textOut);
+    }, ROLE_ANIM.optionsOut);
+  }
+  const setError = (msg) => (box.querySelector(".pgm-modal__error").textContent = msg);
   ov.addEventListener("click", (e) => {
+    if (busy) return;
     const pick = e.target.closest("[data-pgm-pick]");
-    if (pick) { choices[roles[step - 1]] = Number(pick.dataset.pgmPick); error = ""; return draw(); }
+    if (pick) {
+      // Update in place, so picking doesn't replay the entrance.
+      choices[roles[step - 1]] = Number(pick.dataset.pgmPick);
+      box.querySelectorAll("[data-pgm-pick]").forEach((b) => {
+        const on = b === pick;
+        b.classList.toggle("is-on", on);
+        b.setAttribute("aria-checked", String(on));
+      });
+      return setError("");
+    }
     const act = e.target.closest("[data-pgm]")?.dataset.pgm;
     if (act === "skip") return closeOverlay(); // the PGM's message stays in Camp
-    if (act === "prev") { step--; error = ""; return draw(); }
+    if (act === "prev") return moveTo(step - 1);
     if (act === "next") {
-      if (step > 0 && choices[roles[step - 1]] === undefined) { error = "Pick the option that fits you best to continue."; return draw(); }
-      if (step < roles.length) { step++; return draw(); }
+      if (step > 0 && choices[roles[step - 1]] === undefined) return setError("Pick the option that fits you best to continue.");
+      if (step < roles.length) return moveTo(step + 1);
       // Finish: the PGM unlocks Proof of Work and takes the user there (FigJam 339:1035).
       const first = !state.camp.expDone;
       state.camp.experience = choices;
