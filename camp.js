@@ -50,9 +50,9 @@ const MANAGERS = {
 
 // ---------- Experience claims ----------
 const EXPERIENCE = [
-  ["I haven’t made anything in this role yet", "Even if I’ve read, watched or studied about it", "✨"],
-  ["I’ve made things on my own or for college", "Personal projects, coursework, hackathons, practice briefs", "📚"],
-  ["I’ve made things for a real client or organisation", "Internships, freelance, startup or company work, paid or unpaid", "💼"],
+  ["I haven’t made anything in this role yet", "Even if I’ve read, watched or studied about it", "exp-none.svg"],
+  ["I’ve made things on my own or for college", "Personal projects, coursework, hackathons, practice briefs", "exp-own.svg"],
+  ["I’ve made things for a real client or organisation", "Internships, freelance, startup or company work, paid or unpaid", "exp-client.svg"],
 ];
 const quoteList = (ids) => {
   const names = ids.map((r) => `‘${roleName(r)}’`);
@@ -427,10 +427,9 @@ function openPgmFlow() {
   const choices = { ...state.camp.experience };
   let step = 0; // 0 = intro, 1..n = roles
   let busy = false; // mid-transition: ignore clicks
-  let shown = 0; // the role the progress bar last showed; it grows or shrinks from there
   const ov = openOverlay(`<div class="pgm-modal" role="dialog" aria-modal="true" aria-label="Professional Growth Manager"></div>`, "modal");
   const box = ov.querySelector(".pgm-modal");
-  // enter: "right" (first role, or Next) | "left" (Previous) | undefined (the intro)
+  // enter: "up" (first role) | "right" (Next) | "left" (Previous) | undefined (the intro, reduced motion)
   function draw(enter) {
     if (step === 0) {
       box.className = "pgm-modal pgm-modal--intro";
@@ -444,40 +443,34 @@ function openPgmFlow() {
     // Which role we're on, at a glance: done roles ticked, the current one filled, the rest waiting.
     const chips = roles.map((r, i) => {
       const n = i + 1;
-      const cls = n < step ? "is-done" : n === step ? `is-current${enter ? " pgm-chip-pop" : ""}` : "";
+      const cls = n < step ? "is-done" : n === step ? "is-current" : "";
       return `<li class="pgm-role-chip ${cls}" ${n === step ? 'aria-current="step"' : ""}><span class="pgm-role-chip__mark">${n < step ? "✓" : n}</span>${esc(roleName(r))}</li>`;
     }).join("");
     box.innerHTML = `${pgmHead("close")}
-      <ol class="pgm-role-steps" aria-label="Your roles">${chips}</ol>
       <div class="pgm-modal__body pgm-modal__scroll">
+        <ol class="pgm-role-steps" aria-label="Your roles">${chips}</ol>
         <div class="pgm-modal__text${enter ? ` pgm-enter-${enter}` : ""}">
           <p class="pgm-modal__kicker">Role ${step} of ${roles.length}</p>
           <h2 class="pgm-modal__q">What kind of output have you produced as ${/^[AEIOU]/i.test(name) ? "an" : "a"} <b class="pgm-role-name${enter ? " pgm-mark-in" : ""}">${esc(name)}</b> so far?</h2>
         </div>
-        <div class="pgm-options${enter ? " pgm-enter-rise" : ""}" role="radiogroup">${EXPERIENCE.map(([t, d, emoji], i) => `
+        <div class="pgm-options${enter ? ` pgm-enter-rise${enter === "up" ? " is-first" : ""}` : ""}" role="radiogroup">${EXPERIENCE.map(([t, d, icon], i) => `
           <button type="button" role="radio" aria-checked="${choices[role] === i}" class="pgm-option${choices[role] === i ? " is-on" : ""}" data-pgm-pick="${i}">
-            <span><b>${t}</b><small>${d}</small></span><span class="pgm-option__emoji" aria-hidden="true">${emoji}</span>
+            <span><b>${t}</b><small>${d}</small></span><img class="pgm-option__icon" src="${CA}${icon}" alt="" />
           </button>`).join("")}</div>
         <p class="pgm-modal__error" role="alert"></p>
       </div>
-      <div class="pgm-progress" aria-hidden="true"><i style="width:${((enter ? shown : step) / roles.length) * 100}%"></i></div>
       ${pgmFoot(step === 1, step === roles.length)}`;
-    // Move the progress bar to this role after the swap (it starts where the last role left it).
-    shown = step;
-    if (enter) setTimeout(() => {
-      const bar = box.querySelector(".pgm-progress i");
-      if (bar) bar.style.width = `${(step / roles.length) * 100}%`;
-    }, 30);
   }
   // Leave the current role (options fade, then the question slides away), then draw the new one.
   function moveTo(nextStep) {
     const dir = nextStep > step ? "right" : "left";
-    if (step === 0 || reduceMotion()) { step = nextStep; return draw(dir); }
+    if (reduceMotion()) { step = nextStep; return draw(); }
+    if (step === 0) { step = nextStep; return draw("up"); }
     busy = true;
     box.querySelector(".pgm-options").classList.replace("pgm-enter-rise", "pgm-leave-fade") || box.querySelector(".pgm-options").classList.add("pgm-leave-fade");
     setTimeout(() => {
       const text = box.querySelector(".pgm-modal__text");
-      text.classList.remove("pgm-enter-right", "pgm-enter-left");
+      text.classList.remove("pgm-enter-up", "pgm-enter-right", "pgm-enter-left");
       text.classList.add(`pgm-leave-${dir === "right" ? "left" : "right"}`);
       setTimeout(() => { step = nextStep; draw(dir); busy = false; }, ROLE_ANIM.textOut);
     }, ROLE_ANIM.optionsOut);
