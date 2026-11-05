@@ -492,8 +492,9 @@ function openRow(row, e) {
   if (a || (FLOW_ACTIONS.includes(m.action) && !msgDone(m))) return CAMP_ACTIONS[m.action]();
   openMessage(m);
 }
-// Messages that open a screen designed for them (PGM intros, asset modal, asset picker): no extra modal before it.
-const FLOW_ACTIONS = ["pgm-flow", "add-proof", "transferable", "tools"]; // the achievement message opens in full first
+// Messages whose flow starts with its own intro (the PGM's): no extra modal before it. The others (proof of work,
+// achievement cards) open in full first, with the CTA to start.
+const FLOW_ACTIONS = ["pgm-flow", "transferable", "tools"];
 campPage.addEventListener("click", (e) => {
   const row = e.target.closest("[data-msg]");
   if (row) openRow(row, e);
