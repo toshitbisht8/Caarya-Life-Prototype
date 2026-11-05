@@ -6,8 +6,8 @@ const PAGE_FOR = {
   assessments: { page: "assessments", menu: "assessments", crumb: ["Your Unique Identity", "Assessments"] },
   growth: { page: "growth", menu: "growth", crumb: ["Your Career", "Growth Track"] },
   programs: { page: "road", menu: "growth", crumb: ["Your Career", "Programs"] }, // camp.js / passes.js
-  "community-intelligence": { page: "space", menu: "", crumb: ["Your Knowledge Space", "Community Intelligence"] }, // space.js
-  "synergy-intelligence": { page: "space", menu: "", crumb: ["Your Network", "Synergy Intelligence"] },
+  "community-intelligence": { page: "space", menu: "community-intelligence", crumb: ["Your Knowledge Space", "Community Intelligence"] }, // space.js
+  "synergy-intelligence": { page: "space", menu: "synergy-intelligence", crumb: ["Your Network", "Synergy Intelligence"] },
   explore: { page: "growth", menu: "growth", crumb: ["Your Career", "Growth Track"] },
   "explore-all": { page: "growth", menu: "growth", crumb: ["Your Career", "Growth Track"] },
   "work-order": { page: "growth", menu: "growth", crumb: ["Your Career", "Growth Track"] },
@@ -198,10 +198,12 @@ userMenu.addEventListener("click", (e) => {
       ["Assessments", [{ file: "assessments-idle.svg", inset: "5.21% 13.54% 5.22% 13.54%" }], "assessments", "assessments-focus.svg"],
     ] },
     { key: "knowledge", title: "Your Knowledge Space", color: "#c44eb9", icon: "section-knowledge.png", items: [
+      ["Community Intelligence", whole("exchange.svg"), "community-intelligence"], // temporary: the one-pager (space.js)
       ["Daily Gains", whole("daily-gains.svg"), "daily-gains"],
       ["Exchange", whole("exchange.svg"), "exchange"],
     ] },
     { key: "network", title: "Your Network", color: "#0497ae", icon: "section-network.svg", items: [
+      ["Synergy Intelligence", whole("rolodex.svg"), "synergy-intelligence"], // temporary: the one-pager (space.js)
       ["Rolodex", whole("rolodex.svg"), "rolodex"],
       ["Profile", whole("network-profile.svg"), "network-profile"],
     ] },

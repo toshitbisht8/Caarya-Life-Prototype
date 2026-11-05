@@ -5,8 +5,11 @@
 // where you stand in your roles (1299:25773), transferable skills (1326:55276) and tool stack (1326:58143).
 
 // Menu items a new user unlocks one by one; returning users see them all.
-const CAMP_ITEMS = ["growth", "domain-affinity", "industry-affinity", "desk", "session-logs", "achievements", "competencies", "proof", "journal", "profile", "assessments", "daily-gains", "exchange", "rolodex", "network-profile"];
-const ALL_UNLOCKED = () => new Set(CAMP_ITEMS);
+const CAMP_ITEMS = ["growth", "domain-affinity", "industry-affinity", "desk", "session-logs", "achievements", "competencies", "proof", "journal", "profile", "assessments", "daily-gains", "exchange", "rolodex", "network-profile", "community-intelligence", "synergy-intelligence"];
+// Temporary menu items for new users: the coming-soon one-pagers, open once set-up is done. Returning users have the
+// sections themselves, so they don't get these.
+const SPACE_ITEMS = ["community-intelligence", "synergy-intelligence"];
+const ALL_UNLOCKED = () => new Set(CAMP_ITEMS.filter((i) => !SPACE_ITEMS.includes(i)));
 // A new user starts with Growth Track (the Road To Career Acceleration) and ends set-up with these (Figma 1365:42807).
 const FRESH_START = () => new Set(["growth"]);
 
@@ -214,6 +217,8 @@ const SPOTS = {
   assessments: { title: "Assessments are open", text: "Optional assessments that help enhance your ME profile while your career report is being generated." },
   synergy: { items: SYNERGY, who: "talent", section: true, title: "Synergy Intelligence is unlocked",
     text: "Your Network: the people you’ve worked with, how you work together and who can open doors for you." },
+  "community-intelligence": { title: "Community Intelligence is coming", text: "See what’s coming to Your Knowledge Space, and join the waitlist to try it first." },
+  "synergy-intelligence": { who: "talent", title: "Synergy Intelligence is coming", text: "See what’s coming to Your Network, and join the waitlist to try it first." },
   work: { items: ["desk", "session-logs"], section: true, title: "Your Work is unlocked",
     text: "Your Desk is where you work on the work orders you pick up. Session Logs keeps a record of every session." },
   credits: { items: ["credits"], who: "talent", target: () => document.querySelector("[data-user-chip]"), title: "You’ve got 200 free credits",
@@ -439,7 +444,7 @@ const CAMP_ACTIONS = {
 
 // Measured Excellence opens once set-up is done; Achievements once the first card exists.
 function syncCampUnlocks() {
-  if (setupDone()) unlock("profile");
+  if (setupDone()) unlock("profile", ...(isFresh() ? SPACE_ITEMS : []));
   if (state.achievements.length) unlock("achievements");
 }
 

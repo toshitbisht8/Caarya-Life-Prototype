@@ -38,7 +38,7 @@ function loadPendingUser() {
     "Written Communication": 6, "Verbal Communication": 5,
   };
   state.tools = ["Canva", "Photoshop", "Google Analytics", "Microsoft Office"];
-  unlock("proof", "competencies", "profile", "assessments"); // what set-up opens (Figma 1365:42807)
+  unlock("proof", "competencies", "profile", "assessments", ...SPACE_ITEMS); // what set-up opens (Figma 1365:42807, camp.js)
 
   // ---------- Camp: the set-up history, then what's current ----------
   state.camp.inbox = [];
