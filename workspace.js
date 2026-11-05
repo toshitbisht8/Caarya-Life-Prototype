@@ -198,14 +198,18 @@ userMenu.addEventListener("click", (e) => {
       ["Assessments", [{ file: "assessments-idle.svg", inset: "5.21% 13.54% 5.22% 13.54%" }], "assessments", "assessments-focus.svg"],
     ] },
     { key: "knowledge", title: "Your Knowledge Space", color: "#c44eb9", icon: "section-knowledge.png", items: [
-      ["Community Intelligence", whole("exchange.svg"), "community-intelligence"], // temporary: the one-pager (space.js)
       ["Daily Gains", whole("daily-gains.svg"), "daily-gains"],
       ["Exchange", whole("exchange.svg"), "exchange"],
     ] },
     { key: "network", title: "Your Network", color: "#0497ae", icon: "section-network.svg", items: [
-      ["Synergy Intelligence", whole("rolodex.svg"), "synergy-intelligence"], // temporary: the one-pager (space.js)
       ["Rolodex", whole("rolodex.svg"), "rolodex"],
       ["Profile", whole("network-profile.svg"), "network-profile"],
+    ] },
+    // Temporary, for new users once set-up is done (Figma 1458:13848): the one-pagers in space.js. Coloured icons,
+    // idle and focused alike.
+    { key: "soon", title: "Coming Soon", color: "#9c9a96", icon: null, divider: true, items: [
+      ["Community Intelligence", whole("soon-community.png"), "community-intelligence", "soon-community.png"],
+      ["Synergy Intelligence", whole("soon-synergy.svg"), "synergy-intelligence", "soon-synergy.svg"],
     ] },
   ];
 
@@ -215,8 +219,9 @@ userMenu.addEventListener("click", (e) => {
     sec.className = "menu-section";
     sec.dataset.menuSection = section.key;
     sec.innerHTML = `
+      ${section.divider ? `<div class="menu__divider menu-section__divider"><span></span></div>` : ""}
       <p class="menu-section__title" style="color:${section.color}">
-        <img src="${M}${section.icon}" alt="" /><span></span>
+        ${section.icon ? `<img src="${M}${section.icon}" alt="" />` : ""}<span></span>
       </p>
       <div class="menu-section__items"></div>`;
     sec.querySelector(".menu-section__title span").textContent = section.title;
