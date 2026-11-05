@@ -460,3 +460,7 @@
   .space__top, .space__pricing { grid-template-columns: 1fr; }
   .space__hero { max-width: 560px; }
 }
+
+/* Transferable skills empty state (Figma 1459:26113): the icon sits in an 80px box */
+.cp-empty__art--transferable { position: relative; display: block; }
+.cp-empty__art--transferable img { position: absolute; inset: 0.2% 10.27% 0.2% 10.23%; width: 79.5%; height: 99.6%; }
