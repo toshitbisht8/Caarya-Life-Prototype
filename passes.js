@@ -3,8 +3,8 @@
 //   Learner Pass     Experience Studio work and unpaid gigs
 //   Worker Pass      paid gigs and jobs / CGOs: eligible once a pod mentor grades work submitted on the Desk
 //   Integrated Pass  both; available with the Learner Pass, its industrial half opens once the user is eligible for it
-// Any pass opens the real Growth Track and Your Work. Credits unlock with the first pass (with 200 free on top of the
-// pass's own) and can be topped up from the account menu.
+// Any pass opens the real Growth Track and Your Work. Credits unlock with the first pass (the pass's own credits) and
+// can be topped up from the account menu.
 // Demo shortcut (mentor-sim.js): Shift+L approves Learner Pass eligibility.
 
 const PASSES = {
@@ -13,7 +13,6 @@ const PASSES = {
   integrated: { name: "Integrated Pass", price: 4999, credits: 5000, unlocks: ["Everything in the Learner Pass", "Paid gigs and jobs / CGOs, once you’re eligible for them", "Your Work: Desk and Session Logs"] },
 };
 const CREDIT_PACKS = [[500, 499], [1000, 999], [2500, 2499]]; // [credits, price in ₹] (prices are placeholders)
-const FREE_CREDITS = 200;
 const PAY_MS = 1600; // "processing" on the payment screen
 const P = "assets/passes/";
 
@@ -50,11 +49,9 @@ function addCredits(n) {
   state.coins += n;
   state.coinsMax += n;
 }
-// Credits open with the first pass, with some free to spend as the user chooses; the spotlight (camp.js) introduces them.
+// Credits open with the first pass; the spotlight (camp.js) introduces them.
 function unlockCredits() {
-  if (creditsOn()) return;
-  unlock("credits");
-  addCredits(FREE_CREDITS);
+  if (!creditsOn()) unlock("credits");
 }
 
 // Why a tab on Explore Work is closed by the user's passes ("" when it isn't).

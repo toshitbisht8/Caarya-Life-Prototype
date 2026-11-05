@@ -221,8 +221,8 @@ const SPOTS = {
   "synergy-intelligence": { who: "talent", title: "Synergy Intelligence is coming", text: "See what’s coming to Your Network, and join the waitlist to try it first." },
   work: { items: ["desk", "session-logs"], section: true, title: "Your Work is unlocked",
     text: "Your Desk is where you work on the work orders you pick up. Session Logs keeps a record of every session." },
-  credits: { items: ["credits"], who: "talent", target: () => document.querySelector("[data-user-chip]"), title: "You’ve got 200 free credits",
-    text: "Spend them as you choose on work orders now, and on Your Knowledge Space and Your Network when they open. The ring around your picture shows your balance. Click it to top up." },
+  credits: { items: ["credits"], who: "talent", target: () => document.querySelector("[data-user-chip]"), title: "Your credits",
+    text: "Your pass came with credits. Spend them on work orders now, and on Your Knowledge Space and Your Network when they open. The ring around your picture shows your balance. Click it to top up." },
   community: { items: COMMUNITY, section: true, title: "Community Intelligence is unlocked",
     text: "Your Knowledge Space: daily knowledge gains and an exchange of ideas with your peers." },
 };
