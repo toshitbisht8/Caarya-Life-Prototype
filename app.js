@@ -223,6 +223,11 @@ $('[data-view="login"]').addEventListener("submit", (e) => {
     loadDemoUser();
     return loggingIn(() => go("camp"));
   }
+  // Second demo account (pending-user.js): set-up done, waiting on pass eligibility.
+  if (PENDING_LOGINS.includes(username.toLowerCase())) {
+    loadPendingUser();
+    return loggingIn(() => go("camp"));
+  }
   state.name = username.includes("@") ? "" : username;
   state.email = username.includes("@") ? username : "";
   go("otp");

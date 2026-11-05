@@ -315,3 +315,42 @@
 .user-menu__topup:hover { background: var(--neutral-50); }
 .add-track__topup { padding: 0; border: 0; background: none; cursor: pointer; font: inherit; color: var(--caarya-red-500); text-decoration: underline; }
 .locked .pgm-btn { margin-top: 8px; }
+
+/* ---------- Payment screen (passes.js) ---------- */
+.pay-modal { width: min(760px, calc(100vw - 32px)); }
+.pay__body { display: grid; grid-template-columns: 240px 1fr; min-height: 0; overflow-y: auto; }
+.pay__summary { display: flex; flex-direction: column; gap: 20px; padding: 20px; border-right: 1px solid var(--neutral-100); background: var(--neutral-50); }
+.pay__merchant { display: flex; align-items: center; gap: 8px; font-family: var(--font-poppins, "Poppins"), sans-serif; font-weight: 600; font-size: 14px; color: var(--neutral-900); }
+.pay__merchant img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+.pay__label { font-family: var(--font-satoshi); font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; color: var(--neutral-500); }
+.pay__item { font-family: var(--font-lato); font-weight: 700; font-size: 16px; letter-spacing: 0.32px; line-height: 1.5; color: var(--neutral-900); }
+.pay__amount { font-family: var(--font-satoshi); font-weight: 700; font-size: 24px; letter-spacing: 0.48px; line-height: 1.5; color: var(--neutral-900); }
+.pay__secure { display: flex; align-items: center; gap: 6px; margin-top: auto; font-family: var(--font-satoshi); font-size: 10px; letter-spacing: 0.2px; line-height: 1.5; color: var(--neutral-400); }
+.pay__secure img { width: 12px; height: 12px; }
+.pay__form { display: flex; flex-direction: column; gap: 16px; min-height: 340px; padding: 20px; }
+.pay__tabs { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--neutral-50); }
+.pay__tab { flex: 1; padding: 8px !important; border: 0 !important; border-radius: 8px; background: none !important; cursor: pointer; font-family: var(--font-satoshi); font-weight: 500; font-size: 13px; letter-spacing: 0.26px; line-height: 1.5; color: var(--neutral-500); }
+.pay__tab.is-on { background: var(--shades-50) !important; font-weight: 700; color: var(--neutral-900); box-shadow: var(--shadow); }
+.pay__fields { display: flex; flex-direction: column; gap: 12px; }
+.pay__field { display: flex; flex-direction: column; gap: 4px; flex: 1; font-family: var(--font-satoshi); font-weight: 500; font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; color: var(--neutral-800); }
+.pay__field input { width: 100%; padding: 10px 12px; border: 1px solid var(--neutral-200); border-radius: 8px; font-family: var(--font-satoshi); font-size: 14px; letter-spacing: 0.28px; color: var(--neutral-900); outline: none; }
+.pay__field input:focus { border-color: #feb8b1; box-shadow: 0 0 0 3px #fff4f2; }
+.pay__row { display: flex; gap: 12px; }
+.pay__hint { font-family: var(--font-satoshi); font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; color: var(--neutral-500); }
+.pay__banks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pay__bank { padding: 10px 12px !important; border: 1px solid var(--neutral-200) !important; border-radius: 8px; background: var(--shades-50) !important; cursor: pointer; text-align: left; font-family: var(--font-satoshi); font-weight: 500; font-size: 13px; letter-spacing: 0.26px; line-height: 1.5; color: var(--neutral-800); }
+.pay__bank.is-on { border-color: #feb8b1 !important; background: #fff4f2 !important; color: var(--caarya-red-500); font-weight: 700; }
+.pay__error { min-height: 18px; font-family: var(--font-satoshi); font-size: 12px; color: var(--caarya-red-500); }
+.pay__actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: auto; }
+.pay__status { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; font-family: var(--font-satoshi); font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: var(--neutral-500); }
+.pay__status .pgm-btn { margin-top: 16px; }
+.pay__status-title { font-family: var(--font-lato); font-weight: 700; font-size: 18px; letter-spacing: 0.36px; color: var(--neutral-900); }
+.pay__ref { font-size: 12px; color: var(--neutral-400); }
+.pay__tick { width: 48px; height: 48px; padding: 10px; border-radius: 50%; background: #e3f6e5; }
+.pay__spinner { width: 40px; height: 40px; border: 3px solid var(--neutral-100); border-top-color: var(--caarya-red-500); border-radius: 50%; animation: pay-spin 0.8s linear infinite; }
+@keyframes pay-spin { to { transform: rotate(360deg); } }
+@media (max-width: 760px) {
+  .pay__body { grid-template-columns: 1fr; }
+  .pay__summary { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 12px 24px; border-right: 0; border-bottom: 1px solid var(--neutral-100); }
+  .pay__secure { margin-top: 0; width: 100%; }
+}
