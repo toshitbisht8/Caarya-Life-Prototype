@@ -354,3 +354,17 @@
   .pay__summary { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 12px 24px; border-right: 0; border-bottom: 1px solid var(--neutral-100); }
   .pay__secure { margin-top: 0; width: 100%; }
 }
+
+/* ---------- Logout confirmation (Figma 1450:13063) ---------- */
+.logout-modal { width: min(320px, calc(100vw - 32px)); overflow: hidden; border-radius: 24px; background: var(--shades-50); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
+.logout-modal__body { display: flex; flex-direction: column; gap: 8px; padding: 24px; text-align: center; line-height: 1.5; color: var(--neutral-800); }
+.logout-modal__body h2 { margin: 0; font-family: var(--font-lato); font-weight: 700; font-size: 20px; letter-spacing: 0.4px; text-transform: capitalize; }
+.logout-modal__body p { font-family: var(--font-satoshi); font-size: 14px; letter-spacing: 0.28px; }
+.logout-modal__actions { display: flex; gap: 1px; padding-top: 1px; background: var(--neutral-100); }
+.logout-modal__actions button { flex: 1; padding: 20px !important; background: var(--shades-50) !important; font-family: var(--font-satoshi); font-weight: 700; font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; text-transform: uppercase; color: var(--neutral-800); }
+.logout-modal__actions button:hover { background: var(--neutral-50) !important; }
+.logout-modal__actions .is-danger { color: var(--caarya-red-500); }
+
+/* Plain toasts with a second line */
+.toast:not(.toast--step) .toast__text { display: flex; flex-direction: column; }
+.toast:not(.toast--step) .toast__text small { font-weight: 500; font-size: 12px; letter-spacing: 0.3px; color: rgba(255, 255, 255, 0.7); }

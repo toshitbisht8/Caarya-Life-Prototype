@@ -723,7 +723,11 @@ function openProofPrompt() {
       </footer>
     </div>`, "modal").addEventListener("click", (e) => {
     const act = e.target.closest("[data-pgm]")?.dataset.pgm;
-    if (act === "skip") closeOverlay();
+    if (act === "skip") {
+      closeOverlay();
+      // Experience claimed but no proof yet: a nudge on why it's worth adding.
+      if (exp) showToast("Proof of work backs up your past experience\nIt improves your chances of landing a pass and a job");
+    }
     if (act === "add") { closeOverlay(); openAssetModal(); } // impact.js
   });
 }

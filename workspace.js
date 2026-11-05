@@ -147,7 +147,7 @@ userMenu.addEventListener("click", (e) => {
   if (action === "settings") showToast("Account settings are coming soon");
   if (action === "topup") openTopUp(); // passes.js
   if (action === "passes") openPasses();
-  if (action === "logout") { location.hash = "#login"; location.reload(); } // all state is in memory, so this signs out
+  if (action === "logout") confirmLogout();
 });
 
 (function () {
@@ -291,3 +291,21 @@ userMenu.addEventListener("click", (e) => {
     listEl.append(group);
   });
 })();
+
+// Log out, after a confirmation (Figma 1450:13063). All state is in memory, so reloading signs out.
+function confirmLogout() {
+  openOverlay(`
+    <div class="logout-modal" role="alertdialog" aria-modal="true" aria-labelledby="logout-title" aria-describedby="logout-text">
+      <div class="logout-modal__body">
+        <h2 id="logout-title">Logout</h2>
+        <p id="logout-text">Are you sure you want to log out?</p>
+      </div>
+      <div class="logout-modal__actions">
+        <button type="button" data-close autofocus>Cancel</button>
+        <button type="button" class="is-danger" data-logout>Logout</button>
+      </div>
+    </div>`, "modal").querySelector("[data-logout]").addEventListener("click", () => {
+    location.hash = "#login";
+    location.reload();
+  });
+}
