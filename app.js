@@ -89,12 +89,12 @@ const ROUTES = [
   "login", "signup", "otp", "about", "roles", "industries", "confirm",
   "assessments", "growth", "explore", "explore-all", "work-order", "desk", "session",
   "proof", "proof-asset", "achievements", "achievement-new", "journal", "competencies", "profile", "riasec", "wep",
-  "domain-affinity", "industry-affinity", "session-logs", "daily-gains", "exchange", "rolodex", "network-profile", "camp", "programs", "checkout",
+  "domain-affinity", "industry-affinity", "session-logs", "daily-gains", "exchange", "rolodex", "network-profile", "camp", "programs", "checkout", "community-intelligence", "synergy-intelligence",
   "welcome", "first-things", "meet-team",
 ];
 const STEPS = ["about", "roles", "industries"];
 const WORKSPACE_ROUTES = ["camp", "assessments", "growth", "explore", "explore-all", "work-order", "desk", "proof", "proof-asset", "achievements", "journal", "competencies", "profile",
-  "domain-affinity", "industry-affinity", "session-logs", "daily-gains", "exchange", "rolodex", "network-profile", "programs"];
+  "domain-affinity", "industry-affinity", "session-logs", "daily-gains", "exchange", "rolodex", "network-profile", "programs", "community-intelligence", "synergy-intelligence"];
 const SCREEN_FOR = { checkout: "checkout", login: "auth", signup: "auth", otp: "auth", confirm: "confirm", session: "session", "achievement-new": "wizard", riasec: "riasec", wep: "wep",
   welcome: "intro", "first-things": "intro", "meet-team": "intro" };
 WORKSPACE_ROUTES.forEach((r) => (SCREEN_FOR[r] = "workspace"));

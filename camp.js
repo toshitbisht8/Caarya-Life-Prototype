@@ -217,7 +217,7 @@ const SPOTS = {
   work: { items: ["desk", "session-logs"], section: true, title: "Your Work is unlocked",
     text: "Your Desk is where you work on the work orders you pick up. Session Logs keeps a record of every session." },
   credits: { items: ["credits"], who: "talent", target: () => document.querySelector("[data-user-chip]"), title: "You’ve got 200 free credits",
-    text: "Spend them as you choose: on work orders, in your Knowledge Space and in your Network. The ring around your picture shows your balance. Click it to top up." },
+    text: "Spend them as you choose on work orders now, and on Your Knowledge Space and Your Network when they open. The ring around your picture shows your balance. Click it to top up." },
   community: { items: COMMUNITY, section: true, title: "Community Intelligence is unlocked",
     text: "Your Knowledge Space: daily knowledge gains and an exchange of ideas with your peers." },
 };
@@ -328,8 +328,9 @@ const MESSAGE_DEFS = [
   ["first-asset", () => isFresh() && state.assets.length > 0, "pgm", () => `Congratulations on adding your first proof of work, ${firstName()}! If you want to, you can also turn your assets into achievement cards that show the skills and impact behind them.`, "Create achievement card", "achievement", () => state.achievements.length > 0],
   ["tm-done", () => isFresh() && setupDone(), "talent", () => TM_DONE[0], "Details", "talent-details"],
   ["assessments", () => isFresh() && setupDone(), "pgm", () => "While your career report is being generated, you can take a few basic assessments if you like. They’re optional, and they help enhance your ME profile.", "Explore assessments", "assessments", null, () => unlock("assessments")],
-  ["synergy", () => isFresh() && setupDone(), "talent", () => "Unlock Synergy Intelligence? See your network: the people you’ve worked with, how you work together and who can open doors for you.", "Unlock", "synergy", () => SYNERGY.every((i) => state.camp.unlocked.has(i))],
-  ["community", () => isFresh() && setupDone(), "pgm", () => "Unlock Community Intelligence? Grow with the community through daily knowledge gains and an exchange of ideas with your peers.", "Unlock", "community", () => COMMUNITY.every((i) => state.camp.unlocked.has(i))],
+  // Coming soon: each leads to its one-pager and waitlist (space.js)
+  ["synergy", () => isFresh() && setupDone(), "talent", () => "Synergy Intelligence is coming to Your Network: the people you’ve worked with, how you work together and who can open doors for you. Learn more and join the waitlist.", "Learn more", "synergy", () => onWaitlist("synergy")],
+  ["community", () => isFresh() && setupDone(), "pgm", () => "Community Intelligence is coming to Your Knowledge Space: daily knowledge gains and an exchange of ideas with your peers. Learn more and join the waitlist.", "Learn more", "community", () => onWaitlist("community")],
   // Passes (passes.js): a pod mentor's review, then graded Desk work
   ["pass-learner", () => passesOpen(), "talent", () => `Good news, ${firstName()}! A pod mentor has reviewed your profile, and you’re eligible for our learner programs. Enroll in a program to unlock your Growth Track: Experience Studio work, your Desk and credits to get started.`, "View programs", "passes", () => hasPass()],
   ["pass-worker", () => isFresh() && workerEligible(), "talent", () => owns("integrated")
@@ -420,8 +421,6 @@ function openMessage(m) {
   });
 }
 
-// Unlocking Your Network or Your Knowledge Space also opens credits, with some free ones (passes.js).
-const unlockAndGo = (items, toast) => { unlock(...items); unlockCredits(); render(); showToast(toast); };
 const CAMP_ACTIONS = {
   "pgm-flow": () => openPgmFlow(),
   "add-proof": addProof,
@@ -432,8 +431,8 @@ const CAMP_ACTIONS = {
   passes: () => openPasses(),
   "paid-work": () => (canWork() ? (state.growth.exploreTab = "paid", go("explore-all")) : openPasses()),
   assessments: () => go("assessments"),
-  synergy: () => unlockAndGo(SYNERGY, "Synergy Intelligence unlocked"),
-  community: () => unlockAndGo(COMMUNITY, "Community Intelligence unlocked"),
+  synergy: () => go("synergy-intelligence"), // space.js
+  community: () => go("community-intelligence"),
   explore: () => go("explore"),
   desk: () => go("desk"),
 };
@@ -882,6 +881,7 @@ function applyProfile(p, fresh) {
   if (fresh) {
     Object.assign(state, { coins: 0, coinsMax: 0 }); // credits come with a pass or when they unlock (passes.js)
     state.pass = { eligible: new Set(), owned: new Set(), programs: new Set() };
+    state.waitlist = new Set();
   }
   state.camp.stepsSeen = null;
   state.camp.spotSeen = null;

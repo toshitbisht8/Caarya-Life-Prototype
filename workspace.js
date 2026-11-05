@@ -6,6 +6,8 @@ const PAGE_FOR = {
   assessments: { page: "assessments", menu: "assessments", crumb: ["Your Unique Identity", "Assessments"] },
   growth: { page: "growth", menu: "growth", crumb: ["Your Career", "Growth Track"] },
   programs: { page: "road", menu: "growth", crumb: ["Your Career", "Programs"] }, // camp.js / passes.js
+  "community-intelligence": { page: "space", menu: "", crumb: ["Your Knowledge Space", "Community Intelligence"] }, // space.js
+  "synergy-intelligence": { page: "space", menu: "", crumb: ["Your Network", "Synergy Intelligence"] },
   explore: { page: "growth", menu: "growth", crumb: ["Your Career", "Growth Track"] },
   "explore-all": { page: "growth", menu: "growth", crumb: ["Your Career", "Growth Track"] },
   "work-order": { page: "growth", menu: "growth", crumb: ["Your Career", "Growth Track"] },
@@ -97,6 +99,7 @@ function renderWorkspace(route, param) {
   if (info.page === "soon") renderSoon(route);
   if (info.page === "camp") renderCamp(); // camp.js
   if (info.page === "road") renderRoad(route); // camp.js
+  if (info.page === "space") renderSpace(route); // space.js
   document.querySelector(".inbox").classList.toggle("is-focus", info.page === "camp");
   syncInbox(); // camp.js
   closeUserMenu();

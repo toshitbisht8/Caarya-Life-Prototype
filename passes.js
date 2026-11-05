@@ -3,8 +3,8 @@
 //   Learner Pass     Experience Studio work and unpaid gigs
 //   Worker Pass      paid gigs and jobs / CGOs: eligible once a pod mentor grades work submitted on the Desk
 //   Integrated Pass  both; available with the Learner Pass, its industrial half opens once the user is eligible for it
-// Any pass opens the real Growth Track and Your Work. Credits are separate: they unlock (with 200 free) when the user
-// first unlocks Your Network or Your Knowledge Space, or buys a pass, and can be topped up from the account menu.
+// Any pass opens the real Growth Track and Your Work. Credits unlock with the first pass (with 200 free on top of the
+// pass's own) and can be topped up from the account menu.
 // Demo shortcut (mentor-sim.js): Shift+L approves Learner Pass eligibility.
 
 const PASSES = {
@@ -50,7 +50,7 @@ function addCredits(n) {
   state.coins += n;
   state.coinsMax += n;
 }
-// The first time credits open, the user gets some to spend as they choose; the spotlight (camp.js) introduces them.
+// Credits open with the first pass, with some free to spend as the user chooses; the spotlight (camp.js) introduces them.
 function unlockCredits() {
   if (creditsOn()) return;
   unlock("credits");
