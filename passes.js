@@ -1,5 +1,5 @@
-// Passes and credits. After set-up a pod mentor reviews the user; the Talent Manager
-// then tells them which passes they can buy (Camp messages in camp.js).
+// Programs, passes and credits. After set-up a pod mentor reviews the user; the Talent Manager then tells them which
+// programs they can enroll in (Camp messages in camp.js). Each program comes with a pass, and passes control access:
 //   Learner Pass     Experience Studio work and unpaid gigs
 //   Worker Pass      paid gigs and jobs / CGOs: eligible once a pod mentor grades work submitted on the Desk
 //   Integrated Pass  both; available with the Learner Pass, its industrial half opens once the user is eligible for it
@@ -17,7 +17,17 @@ const FREE_CREDITS = 200;
 const PAY_MS = 1600; // "processing" on the payment screen
 const P = "assets/passes/";
 
-state.pass = { eligible: new Set(), owned: new Set() }; // eligible: "learner" (pod mentor), "worker" (graded Desk work)
+// Programs on offer (the Programs page, which Growth Track shows until the user has a pass).
+const PROGRAMS = [
+  { id: "safari", name: "Industry Safari", pass: "learner", tag: "Learner Pass" },
+  { id: "castles", name: "Career Castles", pass: "learner", tag: "Learner Pass" },
+  { id: "fusion", name: "Fusion Work Study", pass: "worker", tag: "Worker Pass" },
+  { id: "integrated", name: "Integrated Program", pass: "integrated", tag: "Learner + Worker Pass" },
+];
+const programById = (id) => PROGRAMS.find((p) => p.id === id);
+
+// eligible: "learner" (pod mentor), "worker" (graded Desk work); owned: passes; programs: program ids enrolled in
+state.pass = { eligible: new Set(), owned: new Set(), programs: new Set() };
 
 const rupees = (n) => `₹${n.toLocaleString("en-IN")}`;
 const credits = (n) => n.toLocaleString("en-IN");
@@ -49,61 +59,68 @@ function unlockCredits() {
 
 // Why a tab on Explore Work is closed by the user's passes ("" when it isn't).
 function passLock(tab) {
-  if (tab === "studio" || tab === "unpaid") return canLearn() ? "" : "Get the Learner Pass or Integrated Pass to unlock this";
+  if (tab === "studio" || tab === "unpaid") return canLearn() ? "" : "Enroll in a program to unlock this";
   if (canWork()) return "";
   if (!workerEligible()) return owns("integrated") ? "Opens on your Integrated Pass once a pod mentor grades work you submit on the Desk"
     : "Unlocks once a pod mentor grades work you submit on the Desk";
-  return "Get the Worker Pass to unlock paid gigs and jobs";
+  return "Enroll in Fusion Work Study to unlock paid gigs and jobs";
 }
 
-// ---------- Pass picker ----------
 const modalHead = (title) => `
   <header class="pgm-modal__head pass-modal__head">
     <h2 class="pass-modal__title">${title}</h2>
     <button type="button" class="pgm-modal__close" data-close aria-label="Close"><img src="${G}close-dark.svg" alt="" /></button>
   </header>`;
 
-function passState(k) {
-  if (owns(k)) return ["is-owned", "Active"];
-  if (k !== "integrated" && owns("integrated")) return ["is-owned", "Included in your Integrated Pass"];
-  if (!passEligible(k)) return ["is-locked", "Unlocks once a pod mentor grades work you submit on the Desk"];
+// ---------- Programs page (references: the user's pricing-page examples) ----------
+// [class, note]: enrolled, locked until eligible, or open to enroll.
+function programState(p) {
+  if (state.pass.programs.has(p.id)) return ["is-enrolled", "Enrolled"];
+  if (!passEligible(p.pass)) return ["is-locked", "Unlocks once a pod mentor grades work you submit on the Desk"];
   return ["", ""];
 }
+const programsOpenToEnroll = () => PROGRAMS.some((p) => !programState(p)[0]);
+const openPasses = () => go("programs"); // where every "choose a program" link leads
 
-function openPasses(preselect) {
-  let picked = preselect && !passState(preselect)[0] ? preselect : Object.keys(PASSES).find((k) => !passState(k)[0]) || "";
-  const ov = openOverlay(`<div class="pgm-modal pass-modal" role="dialog" aria-modal="true" aria-label="Choose your pass"></div>`, "modal");
-  const box = ov.querySelector(".pass-modal");
-  function draw() {
-    box.innerHTML = `${modalHead("Choose your pass")}
-      <div class="pgm-modal__body pgm-modal__scroll pass-modal__body">
-        <p>Each pass opens a part of the platform and comes with credits. You can add another pass later.</p>
-        <div class="pass-grid" role="radiogroup" aria-label="Passes">${Object.entries(PASSES).map(([k, p]) => {
-          const [cls, note] = passState(k);
-          const on = picked === k;
-          return `
-          <button type="button" role="radio" aria-checked="${on}" class="pass-card ${cls}${on ? " is-selected" : ""}" data-pass="${k}" ${cls ? "disabled" : ""}>
-            <span class="pass-card__name">${p.name}</span>
-            <span class="pass-card__price">${rupees(p.price)}</span>
-            <span class="pass-card__credits"><img src="${G}coins-dark.svg" alt="" />${credits(p.credits)} credits included</span>
-            <span class="pass-card__list">${p.unlocks.map((u) => `<span><img src="${CA}done.svg" alt="" />${u}</span>`).join("")}</span>
-            ${note ? `<span class="pass-card__note">${cls === "is-locked" ? `<img src="${G}lock-small.svg" alt="" />` : ""}${note}</span>` : ""}
-          </button>`;
-        }).join("")}</div>
+function programCard(p) {
+  const pass = PASSES[p.pass];
+  const [cls, note] = programState(p);
+  const featured = p.pass === "integrated";
+  const list = [...pass.unlocks, `${credits(pass.credits)} credits to get you started`];
+  return `
+    <article class="prog${featured ? " prog--featured" : ""}${cls ? ` ${cls}` : ""}" aria-labelledby="prog-${p.id}">
+      <div class="prog__top">
+        <div class="prog__title"><h3 id="prog-${p.id}">${p.name}</h3>${featured ? `<span class="prog__badge">Best value</span>` : ""}</div>
+        <p class="prog__pass">${p.tag}</p>
+        <p class="prog__price">${rupees(pass.price)}</p>
       </div>
-      <footer class="pgm-modal__foot pass-modal__foot">
-        <span></span>
-        <button type="button" class="pgm-btn" data-pass-next ${picked ? "" : "disabled"}>Continue <span aria-hidden="true">→</span></button>
-      </footer>`;
-  }
-  ov.addEventListener("click", (e) => {
-    const card = e.target.closest("[data-pass]");
-    if (card && !card.disabled) { picked = card.dataset.pass; return draw(); }
-    if (!e.target.closest("[data-pass-next]") || !picked) return;
-    closeOverlay();
-    openCheckout({ kind: "pass", key: picked });
-  });
-  draw();
+      <div class="prog__body">
+        <p class="prog__label">Includes</p>
+        <ul class="prog__list">${list.map((u) => `<li><img src="${CA}done.svg" alt="" />${u}</li>`).join("")}</ul>
+      </div>
+      <div class="prog__foot">
+        ${cls === "is-enrolled" ? `<span class="prog__state is-on"><img src="${CA}done.svg" alt="" />${note}</span>`
+          : cls === "is-locked" ? `<span class="prog__state"><img src="${G}lock-small.svg" alt="" />${note}</span>`
+          : `<button type="button" class="pgm-btn" data-enroll="${p.id}">Enroll <span aria-hidden="true">→</span></button>`}
+      </div>
+    </article>`;
+}
+
+function programsPage() {
+  const first = !hasPass();
+  return `
+    <section class="programs">
+      ${first ? "" : backLink("Back to Growth Track", "growth")}
+      <div class="programs__head">
+        <h1>${first ? "Enroll in a program to get started" : "Programs"}</h1>
+        <p>${first ? "Each program comes with a pass that opens part of Caarya Life, and credits to get you going."
+          : "Add a program to open more of Caarya Life. Each comes with its pass and credits."}</p>
+      </div>
+      <h2 class="programs__group">Programs</h2>
+      <div class="programs__grid">${PROGRAMS.filter((p) => p.pass !== "integrated").map(programCard).join("")}</div>
+      <h2 class="programs__group">Learn and work</h2>
+      ${PROGRAMS.filter((p) => p.pass === "integrated").map(programCard).join("")}
+    </section>`;
 }
 
 // ---------- Credit top-up ----------
@@ -139,16 +156,17 @@ function openTopUp() {
 
 // ---------- Checkout: the order, then the payment screen ----------
 function openCheckout(item) {
-  const pass = item.kind === "pass" ? PASSES[item.key] : null;
+  const program = item.kind === "program" ? programById(item.id) : null;
+  const pass = program ? PASSES[program.pass] : null;
   const [packCredits, packPrice] = pass ? [pass.credits, pass.price] : CREDIT_PACKS[item.pack];
-  const name = pass ? pass.name : `${credits(packCredits)} credits`;
+  const name = program ? program.name : `${credits(packCredits)} credits`;
   const ov = openOverlay(`
     <div class="pgm-modal pass-modal pass-modal--checkout" role="dialog" aria-modal="true" aria-label="Checkout">
       ${modalHead("Checkout")}
       <div class="pgm-modal__body pass-modal__body">
         <div class="checkout__item">
           <div><p class="checkout__name">${name}</p>
-            <p class="checkout__sub">${pass ? `Includes ${credits(packCredits)} credits` : "Credit pack"}</p></div>
+            <p class="checkout__sub">${program ? `${program.tag} · includes ${credits(packCredits)} credits` : "Credit pack"}</p></div>
           <p class="checkout__price">${rupees(packPrice)}</p>
         </div>
         <dl class="checkout__rows">
@@ -164,11 +182,11 @@ function openCheckout(item) {
   ov.addEventListener("click", (e) => {
     if (e.target.closest("[data-pay-back]")) {
       closeOverlay();
-      return pass ? openPasses(item.key) : openTopUp();
+      return program ? undefined : openTopUp(); // the Programs page is behind the checkout
     }
     if (!e.target.closest("[data-pay]")) return;
     closeOverlay();
-    openGateway(name, packPrice, () => (pass ? buyPass(item.key) : buyCredits(packCredits)), () => openCheckout(item));
+    openGateway(name, packPrice, () => (program ? enroll(program) : buyCredits(packCredits)), () => openCheckout(item));
   });
 }
 
@@ -273,15 +291,16 @@ function openGateway(name, price, onPaid, onBack) {
   draw();
 }
 
-// A pass opens the real Growth Track and Your Work; the spotlights (camp.js) then show what's new.
-function buyPass(k) {
-  const p = PASSES[k];
-  state.pass.owned.add(k);
+// Enrolling gives the program's pass: the real Growth Track and Your Work open; the spotlights (camp.js) show what's new.
+function enroll(program) {
+  const pass = PASSES[program.pass];
+  state.pass.programs.add(program.id);
+  state.pass.owned.add(program.pass);
   unlockCredits();
-  addCredits(p.credits);
+  addCredits(pass.credits);
   unlock("desk", "session-logs");
   go("growth");
-  showToast(`${p.name} active\n${credits(p.credits)} credits added`, undefined, POPUP_DELAY_MS, "step");
+  showToast(`Enrolled in ${program.name}\n${pass.name} active · ${credits(pass.credits)} credits added`, undefined, POPUP_DELAY_MS, "step");
 }
 function buyCredits(n) {
   addCredits(n);

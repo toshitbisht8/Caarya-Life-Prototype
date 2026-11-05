@@ -300,13 +300,13 @@ function pageExploreAll() {
   // A tab is closed by the user's passes (passes.js) or, for gigs and jobs, by their career stage in the role.
   const lockText = (key) => passLock(key) || (key !== "studio" && stageOf(role) < UNLOCK_AT[key] ? LOCKED_TABS[key][2] : "");
   const isLocked = (key) => !!lockText(key);
-  const buyable = Object.keys(PASSES).some((k) => !passState(k)[0]);
+  const buyable = programsOpenToEnroll(); // passes.js
   // Unlocked gig tabs have no designed listings yet, so they say so instead of showing the lock.
   const content = tab === "studio" && passLock("studio") ? `
         <div class="locked">
           <p class="locked__text">Practise on real briefs and build proof of your work</p>
           <p class="locked__pill"><img src="${G}lock-small.svg" alt="" />${passLock("studio")}</p>
-          ${buyable ? `<button type="button" class="pgm-btn" data-action="passes">Choose a pass <span aria-hidden="true">→</span></button>` : ""}
+          ${buyable ? `<button type="button" class="pgm-btn" data-action="passes">View programs <span aria-hidden="true">→</span></button>` : ""}
         </div>`
     : tab === "studio"
     ? `${filterChips()}<div class="gt-grid">${workOrderIds(EXPLORE_COUNT, 4).map((id) => woCard(id, "explore")).join("")}</div>`
@@ -316,7 +316,7 @@ function pageExploreAll() {
           <p class="locked__text">${text}</p>
           ${isLocked(tab)
             ? `<p class="locked__pill"><img src="${G}lock-small.svg" alt="" />${lockText(tab)}</p>
-               ${passLock(tab) && buyable && workerEligible() ? `<button type="button" class="pgm-btn" data-action="passes">Choose a pass <span aria-hidden="true">→</span></button>` : ""}`
+               ${passLock(tab) && buyable && workerEligible() ? `<button type="button" class="pgm-btn" data-action="passes">View programs <span aria-hidden="true">→</span></button>` : ""}`
             : `<p class="locked__pill">No ${name.toLowerCase()} open for ‘${esc(roleName(role))}’ right now. New ones are posted every week.</p>`}
         </div>`)(LOCKED_TABS[tab]);
   return `

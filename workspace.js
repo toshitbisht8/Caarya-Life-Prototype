@@ -5,6 +5,7 @@ const PAGE_FOR = {
   camp: { page: "camp", menu: "camp", crumb: ["Caarya Life", "Camp"] },
   assessments: { page: "assessments", menu: "assessments", crumb: ["Your Unique Identity", "Assessments"] },
   growth: { page: "growth", menu: "growth", crumb: ["Your Career", "Growth Track"] },
+  programs: { page: "road", menu: "growth", crumb: ["Your Career", "Programs"] }, // camp.js / passes.js
   explore: { page: "growth", menu: "growth", crumb: ["Your Career", "Growth Track"] },
   "explore-all": { page: "growth", menu: "growth", crumb: ["Your Career", "Growth Track"] },
   "work-order": { page: "growth", menu: "growth", crumb: ["Your Career", "Growth Track"] },
@@ -95,7 +96,7 @@ function renderWorkspace(route, param) {
   if (info.page === "assessments") syncAssessmentCards(); // riasec.js
   if (info.page === "soon") renderSoon(route);
   if (info.page === "camp") renderCamp(); // camp.js
-  if (info.page === "road") renderRoad(); // camp.js
+  if (info.page === "road") renderRoad(route); // camp.js
   document.querySelector(".inbox").classList.toggle("is-focus", info.page === "camp");
   syncInbox(); // camp.js
   closeUserMenu();
@@ -146,7 +147,7 @@ userMenu.addEventListener("click", (e) => {
   if (action === "camp") go("camp");
   if (action === "settings") showToast("Account settings are coming soon");
   if (action === "topup") openTopUp(); // passes.js
-  if (action === "passes") openPasses();
+  if (action === "passes") go("programs"); // passes.js
   if (action === "logout") confirmLogout();
 });
 
