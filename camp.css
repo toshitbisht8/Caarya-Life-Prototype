@@ -259,3 +259,59 @@
 
 /* Credits hidden for now (workspace.js CREDITS_ON) */
 .no-credits .user-ring svg, .no-credits .user-menu__credits { display: none; }
+
+/* ---------- Growth Track before a pass: the review card (Figma 1446:12606) ---------- */
+.road-card { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 16px; padding: 16px; border-radius: 20px; background: var(--shades-50); box-shadow: var(--shadow); }
+.road-card__top { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.road-card__icon { width: 39.3042px; height: 40px; }
+.road-card__top h2 { margin: 0; font-family: var(--font-lato); font-weight: 700; font-size: 16px; letter-spacing: 0.32px; line-height: 1.5; text-transform: capitalize; color: var(--neutral-800); }
+.road-card__top p { font-family: var(--font-satoshi); font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; color: var(--neutral-500); }
+.road-card__cta { margin-top: 8px; }
+.road-card__rule { display: flex; align-items: center; gap: 16px; }
+.road-card__rule::before, .road-card__rule::after { content: ""; flex: 1; height: 1px; border-radius: 24px; background: var(--neutral-200); }
+.road-card__toggle { display: inline-flex; align-items: center; gap: 8px; padding: 8px; border: 0; border-radius: 44px; background: none; cursor: pointer; font-family: var(--font-satoshi); font-weight: 700; font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; text-transform: uppercase; color: var(--neutral-500); }
+.road-card__toggle:hover { background: var(--neutral-50); }
+.road-card__toggle img { width: 16px; height: 16px; transition: transform 0.2s; }
+.road-card__toggle.is-open img { transform: rotate(180deg); }
+.road-card .camp-steps { width: 100%; }
+
+/* ---------- Passes, credit top-up and checkout (passes.js; built from the PGM modal and card styles) ---------- */
+.pass-modal { width: min(800px, calc(100vw - 32px)); }
+.pass-modal--checkout { width: min(480px, calc(100vw - 32px)); }
+.pass-modal--credits { width: min(640px, calc(100vw - 32px)); }
+.pass-modal__head { justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--neutral-100); }
+.pass-modal__title { margin: 0; font-family: var(--font-lato); font-weight: 700; font-size: 18px; letter-spacing: 0.36px; line-height: 1.5; color: var(--neutral-900); }
+.pass-modal__body { gap: 16px; padding: 20px; }
+.pass-modal__body > p { font-family: var(--font-satoshi); font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: var(--neutral-800); }
+.pass-modal__foot { padding: 16px 20px; border-top: 1px solid var(--neutral-100); }
+.pass-modal__foot .pgm-btn:disabled { opacity: 0.4; cursor: default; }
+.pass-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.pass-card { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 16px !important; border: 1px solid var(--neutral-200) !important; border-radius: 16px; background: var(--shades-50) !important; text-align: left; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.pass-card:not(:disabled):hover { border-color: #feb8b1 !important; }
+.pass-card.is-selected { border-color: #feb8b1 !important; background: #fff4f2 !important; box-shadow: inset 0 0 0 1px #feb8b1; }
+.pass-card:disabled { cursor: default; }
+.pass-card.is-locked > :not(.pass-card__note) { opacity: 0.5; }
+.pass-card__name { font-family: var(--font-lato); font-weight: 700; font-size: 16px; letter-spacing: 0.32px; line-height: 1.5; color: var(--neutral-900); }
+.pass-card__price { font-family: var(--font-satoshi); font-weight: 700; font-size: 20px; letter-spacing: 0.4px; line-height: 1.5; color: var(--neutral-900); }
+.pass-card__credits { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-satoshi); font-weight: 500; font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; color: var(--neutral-500); }
+.pass-card__credits img { width: 14px; height: 14px; }
+.pass-card__list { display: flex; flex-direction: column; gap: 6px; padding-top: 8px; border-top: 1px solid var(--neutral-100); align-self: stretch; }
+.pass-card__list > span { display: flex; align-items: flex-start; gap: 6px; font-family: var(--font-satoshi); font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; color: var(--neutral-800); }
+.pass-card__list img { width: 16px; height: 16px; flex-shrink: 0; }
+.pass-card__note { display: inline-flex; align-items: center; gap: 6px; margin-top: auto; padding: 4px 8px; border-radius: 40px; background: var(--neutral-50); font-family: var(--font-satoshi); font-weight: 500; font-size: 10px; letter-spacing: 0.2px; line-height: 1.5; color: var(--neutral-500); }
+.pass-card__note img { width: 12px; height: 12px; }
+.pass-card.is-owned .pass-card__note { background: #e3f6e5; color: #2bb656; }
+.checkout__item { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px; border: 1px solid var(--neutral-100); border-radius: 16px; }
+.checkout__name { font-family: var(--font-lato); font-weight: 700; font-size: 16px; letter-spacing: 0.32px; line-height: 1.5; color: var(--neutral-900); }
+.checkout__sub { font-family: var(--font-satoshi); font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; color: var(--neutral-500); }
+.checkout__price { font-family: var(--font-satoshi); font-weight: 700; font-size: 16px; letter-spacing: 0.32px; color: var(--neutral-900); }
+.checkout__rows { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+.checkout__rows > div { display: flex; justify-content: space-between; font-family: var(--font-satoshi); font-size: 14px; letter-spacing: 0.28px; line-height: 1.5; color: var(--neutral-500); }
+.checkout__rows dd { margin: 0; color: var(--neutral-800); }
+.checkout__total { padding-top: 8px; border-top: 1px solid var(--neutral-100); font-weight: 700; }
+.checkout__total dt, .checkout__total dd { color: var(--neutral-900) !important; }
+.checkout__note { font-family: var(--font-satoshi); font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; color: var(--neutral-400); }
+.user-menu__topup { align-self: flex-start; padding: 6px 12px; border: 1px solid var(--neutral-200); border-radius: 40px; background: var(--shades-50); cursor: pointer; font-family: var(--font-satoshi); font-weight: 700; font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; text-transform: uppercase; color: var(--neutral-800); }
+.user-menu__topup:hover { background: var(--neutral-50); }
+.add-track__topup { padding: 0; border: 0; background: none; cursor: pointer; font: inherit; color: var(--caarya-red-500); text-decoration: underline; }
+.locked .pgm-btn { margin-top: 8px; }

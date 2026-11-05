@@ -5,6 +5,7 @@
 //   Shift+S  rate every technical skill awaiting verification (Competencies)
 //   Shift+M  all of the above
 //   Shift+C  cycle the career stage C1 → C5 of the role in view (the desk's role on Desk / session)
+//   Shift+L  a pod mentor approves Learner Pass eligibility (passes.js), once set-up is done
 const mentorLevel = (max) => 2 + Math.floor(Math.random() * (max - 2)); // a plausible grade: L2 up to L(max-1)
 
 function gradeArtefacts() {
@@ -35,6 +36,12 @@ const MENTOR_KEYS = {
 };
 
 document.addEventListener("keydown", (e) => {
+  if (e.key === "L" && e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey && !e.repeat && !e.target.closest("input, textarea, select, [contenteditable]")) {
+    if (!isFresh() || !setupDone()) return showToast("Pod mentor: finish set-up first", undefined, 0);
+    if (state.pass.eligible.has("learner")) return showToast("Pod mentor: already eligible for the Learner Pass", undefined, 0);
+    state.pass.eligible.add("learner");
+    return render(); // the Talent Manager's message (camp.js) says so
+  }
   if (e.key === "C" && e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey && !e.repeat && !e.target.closest("input, textarea, select, [contenteditable]")) {
     const role = ["desk", "session"].includes(currentBase()) && state.growth.deskRole ? state.growth.deskRole : activeRole();
     if (!role) return;

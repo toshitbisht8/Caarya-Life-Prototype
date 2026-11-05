@@ -64,6 +64,7 @@ function renderWorkspace(route, param) {
   if (route === "profile" && isUnlocked(route)) state.camp.profileSeen = true; // the Talent Manager's message has done its job
   syncCampUnlocks();
   syncSteps(); // camp.js: a step toast when a Road step is newly done
+  syncPasses(); // passes.js: graded Desk work makes a pass holder worker-eligible
   syncMessages(); // camp.js: anything newly due lands in Camp
   syncSpotlights(); // camp.js: newly unlocked sections, after the messages' pop-ups
   if (!isUnlocked(route)) {
@@ -71,7 +72,7 @@ function renderWorkspace(route, param) {
     return go("camp");
   }
   campOnRoute(route); // camp.js: e.g. the PGM's first-proof prompt on the first visit to Proof
-  const info = route === "growth" && state.camp.fresh ? { page: "road", menu: "growth", crumb: PAGE_FOR.growth.crumb } : PAGE_FOR[route];
+  const info = route === "growth" && !hasPass() ? { page: "road", menu: "growth", crumb: PAGE_FOR.growth.crumb } : PAGE_FOR[route];
   syncMenuLocks();
   document.querySelectorAll("[data-page]").forEach((p) => (p.hidden = p.dataset.page !== info.page));
   document.querySelector("[data-crumb-section]").textContent = info.crumb[0];
@@ -101,15 +102,14 @@ function renderWorkspace(route, param) {
 }
 
 // Credit balance: the ring round the avatar in the nav bar, and the full numbers in the account menu.
-// Credits stay hidden (the ring round the avatar and the balance in the account menu) until the steps after set-up
-// that use them exist. Flip this to show them again.
-const CREDITS_ON = false;
+// Credits (the ring round the avatar and the balance in the account menu) show once they're unlocked (passes.js).
 function renderCoins() {
   const ring = document.querySelector(".user-ring");
-  document.documentElement.classList.toggle("no-credits", !CREDITS_ON);
-  if (CREDITS_ON) ring.setAttribute("role", "meter");
+  document.documentElement.classList.toggle("no-credits", !creditsOn());
+  if (creditsOn()) ring.setAttribute("role", "meter");
   else ring.removeAttribute("role");
-  const pct = Math.max(0, Math.min(1, state.coins / state.coinsMax));
+  document.querySelector('[data-user-action="passes"]').hidden = !passesOpen();
+  const pct = state.coinsMax ? Math.max(0, Math.min(1, state.coins / state.coinsMax)) : 0;
   document.querySelector(".user-ring__fill").style.strokeDasharray = `${pct * 100} 100`;
   ring.setAttribute("aria-valuenow", state.coins);
   ring.setAttribute("aria-valuemax", state.coinsMax);
@@ -145,6 +145,8 @@ userMenu.addEventListener("click", (e) => {
   closeUserMenu();
   if (action === "camp") go("camp");
   if (action === "settings") showToast("Account settings are coming soon");
+  if (action === "topup") openTopUp(); // passes.js
+  if (action === "passes") openPasses();
   if (action === "logout") { location.hash = "#login"; location.reload(); } // all state is in memory, so this signs out
 });
 

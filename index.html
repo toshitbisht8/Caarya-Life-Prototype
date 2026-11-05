@@ -281,10 +281,12 @@
               <p class="user-menu__label"><img src="assets/growth/coins-dark.svg" alt="" />Credit balance</p>
               <div class="user-menu__nums"><span>Spent <b data-credits-spent></b></span><span>Available <b data-credits-left></b></span></div>
               <div class="coins__track"><div class="coins__fill"></div></div>
-              <p class="user-menu__note">Credits are used to add work orders to your Growth Track.</p>
+              <p class="user-menu__note">Credits are spent on work orders, in your Knowledge Space and in your Network.</p>
+              <button type="button" class="user-menu__topup" data-user-action="topup">Top up credits</button>
             </div>
             <div class="user-menu__items">
               <button type="button" role="menuitem" data-user-action="camp"><img src="assets/menu/camp.svg" alt="" />Camp</button>
+              <button type="button" role="menuitem" data-user-action="passes" hidden><img src="assets/menu/growth-track.svg" alt="" />Passes</button>
               <button type="button" role="menuitem" data-user-action="settings"><img src="assets/competencies/settings.svg" alt="" />Account settings</button>
             </div>
             <div class="user-menu__items">
@@ -360,6 +362,7 @@
   <script src="wep.js"></script>
   <script src="particles.js"></script>
   <script src="camp.js"></script>
+  <script src="passes.js"></script>
   <script src="onboarding.js"></script>
   <script src="demo-user.js"></script>
   <script src="mentor-sim.js"></script>

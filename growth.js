@@ -297,16 +297,26 @@ const UNLOCK_AT = { unpaid: 3, paid: 4, jobs: 5 };
 function pageExploreAll() {
   const role = activeRole();
   const tab = state.growth.exploreTab;
-  const isLocked = (key) => stageOf(role) < UNLOCK_AT[key];
+  // A tab is closed by the user's passes (passes.js) or, for gigs and jobs, by their career stage in the role.
+  const lockText = (key) => passLock(key) || (key !== "studio" && stageOf(role) < UNLOCK_AT[key] ? LOCKED_TABS[key][2] : "");
+  const isLocked = (key) => !!lockText(key);
+  const buyable = Object.keys(PASSES).some((k) => !passState(k)[0]);
   // Unlocked gig tabs have no designed listings yet, so they say so instead of showing the lock.
-  const content = tab === "studio"
+  const content = tab === "studio" && passLock("studio") ? `
+        <div class="locked">
+          <p class="locked__text">Practise on real briefs and build proof of your work</p>
+          <p class="locked__pill"><img src="${G}lock-small.svg" alt="" />${passLock("studio")}</p>
+          ${buyable ? `<button type="button" class="pgm-btn" data-action="passes">Choose a pass <span aria-hidden="true">→</span></button>` : ""}
+        </div>`
+    : tab === "studio"
     ? `${filterChips()}<div class="gt-grid">${workOrderIds(EXPLORE_COUNT, 4).map((id) => woCard(id, "explore")).join("")}</div>`
     : (([name, text, unlock]) => `
         <div class="locked">
           <span class="locked__icon"><span style="inset:9.31% 0"><img src="${G}briefcase.svg" alt="" /></span></span>
           <p class="locked__text">${text}</p>
           ${isLocked(tab)
-            ? `<p class="locked__pill"><img src="${G}lock-small.svg" alt="" />${unlock}</p>`
+            ? `<p class="locked__pill"><img src="${G}lock-small.svg" alt="" />${lockText(tab)}</p>
+               ${passLock(tab) && buyable && workerEligible() ? `<button type="button" class="pgm-btn" data-action="passes">Choose a pass <span aria-hidden="true">→</span></button>` : ""}`
             : `<p class="locked__pill">No ${name.toLowerCase()} open for ‘${esc(roleName(role))}’ right now. New ones are posted every week.</p>`}
         </div>`)(LOCKED_TABS[tab]);
   return `
@@ -398,7 +408,7 @@ function pageDetails(id) {
           <h1 class="wo-header__title">${esc(d.title)}</h1>
           <p class="wo-header__tags">${d.tags.map((t) => `<span>${esc(t)}</span>`).join("")}</p>
         </div>
-        <div class="wo-header__cta">${addBtn}${!added && broke ? `<p class="add-track__note">Not enough coins</p>` : ""}</div>
+        <div class="wo-header__cta">${addBtn}${!added && broke ? `<p class="add-track__note">Not enough credits · <button type="button" class="add-track__topup" data-action="top-up">Top up</button></p>` : ""}</div>
       </div>
       <div class="wo-overview">${d.overview.map(([h, t]) => `<div><b>${esc(h)}</b><p>${esc(t)}</p></div>`).join("")}</div>
       ${tabs([["overview", "Overview"], ["vcs", "Value Constructs"], ["background", "Background"]], g.woTab, "wo-tab")}
@@ -472,6 +482,8 @@ page.addEventListener("click", (e) => {
       break;
     }
     case "add-to-desk": addToDesk(id); break;
+    case "passes": openPasses(); break; // passes.js
+    case "top-up": openTopUp(); break;
     case "judged": openJudgedDrawer(g.lastWo, Number(el.dataset.vc)); break;
   }
 });
