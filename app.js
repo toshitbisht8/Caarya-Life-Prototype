@@ -89,13 +89,13 @@ const ROUTES = [
   "login", "signup", "otp", "about", "roles", "industries", "confirm",
   "assessments", "growth", "explore", "explore-all", "work-order", "desk", "session",
   "proof", "proof-asset", "achievements", "achievement-new", "journal", "competencies", "profile", "riasec", "wep",
-  "domain-affinity", "industry-affinity", "session-logs", "daily-gains", "exchange", "rolodex", "network-profile", "camp", "programs",
+  "domain-affinity", "industry-affinity", "session-logs", "daily-gains", "exchange", "rolodex", "network-profile", "camp", "programs", "checkout",
   "welcome", "first-things", "meet-team",
 ];
 const STEPS = ["about", "roles", "industries"];
 const WORKSPACE_ROUTES = ["camp", "assessments", "growth", "explore", "explore-all", "work-order", "desk", "proof", "proof-asset", "achievements", "journal", "competencies", "profile",
   "domain-affinity", "industry-affinity", "session-logs", "daily-gains", "exchange", "rolodex", "network-profile", "programs"];
-const SCREEN_FOR = { login: "auth", signup: "auth", otp: "auth", confirm: "confirm", session: "session", "achievement-new": "wizard", riasec: "riasec", wep: "wep",
+const SCREEN_FOR = { checkout: "checkout", login: "auth", signup: "auth", otp: "auth", confirm: "confirm", session: "session", "achievement-new": "wizard", riasec: "riasec", wep: "wep",
   welcome: "intro", "first-things": "intro", "meet-team": "intro" };
 WORKSPACE_ROUTES.forEach((r) => (SCREEN_FOR[r] = "workspace"));
 const displayName = () => state.name || state.email.split("@")[0];
@@ -136,6 +136,7 @@ function render() {
   else if (screen === "wizard") renderWizard(); // impact.js
   else if (screen === "riasec") renderRiasec(param); // riasec.js
   else if (screen === "wep") renderWep(param); // wep.js
+  else if (screen === "checkout") renderCheckout(param); // passes.js
   else renderWorkspace(route, param); // workspace.js / growth.js
 
   if (navigated) {

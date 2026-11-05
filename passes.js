@@ -149,147 +149,170 @@ function openTopUp() {
     if (card) { picked = Number(card.dataset.pack); return draw(); }
     if (!e.target.closest("[data-pack-next]")) return;
     closeOverlay();
-    openCheckout({ kind: "credits", pack: picked });
+    openCheckout(`credits-${picked}`);
   });
   draw();
 }
 
-// ---------- Checkout: the order, then the payment screen ----------
-function openCheckout(item) {
-  const program = item.kind === "program" ? programById(item.id) : null;
-  const pass = program ? PASSES[program.pass] : null;
-  const [packCredits, packPrice] = pass ? [pass.credits, pass.price] : CREDIT_PACKS[item.pack];
-  const name = program ? program.name : `${credits(packCredits)} credits`;
-  const ov = openOverlay(`
-    <div class="pgm-modal pass-modal pass-modal--checkout" role="dialog" aria-modal="true" aria-label="Checkout">
-      ${modalHead("Checkout")}
-      <div class="pgm-modal__body pass-modal__body">
-        <div class="checkout__item">
-          <div><p class="checkout__name">${name}</p>
-            <p class="checkout__sub">${program ? `${program.tag} · includes ${credits(packCredits)} credits` : "Credit pack"}</p></div>
-          <p class="checkout__price">${rupees(packPrice)}</p>
-        </div>
-        <dl class="checkout__rows">
-          <div><dt>Subtotal</dt><dd>${rupees(packPrice)}</dd></div>
-          <div class="checkout__total"><dt>Total</dt><dd>${rupees(packPrice)}</dd></div>
-        </dl>
-      </div>
-      <footer class="pgm-modal__foot pass-modal__foot">
-        <button type="button" class="pgm-prev" data-pay-back><span aria-hidden="true">←</span> Back</button>
-        <button type="button" class="pgm-btn" data-pay>Proceed to pay <span aria-hidden="true">→</span></button>
-      </footer>
-    </div>`, "modal");
-  ov.addEventListener("click", (e) => {
-    if (e.target.closest("[data-pay-back]")) {
-      closeOverlay();
-      return program ? undefined : openTopUp(); // the Programs page is behind the checkout
-    }
-    if (!e.target.closest("[data-pay]")) return;
-    closeOverlay();
-    openGateway(name, packPrice, () => (program ? enroll(program) : buyCredits(packCredits)), () => openCheckout(item));
-  });
-}
-
-// ---------- Payment screen ----------
-// UPI, card or net banking. What's typed here is only checked for shape and never kept.
+// ---------- Checkout: a full page (#checkout/program-<id> or #checkout/credits-<pack>) ----------
+// Left: what's being bought and the total. Right: UPI, card or net banking. After paying, a receipt with Continue.
+// What's typed is only checked for shape and never kept (only the last digits / bank name, for the receipt).
 const BANKS = ["State Bank of India", "HDFC Bank", "ICICI Bank", "Axis Bank", "Kotak Mahindra Bank", "Punjab National Bank"];
 const PAY_METHODS = [["upi", "UPI"], ["card", "Card"], ["netbanking", "Net banking"]];
 const payRef = () => `CL${Date.now().toString(36).toUpperCase()}`;
+const checkoutEl = document.getElementById("checkout-page");
+let checkoutFrom = "programs"; // where Back (and Continue, for credits) returns to
+let checkout = null; // { key, method, bank, paid: { via, ref, at } }
 
-function openGateway(name, price, onPaid, onBack) {
-  let method = "upi";
-  let bank = "";
-  let paid = false;
-  const ov = openOverlay(`<div class="pgm-modal pass-modal pay-modal" role="dialog" aria-modal="true" aria-label="Payment"></div>`, "modal",
-    () => paid && onPaid()); // closing after a successful payment completes the purchase
-  const box = ov.querySelector(".pay-modal");
-  const summary = `
-    <aside class="pay__summary">
-      <p class="pay__merchant"><img src="assets/menu/logo-icon.jpg" alt="" />Caarya Life</p>
-      <div><p class="pay__label">Paying for</p><p class="pay__item">${name}</p></div>
-      <div><p class="pay__label">Amount</p><p class="pay__amount">${rupees(price)}</p></div>
-      <p class="pay__secure"><img src="${G}lock-small.svg" alt="" />Payments are encrypted and secure</p>
-    </aside>`;
-  const field = (label, attrs) => `<label class="pay__field"><span>${label}</span><input ${attrs} /></label>`;
-  const forms = {
-    upi: () => `${field("UPI ID", 'name="upi" placeholder="yourname@bank" autocomplete="off" inputmode="email"')}
-      <p class="pay__hint">You’ll get a request in your UPI app to approve the payment.</p>`,
-    card: () => `${field("Card number", 'name="card" placeholder="1234 5678 9012 3456" autocomplete="cc-number" inputmode="numeric" maxlength="23"')}
-      ${field("Name on card", 'name="holder" placeholder="As printed on the card" autocomplete="cc-name"')}
-      <div class="pay__row">${field("Expiry", 'name="exp" placeholder="MM / YY" autocomplete="cc-exp" inputmode="numeric" maxlength="7"')}
-        ${field("CVV", 'name="cvv" placeholder="•••" autocomplete="cc-csc" inputmode="numeric" maxlength="4" type="password"')}</div>`,
-    netbanking: () => `<div class="pay__banks" role="radiogroup" aria-label="Bank">${BANKS.map((b) => `
-      <button type="button" role="radio" aria-checked="${bank === b}" class="pay__bank${bank === b ? " is-on" : ""}" data-bank="${b}">${b}</button>`).join("")}</div>`,
-  };
-  function draw() {
-    box.innerHTML = `${modalHead("Payment")}
-      <div class="pay__body">
-        ${summary}
-        <form class="pay__form" novalidate>
-          <div class="pay__tabs" role="tablist">${PAY_METHODS.map(([k, label]) => `
-            <button type="button" role="tab" aria-selected="${k === method}" class="pay__tab${k === method ? " is-on" : ""}" data-method="${k}">${label}</button>`).join("")}</div>
-          <div class="pay__fields">${forms[method]()}</div>
-          <p class="pay__error" role="alert"></p>
-          <div class="pay__actions">
-            <button type="button" class="pgm-prev" data-pay-back><span aria-hidden="true">←</span> Back</button>
-            <button type="submit" class="pgm-btn">Pay ${rupees(price)}</button>
-          </div>
-        </form>
-      </div>`;
+// What a checkout key buys: { name, sub, price, credits, done() }
+function checkoutItem(key) {
+  const [kind, id] = (key || "").split(/-(.+)/);
+  if (kind === "program" && programById(id)) {
+    const program = programById(id), pass = PASSES[program.pass];
+    return { name: program.name, sub: `${program.tag} · includes ${credits(pass.credits)} credits`, price: pass.price, credits: pass.credits,
+      cta: "Go to Growth Track", done: () => enroll(program) };
   }
-  // Light checks on the shape of what's entered; nothing is stored.
-  function problem(f) {
-    if (method === "upi") return /^[\w.-]{2,}@[a-z]{2,}$/i.test(f.upi.value.trim()) ? "" : "Enter a valid UPI ID, like yourname@bank.";
-    if (method === "card") {
-      const num = f.card.value.replace(/\D/g, "");
-      if (num.length < 12 || num.length > 19) return "Enter a valid card number.";
-      if (!f.holder.value.trim()) return "Enter the name on the card.";
-      const [, mm, yy] = f.exp.value.match(/^(\d{2})\s*\/\s*(\d{2})$/) || [];
-      if (!mm || mm < 1 || mm > 12 || new Date(2000 + Number(yy), Number(mm)) < new Date()) return "Enter a valid expiry date.";
-      return /^\d{3,4}$/.test(f.cvv.value) ? "" : "Enter the CVV.";
-    }
-    return bank ? "" : "Choose your bank.";
+  if (kind === "credits" && CREDIT_PACKS[id]) {
+    const [n, price] = CREDIT_PACKS[id];
+    return { name: `${credits(n)} credits`, sub: "Credit pack", price, credits: n, cta: "Done", done: () => buyCredits(n) };
   }
-  function processing() {
-    box.querySelector(".pay__form").innerHTML = `<div class="pay__status"><span class="pay__spinner" aria-hidden="true"></span>
-      <p class="pay__status-title">Processing your payment</p><p>Please don’t close this window.</p></div>`;
-  }
-  function success() {
-    if (!box.isConnected) return; // closed while processing: no payment
-    paid = true;
-    box.querySelector(".pay__form").innerHTML = `<div class="pay__status">
-      <img class="pay__tick" src="${CA}done.svg" alt="" />
-      <p class="pay__status-title">Payment successful</p>
-      <p>${rupees(price)} paid for ${name}</p>
-      <p class="pay__ref">Reference ${payRef()}</p>
-      <button type="button" class="pgm-btn" data-close>Continue <span aria-hidden="true">→</span></button>
-    </div>`;
-    box.querySelector("[data-close].pgm-btn").focus();
-  }
-  ov.addEventListener("click", (e) => {
-    const m = e.target.closest("[data-method]");
-    if (m) { method = m.dataset.method; return draw(); }
-    const b = e.target.closest("[data-bank]");
-    if (b) { bank = b.dataset.bank; box.querySelector(".pay__fields").innerHTML = forms.netbanking(); return; }
-    if (e.target.closest("[data-pay-back]")) { closeOverlay(); onBack(); }
-  });
-  // Card number in groups of four, expiry as MM / YY.
-  ov.addEventListener("input", (e) => {
-    const t = e.target;
-    if (t.name === "card") t.value = t.value.replace(/\D/g, "").slice(0, 19).replace(/(\d{4})(?=\d)/g, "$1 ");
-    if (t.name === "exp") { const d = t.value.replace(/\D/g, "").slice(0, 4); t.value = d.length > 2 ? `${d.slice(0, 2)} / ${d.slice(2)}` : d; }
-    if (t.name === "cvv") t.value = t.value.replace(/\D/g, "");
-  });
-  ov.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const err = problem(e.target);
-    box.querySelector(".pay__error").textContent = err;
-    if (err) return;
-    processing();
-    setTimeout(success, PAY_MS);
-  });
-  draw();
+  return null;
 }
+function openCheckout(key) {
+  if (currentBase() !== "checkout") checkoutFrom = location.hash.slice(1) || "programs";
+  checkout = { key, method: "upi", bank: "", paid: null };
+  go(`checkout/${key}`);
+}
+
+function renderCheckout(key) {
+  const item = checkoutItem(key);
+  if (!item) return go(checkoutFrom);
+  if (!checkout || checkout.key !== key) checkout = { key, method: "upi", bank: "", paid: null };
+  checkoutEl.innerHTML = checkout.paid ? receipt(item) : `
+    <div class="co">
+      <aside class="co__summary">
+        <a class="co__back" href="#${checkoutFrom}"><span aria-hidden="true">←</span> Back</a>
+        <p class="co__merchant"><img src="assets/menu/logo-icon.jpg" alt="" />Caarya Life</p>
+        <div class="co__due"><p>Pay Caarya Life</p><p class="co__amount">${rupees(item.price)}</p></div>
+        <div class="co__lines">
+          <div class="co__line"><div><p>${item.name}</p><small>${item.sub}</small></div><p>${rupees(item.price)}</p></div>
+          <div class="co__line"><p>Subtotal</p><p>${rupees(item.price)}</p></div>
+          <div class="co__line co__total"><p>Total due today</p><p>${rupees(item.price)}</p></div>
+        </div>
+        <p class="co__secure"><img src="${G}lock-small.svg" alt="" />Payments are encrypted and secure</p>
+      </aside>
+      <main class="co__pay">
+        <form class="co__form" novalidate>
+          <h1>Payment method</h1>
+          <div class="pay__tabs" role="tablist">${PAY_METHODS.map(([k, label]) => `
+            <button type="button" role="tab" aria-selected="${k === checkout.method}" class="pay__tab${k === checkout.method ? " is-on" : ""}" data-method="${k}">${label}</button>`).join("")}</div>
+          <div class="co__fields">${payFields()}</div>
+          <p class="pay__error" role="alert"></p>
+          <button type="submit" class="co__submit">Pay ${rupees(item.price)}</button>
+        </form>
+      </main>
+    </div>`;
+}
+
+const payField = (label, attrs) => `<label class="pay__field"><span>${label}</span><input ${attrs} /></label>`;
+function payFields() {
+  if (checkout.method === "upi") return `${payField("UPI ID", 'name="upi" placeholder="yourname@bank" autocomplete="off" inputmode="email"')}
+    <p class="pay__hint">You’ll get a request in your UPI app to approve the payment.</p>`;
+  if (checkout.method === "card") return `
+    <div class="pay__field"><span>Card information</span>
+      <div class="co__card">
+        <input name="card" aria-label="Card number" placeholder="1234 1234 1234 1234" autocomplete="cc-number" inputmode="numeric" maxlength="23" />
+        <div><input name="exp" aria-label="Expiry" placeholder="MM / YY" autocomplete="cc-exp" inputmode="numeric" maxlength="7" />
+          <input name="cvv" aria-label="CVV" placeholder="CVV" autocomplete="cc-csc" inputmode="numeric" maxlength="4" type="password" /></div>
+      </div>
+    </div>
+    ${payField("Name on card", 'name="holder" autocomplete="cc-name"')}`;
+  return `<div class="pay__field"><span>Your bank</span><div class="pay__banks" role="radiogroup" aria-label="Bank">${BANKS.map((b) => `
+    <button type="button" role="radio" aria-checked="${checkout.bank === b}" class="pay__bank${checkout.bank === b ? " is-on" : ""}" data-bank="${b}">${b}</button>`).join("")}</div></div>`;
+}
+// Light checks on the shape of what's entered.
+function payProblem(f) {
+  if (checkout.method === "upi") return /^[\w.-]{2,}@[a-z]{2,}$/i.test(f.upi.value.trim()) ? "" : "Enter a valid UPI ID, like yourname@bank.";
+  if (checkout.method === "card") {
+    const num = f.card.value.replace(/\D/g, "");
+    if (num.length < 12 || num.length > 19) return "Enter a valid card number.";
+    const [, mm, yy] = f.exp.value.match(/^(\d{2})\s*\/\s*(\d{2})$/) || [];
+    if (!mm || mm < 1 || mm > 12 || new Date(2000 + Number(yy), Number(mm)) < new Date()) return "Enter a valid expiry date.";
+    if (!/^\d{3,4}$/.test(f.cvv.value)) return "Enter the CVV.";
+    return f.holder.value.trim() ? "" : "Enter the name on the card.";
+  }
+  return checkout.bank ? "" : "Choose your bank.";
+}
+// How the receipt names the payment: "UPI · priya@okbank", "Card •••• 4242", "HDFC Bank".
+function paidVia(f) {
+  if (checkout.method === "upi") return `UPI · ${f.upi.value.trim()}`;
+  if (checkout.method === "card") return `Card •••• ${f.card.value.replace(/\D/g, "").slice(-4)}`;
+  return `Net banking · ${checkout.bank}`;
+}
+
+// Receipt (reference: a purchase summary): the amount, the date, what was bought and how it was paid.
+function receipt(item) {
+  const p = checkout.paid;
+  const on = new Date(p.at).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  return `
+    <div class="co-done">
+      <div class="co-done__card" role="status">
+        <img class="co-done__tick" src="${CA}done.svg" alt="" />
+        <p class="co-done__amount">${rupees(item.price)}</p>
+        <p class="co-done__on">Paid to Caarya Life on ${on}</p>
+        <section class="co-done__block">
+          <h2>Summary</h2>
+          <div class="co__line"><div><p>${item.name}</p><small>${item.sub}</small></div><p>${rupees(item.price)}</p></div>
+          <div class="co__line co__total"><p>Total</p><p>${rupees(item.price)}</p></div>
+        </section>
+        <section class="co-done__block">
+          <h2>Payment</h2>
+          <div class="co__line"><p>${esc(p.via)}</p><p>${rupees(item.price)}</p></div>
+          <p class="co-done__ref">Reference ${p.ref}</p>
+        </section>
+        <button type="button" class="co__submit" data-co-continue>${item.cta} <span aria-hidden="true">→</span></button>
+      </div>
+    </div>`;
+}
+
+checkoutEl.addEventListener("click", (e) => {
+  const m = e.target.closest("[data-method]");
+  if (m) { checkout.method = m.dataset.method; return renderCheckout(checkout.key); }
+  const b = e.target.closest("[data-bank]");
+  if (b) { checkout.bank = b.dataset.bank; checkoutEl.querySelector(".co__fields").innerHTML = payFields(); return; }
+  if (e.target.closest("[data-co-continue]")) {
+    const item = checkoutItem(checkout.key);
+    const credit = checkout.key.startsWith("credits");
+    checkout = null;
+    if (credit) go(checkoutFrom); // a top-up returns to where it started; enrolling lands on Growth Track
+    item.done();
+  }
+});
+// Card number in groups of four, expiry as MM / YY.
+checkoutEl.addEventListener("input", (e) => {
+  const t = e.target;
+  if (t.name === "card") t.value = t.value.replace(/\D/g, "").slice(0, 19).replace(/(\d{4})(?=\d)/g, "$1 ");
+  if (t.name === "exp") { const d = t.value.replace(/\D/g, "").slice(0, 4); t.value = d.length > 2 ? `${d.slice(0, 2)} / ${d.slice(2)}` : d; }
+  if (t.name === "cvv") t.value = t.value.replace(/\D/g, "");
+});
+checkoutEl.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const err = payProblem(f);
+  f.querySelector(".pay__error").textContent = err;
+  if (err) return;
+  const via = paidVia(f);
+  const btn = f.querySelector(".co__submit");
+  btn.disabled = true;
+  btn.innerHTML = `<span class="pay__spinner" aria-hidden="true"></span>Processing…`;
+  f.querySelectorAll("input, .pay__tab, .pay__bank").forEach((el) => (el.disabled = true));
+  const key = checkout.key;
+  setTimeout(() => {
+    if (!checkout || checkout.key !== key || currentBase() !== "checkout") return; // left the page: no payment
+    checkout.paid = { via, ref: payRef(), at: Date.now() };
+    renderCheckout(key);
+  }, PAY_MS);
+});
 
 // Enrolling gives the program's pass: the real Growth Track and Your Work open; the spotlights (camp.js) show what's new.
 function enroll(program) {

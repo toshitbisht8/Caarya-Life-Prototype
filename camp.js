@@ -574,7 +574,7 @@ roadPage.addEventListener("click", (e) => {
   const act = e.target.closest("[data-road]")?.dataset.road;
   if (act === "steps") { roadStepsOpen = !roadStepsOpen; return renderRoad(); }
   const en = e.target.closest("[data-enroll]");
-  if (en) return openCheckout({ kind: "program", id: en.dataset.enroll }); // passes.js
+  if (en) return openCheckout(`program-${en.dataset.enroll}`); // passes.js: the checkout page
   const s = e.target.closest("[data-camp-step]");
   if (!s) return;
   const [, status, start, edit] = CAMP_STEPS[Number(s.dataset.campStep)];
