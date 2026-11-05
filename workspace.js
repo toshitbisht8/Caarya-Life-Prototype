@@ -5,6 +5,9 @@ const PAGE_FOR = {
   camp: { page: "camp", menu: "camp", crumb: ["Caarya Life", "Camp"] },
   assessments: { page: "assessments", menu: "assessments", crumb: ["Your Unique Identity", "Assessments"] },
   growth: { page: "growth", menu: "growth", crumb: ["Your Career", "Growth Track"] },
+  programs: { page: "road", menu: "growth", crumb: ["Your Career", "Programs"] }, // camp.js / passes.js
+  "community-intelligence": { page: "space", menu: "community-intelligence", crumb: ["Your Knowledge Space", "Community Intelligence"] }, // space.js
+  "synergy-intelligence": { page: "space", menu: "synergy-intelligence", crumb: ["Your Network", "Synergy Intelligence"] },
   explore: { page: "growth", menu: "growth", crumb: ["Your Career", "Growth Track"] },
   "explore-all": { page: "growth", menu: "growth", crumb: ["Your Career", "Growth Track"] },
   "work-order": { page: "growth", menu: "growth", crumb: ["Your Career", "Growth Track"] },
@@ -64,6 +67,7 @@ function renderWorkspace(route, param) {
   if (route === "profile" && isUnlocked(route)) state.camp.profileSeen = true; // the Talent Manager's message has done its job
   syncCampUnlocks();
   syncSteps(); // camp.js: a step toast when a Road step is newly done
+  syncPasses(); // passes.js: graded Desk work makes a pass holder worker-eligible
   syncMessages(); // camp.js: anything newly due lands in Camp
   syncSpotlights(); // camp.js: newly unlocked sections, after the messages' pop-ups
   if (!isUnlocked(route)) {
@@ -71,7 +75,7 @@ function renderWorkspace(route, param) {
     return go("camp");
   }
   campOnRoute(route); // camp.js: e.g. the PGM's first-proof prompt on the first visit to Proof
-  const info = route === "growth" && state.camp.fresh ? { page: "road", menu: "growth", crumb: PAGE_FOR.growth.crumb } : PAGE_FOR[route];
+  const info = route === "growth" && !hasPass() ? { page: "road", menu: "growth", crumb: PAGE_FOR.growth.crumb } : PAGE_FOR[route];
   syncMenuLocks();
   document.querySelectorAll("[data-page]").forEach((p) => (p.hidden = p.dataset.page !== info.page));
   document.querySelector("[data-crumb-section]").textContent = info.crumb[0];
@@ -94,22 +98,22 @@ function renderWorkspace(route, param) {
   if (info.page === "assessments") syncAssessmentCards(); // riasec.js
   if (info.page === "soon") renderSoon(route);
   if (info.page === "camp") renderCamp(); // camp.js
-  if (info.page === "road") renderRoad(); // camp.js
+  if (info.page === "road") renderRoad(route); // camp.js
+  if (info.page === "space") renderSpace(route); // space.js
   document.querySelector(".inbox").classList.toggle("is-focus", info.page === "camp");
   syncInbox(); // camp.js
   closeUserMenu();
 }
 
 // Credit balance: the ring round the avatar in the nav bar, and the full numbers in the account menu.
-// Credits stay hidden (the ring round the avatar and the balance in the account menu) until the steps after set-up
-// that use them exist. Flip this to show them again.
-const CREDITS_ON = false;
+// Credits (the ring round the avatar and the balance in the account menu) show once they're unlocked (passes.js).
 function renderCoins() {
   const ring = document.querySelector(".user-ring");
-  document.documentElement.classList.toggle("no-credits", !CREDITS_ON);
-  if (CREDITS_ON) ring.setAttribute("role", "meter");
+  document.documentElement.classList.toggle("no-credits", !creditsOn());
+  if (creditsOn()) ring.setAttribute("role", "meter");
   else ring.removeAttribute("role");
-  const pct = Math.max(0, Math.min(1, state.coins / state.coinsMax));
+  document.querySelector('[data-user-action="passes"]').hidden = !passesOpen();
+  const pct = state.coinsMax ? Math.max(0, Math.min(1, state.coins / state.coinsMax)) : 0;
   document.querySelector(".user-ring__fill").style.strokeDasharray = `${pct * 100} 100`;
   ring.setAttribute("aria-valuenow", state.coins);
   ring.setAttribute("aria-valuemax", state.coinsMax);
@@ -145,7 +149,9 @@ userMenu.addEventListener("click", (e) => {
   closeUserMenu();
   if (action === "camp") go("camp");
   if (action === "settings") showToast("Account settings are coming soon");
-  if (action === "logout") { location.hash = "#login"; location.reload(); } // all state is in memory, so this signs out
+  if (action === "topup") openTopUp(); // passes.js
+  if (action === "passes") go("programs"); // passes.js
+  if (action === "logout") confirmLogout();
 });
 
 (function () {
@@ -199,6 +205,12 @@ userMenu.addEventListener("click", (e) => {
       ["Rolodex", whole("rolodex.svg"), "rolodex"],
       ["Profile", whole("network-profile.svg"), "network-profile"],
     ] },
+    // Temporary, for new users once set-up is done (Figma 1458:13848): the one-pagers in space.js. Coloured icons,
+    // idle and focused alike.
+    { key: "soon", title: "Coming Soon", color: "#9c9a96", icon: null, divider: true, items: [
+      ["Community Intelligence", whole("soon-community.png"), "community-intelligence", "soon-community.png"],
+      ["Synergy Intelligence", whole("soon-synergy.svg"), "synergy-intelligence", "soon-synergy.svg"],
+    ] },
   ];
 
   const menuEl = document.getElementById("menu-sections");
@@ -207,8 +219,9 @@ userMenu.addEventListener("click", (e) => {
     sec.className = "menu-section";
     sec.dataset.menuSection = section.key;
     sec.innerHTML = `
+      ${section.divider ? `<div class="menu__divider menu-section__divider"><span></span></div>` : ""}
       <p class="menu-section__title" style="color:${section.color}">
-        <img src="${M}${section.icon}" alt="" /><span></span>
+        ${section.icon ? `<img src="${M}${section.icon}" alt="" />` : ""}<span></span>
       </p>
       <div class="menu-section__items"></div>`;
     sec.querySelector(".menu-section__title span").textContent = section.title;
@@ -289,3 +302,21 @@ userMenu.addEventListener("click", (e) => {
     listEl.append(group);
   });
 })();
+
+// Log out, after a confirmation (Figma 1450:13063). All state is in memory, so reloading signs out.
+function confirmLogout() {
+  openOverlay(`
+    <div class="logout-modal" role="alertdialog" aria-modal="true" aria-labelledby="logout-title" aria-describedby="logout-text">
+      <div class="logout-modal__body">
+        <h2 id="logout-title">Logout</h2>
+        <p id="logout-text">Are you sure you want to log out?</p>
+      </div>
+      <div class="logout-modal__actions">
+        <button type="button" data-close autofocus>Cancel</button>
+        <button type="button" class="is-danger" data-logout>Logout</button>
+      </div>
+    </div>`, "modal").querySelector("[data-logout]").addEventListener("click", () => {
+    location.hash = "#login";
+    location.reload();
+  });
+}

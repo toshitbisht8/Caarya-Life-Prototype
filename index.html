@@ -281,10 +281,12 @@
               <p class="user-menu__label"><img src="assets/growth/coins-dark.svg" alt="" />Credit balance</p>
               <div class="user-menu__nums"><span>Spent <b data-credits-spent></b></span><span>Available <b data-credits-left></b></span></div>
               <div class="coins__track"><div class="coins__fill"></div></div>
-              <p class="user-menu__note">Credits are used to add work orders to your Growth Track.</p>
+              <p class="user-menu__note">Credits are spent on work orders, in your Knowledge Space and in your Network.</p>
+              <button type="button" class="user-menu__topup" data-user-action="topup">Top up credits</button>
             </div>
             <div class="user-menu__items">
               <button type="button" role="menuitem" data-user-action="camp"><img src="assets/menu/camp.svg" alt="" />Camp</button>
+              <button type="button" role="menuitem" data-user-action="passes" hidden><img src="assets/menu/growth-track.svg" alt="" />Programs</button>
               <button type="button" role="menuitem" data-user-action="settings"><img src="assets/competencies/settings.svg" alt="" />Account settings</button>
             </div>
             <div class="user-menu__items">
@@ -321,6 +323,7 @@
       <main class="workspace__main gt camp" data-page="camp" id="camp-page" hidden></main>
       <!-- Growth Track for new users: Road To Career Acceleration (camp.js) -->
       <main class="workspace__main gt" data-page="road" id="road-page" hidden></main>
+      <main class="workspace__main gt space" data-page="space" id="space-page" hidden></main>
 
       <!-- Coming-soon sections (Figma 1102:37515), rendered by workspace.js -->
       <main class="workspace__main gt impact" data-page="soon" id="soon-page" hidden></main>
@@ -338,6 +341,9 @@
 
   <!-- ============ WORK ENVIRONMENT PREFERENCES ASSESSMENT (Figma 1065:23152), rendered by wep.js ============ -->
   <section class="screen riasec gt" data-screen="wep" id="wep-screen"></section>
+
+  <!-- ============ CHECKOUT (passes.js): a full page for programs and credit packs ============ -->
+  <section class="screen checkout-page" data-screen="checkout" id="checkout-page"></section>
 
   <button class="to-top" type="button" aria-label="Back to top">
     <span class="to-top__icon"><img src="assets/icons/arrow-upward.svg" alt="" /></span>
@@ -360,8 +366,11 @@
   <script src="wep.js"></script>
   <script src="particles.js"></script>
   <script src="camp.js"></script>
+  <script src="passes.js"></script>
+  <script src="space.js"></script>
   <script src="onboarding.js"></script>
   <script src="demo-user.js"></script>
+  <script src="pending-user.js"></script>
   <script src="mentor-sim.js"></script>
 </body>
 </html>

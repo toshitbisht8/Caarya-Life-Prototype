@@ -188,8 +188,17 @@ function toolsTab() {
 
 // ---------- Transferable ----------
 // Viewing (1045:34296) shows saved ratings; Manage switches every skill to a slider (1045:34661) until Save.
+// Nothing rated yet: the empty state (1459:26113), whose Add Now opens the set-up flow (camp.js).
 function transferableTab() {
   const editing = !!state.tDraft;
+  if (!editing && !Object.keys(state.tSkills).length) {
+    return `
+      <div class="cp-center"><div class="cp-empty">
+        <span class="cp-empty__art cp-empty__art--transferable"><img src="${CP}transferable-empty.svg" alt="" /></span>
+        <div><h2>Set up how you interact with transferable skills</h2><p>Talk about your level of comfort with different transferable skills</p></div>
+        <button type="button" class="btn btn--primary im-add" data-cp="start-transferable"><img src="${IM}add-circle-light.svg" alt="" />Add Now</button>
+      </div></div>`;
+  }
   return `
     ${cpIntro("Comfort with Skill Use", "Rate each skill on your level of comfort with using it", editing ? "save-comfort" : "edit-comfort", editing ? "done-all.svg" : "settings.svg", editing ? "Save" : "Manage")}
     <div class="cp-cats">${TRANSFERABLE.map(([cat, skills, line, bg], i) => `
@@ -238,6 +247,7 @@ competenciesPage.addEventListener("click", (e) => {
   switch (e.target.closest("[data-cp]")?.dataset.cp) {
     case "manage-tech": openManageTech(); break;
     case "manage-tools": openManageTools(); break;
+    case "start-transferable": openTransferableFlow(); break; // camp.js
     case "edit-comfort": state.tDraft = { ...state.tSkills }; renderCompetencies(); break;
     case "save-comfort":
       state.tSkills = state.tDraft;

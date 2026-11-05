@@ -135,3 +135,6 @@
 }
 .assessment__start:hover { background: var(--neutral-800); }
 .menu-item--tint.is-focus .menu-item__icon img { filter: brightness(0.35); }
+
+/* A section set apart by a divider (Coming Soon, Figma 1458:13848) */
+.menu-section__divider { width: auto; margin: 0 -16px; }

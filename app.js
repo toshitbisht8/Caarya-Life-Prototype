@@ -89,13 +89,13 @@ const ROUTES = [
   "login", "signup", "otp", "about", "roles", "industries", "confirm",
   "assessments", "growth", "explore", "explore-all", "work-order", "desk", "session",
   "proof", "proof-asset", "achievements", "achievement-new", "journal", "competencies", "profile", "riasec", "wep",
-  "domain-affinity", "industry-affinity", "session-logs", "daily-gains", "exchange", "rolodex", "network-profile", "camp",
+  "domain-affinity", "industry-affinity", "session-logs", "daily-gains", "exchange", "rolodex", "network-profile", "camp", "programs", "checkout", "community-intelligence", "synergy-intelligence",
   "welcome", "first-things", "meet-team",
 ];
 const STEPS = ["about", "roles", "industries"];
 const WORKSPACE_ROUTES = ["camp", "assessments", "growth", "explore", "explore-all", "work-order", "desk", "proof", "proof-asset", "achievements", "journal", "competencies", "profile",
-  "domain-affinity", "industry-affinity", "session-logs", "daily-gains", "exchange", "rolodex", "network-profile"];
-const SCREEN_FOR = { login: "auth", signup: "auth", otp: "auth", confirm: "confirm", session: "session", "achievement-new": "wizard", riasec: "riasec", wep: "wep",
+  "domain-affinity", "industry-affinity", "session-logs", "daily-gains", "exchange", "rolodex", "network-profile", "programs", "community-intelligence", "synergy-intelligence"];
+const SCREEN_FOR = { checkout: "checkout", login: "auth", signup: "auth", otp: "auth", confirm: "confirm", session: "session", "achievement-new": "wizard", riasec: "riasec", wep: "wep",
   welcome: "intro", "first-things": "intro", "meet-team": "intro" };
 WORKSPACE_ROUTES.forEach((r) => (SCREEN_FOR[r] = "workspace"));
 const displayName = () => state.name || state.email.split("@")[0];
@@ -136,6 +136,7 @@ function render() {
   else if (screen === "wizard") renderWizard(); // impact.js
   else if (screen === "riasec") renderRiasec(param); // riasec.js
   else if (screen === "wep") renderWep(param); // wep.js
+  else if (screen === "checkout") renderCheckout(param); // passes.js
   else renderWorkspace(route, param); // workspace.js / growth.js
 
   if (navigated) {
@@ -221,6 +222,11 @@ $('[data-view="login"]').addEventListener("submit", (e) => {
   // Demo account (demo-user.js): skips the OTP and lands in a seasoned profile.
   if (DEMO_LOGINS.includes(username.toLowerCase())) {
     loadDemoUser();
+    return loggingIn(() => go("camp"));
+  }
+  // Second demo account (pending-user.js): set-up done, waiting on pass eligibility.
+  if (PENDING_LOGINS.includes(username.toLowerCase())) {
+    loadPendingUser();
     return loggingIn(() => go("camp"));
   }
   state.name = username.includes("@") ? "" : username;

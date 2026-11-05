@@ -5,8 +5,11 @@
 // where you stand in your roles (1299:25773), transferable skills (1326:55276) and tool stack (1326:58143).
 
 // Menu items a new user unlocks one by one; returning users see them all.
-const CAMP_ITEMS = ["growth", "domain-affinity", "industry-affinity", "desk", "session-logs", "achievements", "competencies", "proof", "journal", "profile", "assessments", "daily-gains", "exchange", "rolodex", "network-profile"];
-const ALL_UNLOCKED = () => new Set(CAMP_ITEMS);
+const CAMP_ITEMS = ["growth", "domain-affinity", "industry-affinity", "desk", "session-logs", "achievements", "competencies", "proof", "journal", "profile", "assessments", "daily-gains", "exchange", "rolodex", "network-profile", "community-intelligence", "synergy-intelligence"];
+// Temporary menu items for new users: the coming-soon one-pagers, open once set-up is done. Returning users have the
+// sections themselves, so they don't get these.
+const SPACE_ITEMS = ["community-intelligence", "synergy-intelligence"];
+const ALL_UNLOCKED = () => new Set(CAMP_ITEMS.filter((i) => !SPACE_ITEMS.includes(i)));
 // A new user starts with Growth Track (the Road To Career Acceleration) and ends set-up with these (Figma 1365:42807).
 const FRESH_START = () => new Set(["growth"]);
 
@@ -25,7 +28,7 @@ state.camp = {
 };
 
 // Pages that live under a menu item (Camp itself is always open).
-const ITEM_OF = { explore: "growth", "explore-all": "growth", "work-order": "growth", "proof-asset": "proof" };
+const ITEM_OF = { programs: "growth", explore: "growth", "explore-all": "growth", "work-order": "growth", "proof-asset": "proof" };
 const isUnlocked = (route) => {
   const item = ITEM_OF[route] || route;
   return !CAMP_ITEMS.includes(item) || state.camp.unlocked.has(item);
@@ -214,6 +217,12 @@ const SPOTS = {
   assessments: { title: "Assessments are open", text: "Optional assessments that help enhance your ME profile while your career report is being generated." },
   synergy: { items: SYNERGY, who: "talent", section: true, title: "Synergy Intelligence is unlocked",
     text: "Your Network: the people you’ve worked with, how you work together and who can open doors for you." },
+  "community-intelligence": { title: "Community Intelligence is coming", text: "See what’s coming to Your Knowledge Space, and join the waitlist to try it first." },
+  "synergy-intelligence": { who: "talent", title: "Synergy Intelligence is coming", text: "See what’s coming to Your Network, and join the waitlist to try it first." },
+  work: { items: ["desk", "session-logs"], section: true, title: "Your Work is unlocked",
+    text: "Your Desk is where you work on the work orders you pick up. Session Logs keeps a record of every session." },
+  credits: { items: ["credits"], who: "talent", target: () => document.querySelector("[data-user-chip]"), title: "Your credits",
+    text: "Your pass came with credits. Spend them on work orders now, and on Your Knowledge Space and Your Network when they open. The ring around your picture shows your balance. Click it to top up." },
   community: { items: COMMUNITY, section: true, title: "Community Intelligence is unlocked",
     text: "Your Knowledge Space: daily knowledge gains and an exchange of ideas with your peers." },
 };
@@ -234,7 +243,8 @@ function syncSpotlights() {
   const now = [...un].filter((i) => !state.camp.spotSeen.has(i));
   if (!now.length) return;
   now.forEach((i) => state.camp.spotSeen.add(i));
-  const stops = Object.keys(SPOTS).filter((k) => (SPOTS[k].items || [k]).some((i) => now.includes(i))).map(spotStop);
+  const order = [...Object.keys(SPOTS).filter((k) => k !== "credits"), "credits"]; // credits come last
+  const stops = order.filter((k) => (SPOTS[k].items || [k]).some((i) => now.includes(i))).map(spotStop);
   if (stops.length) whenClear(() => spotlight(stops));
 }
 
@@ -323,8 +333,15 @@ const MESSAGE_DEFS = [
   ["first-asset", () => isFresh() && state.assets.length > 0, "pgm", () => `Congratulations on adding your first proof of work, ${firstName()}! If you want to, you can also turn your assets into achievement cards that show the skills and impact behind them.`, "Create achievement card", "achievement", () => state.achievements.length > 0],
   ["tm-done", () => isFresh() && setupDone(), "talent", () => TM_DONE[0], "Details", "talent-details"],
   ["assessments", () => isFresh() && setupDone(), "pgm", () => "While your career report is being generated, you can take a few basic assessments if you like. They’re optional, and they help enhance your ME profile.", "Explore assessments", "assessments", null, () => unlock("assessments")],
-  ["synergy", () => isFresh() && setupDone(), "talent", () => "Unlock Synergy Intelligence? See your network: the people you’ve worked with, how you work together and who can open doors for you.", "Unlock", "synergy", () => SYNERGY.every((i) => state.camp.unlocked.has(i))],
-  ["community", () => isFresh() && setupDone(), "pgm", () => "Unlock Community Intelligence? Grow with the community through daily knowledge gains and an exchange of ideas with your peers.", "Unlock", "community", () => COMMUNITY.every((i) => state.camp.unlocked.has(i))],
+  // Coming soon: each leads to its one-pager and waitlist (space.js)
+  ["synergy", () => isFresh() && setupDone(), "talent", () => "Synergy Intelligence is coming to Your Network: the people you’ve worked with, how you work together and who can open doors for you. Learn more and join the waitlist.", "Learn more", "synergy", () => onWaitlist("synergy")],
+  ["community", () => isFresh() && setupDone(), "pgm", () => "Community Intelligence is coming to Your Knowledge Space: daily knowledge gains and an exchange of ideas with your peers. Learn more and join the waitlist.", "Learn more", "community", () => onWaitlist("community")],
+  // Passes (passes.js): a pod mentor's review, then graded Desk work
+  ["pass-learner", () => passesOpen(), "talent", () => `Good news, ${firstName()}! A pod mentor has reviewed your profile, and you’re eligible for our learner programs. Enroll in a program to unlock your Growth Track: Experience Studio work, your Desk and credits to get started.`, "View programs", "passes", () => hasPass()],
+  ["pass-worker", () => isFresh() && workerEligible(), "talent", () => owns("integrated")
+    ? `A pod mentor has graded your Desk submission, ${firstName()}. Paid gigs and jobs are now open on your Integrated Pass.`
+    : `A pod mentor has graded your Desk submission, ${firstName()}. You’re now eligible for Fusion Work Study, which opens paid gigs and jobs.`,
+    "See paid work", "paid-work", () => canWork()],
   // Returning users: the Talent Manager's pointer to work
   ["explore", () => !isFresh(), "talent", () => {
     const open = myRoles().flatMap(catalogFor).filter((id) => !myRoles().some((r) => trackFor(r).includes(id))).length;
@@ -409,7 +426,6 @@ function openMessage(m) {
   });
 }
 
-const unlockAndGo = (items, toast) => { unlock(...items); render(); showToast(toast); };
 const CAMP_ACTIONS = {
   "pgm-flow": () => openPgmFlow(),
   "add-proof": addProof,
@@ -417,16 +433,18 @@ const CAMP_ACTIONS = {
   tools: () => openToolsFlow(),
   achievement: () => openAssetPicker(startWizard), // impact.js: "Adding New Achievement", pick the asset first
   "talent-details": () => openMessage(state.camp.inbox.find((m) => m.id === "tm-done")),
+  passes: () => openPasses(),
+  "paid-work": () => (canWork() ? (state.growth.exploreTab = "paid", go("explore-all")) : openPasses()),
   assessments: () => go("assessments"),
-  synergy: () => unlockAndGo(SYNERGY, "Synergy Intelligence unlocked"),
-  community: () => unlockAndGo(COMMUNITY, "Community Intelligence unlocked"),
+  synergy: () => go("synergy-intelligence"), // space.js
+  community: () => go("community-intelligence"),
   explore: () => go("explore"),
   desk: () => go("desk"),
 };
 
 // Measured Excellence opens once set-up is done; Achievements once the first card exists.
 function syncCampUnlocks() {
-  if (setupDone()) unlock("profile");
+  if (setupDone()) unlock("profile", ...(isFresh() ? SPACE_ITEMS : []));
   if (state.achievements.length) unlock("achievements");
 }
 
@@ -492,8 +510,9 @@ function openRow(row, e) {
   if (a || (FLOW_ACTIONS.includes(m.action) && !msgDone(m))) return CAMP_ACTIONS[m.action]();
   openMessage(m);
 }
-// Messages that open a screen designed for them (PGM intros, asset modal, asset picker): no extra modal before it.
-const FLOW_ACTIONS = ["pgm-flow", "add-proof", "transferable", "tools"]; // the achievement message opens in full first
+// Messages whose flow starts with its own intro (the PGM's): no extra modal before it. The others (proof of work,
+// achievement cards) open in full first, with the CTA to start.
+const FLOW_ACTIONS = ["pgm-flow", "transferable", "tools"];
 campPage.addEventListener("click", (e) => {
   const row = e.target.closest("[data-msg]");
   if (row) openRow(row, e);
@@ -505,9 +524,34 @@ campPage.addEventListener("keydown", (e) => {
 
 // ---------- Growth Track for new users: Road To Career Acceleration (Figma 1353:12726) ----------
 const roadPage = document.getElementById("road-page");
-function renderRoad() {
+let roadStepsOpen = false;
+const stepList = () => `<ol class="camp-steps">${CAMP_STEPS.map(([title, status], i) => ({ title, status: status(), i })).map((s) => `
+  <li><button type="button" class="camp-step${s.status ? " is-done" : ""}" data-camp-step="${s.i}">
+    <span class="camp-step__mark" aria-label="${s.status ? "Done" : "Not done"}">${s.status ? `<img src="${CA}done.svg" alt="" />` : ""}</span>
+    <span class="camp-step__text"><span class="camp-step__title">${s.title}</span><span class="camp-step__sub">${s.status || "! Not Added"}</span></span>
+    ${s.status ? `<img class="camp-step__edit" src="${CA}edit.svg" alt="Edit" />` : `<span class="camp-step__go">Start <img src="${CA}navigate-next.svg" alt="" /></span>`}
+  </button></li>`).join("")}</ol>`;
+// Growth Track before a pass: the Road steps; once they're done, the review card (Figma 1446:12606) and, when a pod
+// mentor has approved the user, the way to a pass (passes.js).
+function renderRoad(route = "growth") {
   closeAllOverlays();
-  const steps = CAMP_STEPS.map(([title, status], i) => ({ title, status: status(), i }));
+  if (route !== "programs" && !setupDone()) {
+    roadPage.innerHTML = `
+      <section class="road">
+        <div class="road__head">
+          <h1>Growth Track</h1>
+          <p>Choose how you want your career to grow here. Enroll in a program to get started with your career acceleration.</p>
+          <p>We’ll reach out to you with appropriate programs once your career report is complete</p>
+        </div>
+        ${stepList()}
+      </section>`;
+    return;
+  }
+  // Eligible for a program and no pass yet: Growth Track is the Programs page (passes.js).
+  if (route === "programs" || passesOpen()) {
+    roadPage.innerHTML = programsPage();
+    return;
+  }
   roadPage.innerHTML = `
     <section class="road">
       <div class="road__head">
@@ -515,15 +559,26 @@ function renderRoad() {
         <p>Choose how you want your career to grow here. Enroll in a program to get started with your career acceleration.</p>
         <p>We’ll reach out to you with appropriate programs once your career report is complete</p>
       </div>
-      <ol class="camp-steps">${steps.map((s) => `
-        <li><button type="button" class="camp-step${s.status ? " is-done" : ""}" data-camp-step="${s.i}">
-          <span class="camp-step__mark" aria-label="${s.status ? "Done" : "Not done"}">${s.status ? `<img src="${CA}done.svg" alt="" />` : ""}</span>
-          <span class="camp-step__text"><span class="camp-step__title">${s.title}</span><span class="camp-step__sub">${s.status || "! Not Added"}</span></span>
-          ${s.status ? `<img class="camp-step__edit" src="${CA}edit.svg" alt="Edit" />` : `<span class="camp-step__go">Start <img src="${CA}navigate-next.svg" alt="" /></span>`}
-        </button></li>`).join("")}</ol>
+      <div class="road-card">
+        <div class="road-card__top">
+          <img class="road-card__icon" src="${P}confetti.svg" alt="" />
+          <h2>Congratulations on completing the second phase of profiling.</h2>
+          <p>We are going through your submissions to assess your eligibility for our programs. A pod mentor will soon reach out to you with your career report and recommended programs</p>
+        </div>
+        <div class="road-card__rule">
+          <button type="button" class="road-card__toggle${roadStepsOpen ? " is-open" : ""}" data-road="steps" aria-expanded="${roadStepsOpen}">
+            ${roadStepsOpen ? "Hide steps" : "View steps"} <img src="${P}expand-more.svg" alt="" />
+          </button>
+        </div>
+        ${roadStepsOpen ? stepList() : ""}
+      </div>
     </section>`;
 }
 roadPage.addEventListener("click", (e) => {
+  const act = e.target.closest("[data-road]")?.dataset.road;
+  if (act === "steps") { roadStepsOpen = !roadStepsOpen; return renderRoad(); }
+  const en = e.target.closest("[data-enroll]");
+  if (en) return openCheckout(`program-${en.dataset.enroll}`); // passes.js: the checkout page
   const s = e.target.closest("[data-camp-step]");
   if (!s) return;
   const [, status, start, edit] = CAMP_STEPS[Number(s.dataset.campStep)];
@@ -673,7 +728,11 @@ function openProofPrompt() {
       </footer>
     </div>`, "modal").addEventListener("click", (e) => {
     const act = e.target.closest("[data-pgm]")?.dataset.pgm;
-    if (act === "skip") closeOverlay();
+    if (act === "skip") {
+      closeOverlay();
+      // Experience claimed but no proof yet: a nudge on why it's worth adding.
+      if (exp) showToast("Proof of work backs up your past experience\nIt improves your chances of landing a pass and a job");
+    }
     if (act === "add") { closeOverlay(); openAssetModal(); } // impact.js
   });
 }
@@ -824,6 +883,11 @@ function applyProfile(p, fresh) {
   state.techSkills = skills.map((name) => ({ name, status: "new" })); // declared, not yet verified
   state.growth.activeRole = roles[0]?.[0] || null;
   state.camp.fresh = !!fresh;
+  if (fresh) {
+    Object.assign(state, { coins: 0, coinsMax: 0 }); // credits come with a pass or when they unlock (passes.js)
+    state.pass = { eligible: new Set(), owned: new Set(), programs: new Set() };
+    state.waitlist = new Set();
+  }
   state.camp.stepsSeen = null;
   state.camp.spotSeen = null;
   state.camp.unlocked = fresh ? FRESH_START() : ALL_UNLOCKED();
