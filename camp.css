@@ -33,6 +33,7 @@
 .camp-avatar img { width: 8px; height: 8px; object-fit: cover; }
 .camp-avatar--pgm { background: #ffe9e5; }
 .camp-avatar--talent { background: #edffff; }
+.camp-avatar--unlocks { background: #fff7fb; }
 
 /* Growth Track for new users (Figma 1353:12726): centred intro over the checklist */
 .road { width: 100%; max-width: 1400px; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 56px; padding: 32px; }
@@ -228,6 +229,7 @@
 .camp-msg__avatar img { width: 16px; height: 16px; object-fit: contain; }
 .camp-msg__avatar--pgm { background: #ffe9e5; }
 .camp-msg__avatar--talent { background: #edffff; }
+.camp-msg__avatar--unlocks { background: #fff7fb; }
 .camp-msg__body { gap: 4px; }
 .camp-msg__from { gap: 4px; }
 .camp-msg__time::before { margin-right: 4px; }

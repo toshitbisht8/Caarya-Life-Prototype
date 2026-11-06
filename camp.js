@@ -54,7 +54,11 @@ const CA = "assets/camp/";
 const MANAGERS = {
   pgm: ["Professional Growth Manager", `<span class="camp-avatar camp-avatar--pgm"><img src="${CA}pgm.png" alt="" /></span>`],
   talent: ["Talent Manager", `<span class="camp-avatar camp-avatar--talent"><img src="assets/camp/talent-manager.svg" alt="" /></span>`],
+  // Not a manager: what's newly open to try (Community / Synergy Intelligence, brand engagement)
+  unlocks: ["New Unlocks", `<span class="camp-avatar camp-avatar--unlocks"><img src="assets/camp/filter/unlocks.svg" alt="" /></span>`],
 };
+// "your Talent Manager", but just "New Unlocks"
+const senderName = (who) => who === "unlocks" ? MANAGERS.unlocks[0] : `your ${MANAGERS[who][0]}`;
 
 // ---------- Experience claims ----------
 const EXPERIENCE = [
@@ -337,10 +341,10 @@ const MESSAGE_DEFS = [
   ["tm-done", () => isFresh() && setupDone(), "talent", () => TM_DONE[0], "Details", "talent-details"],
   ["assessments", () => isFresh() && setupDone(), "pgm", () => "While your career report is being generated, you can take a few basic assessments if you like. They’re optional, and they help enhance your ME profile.", "Explore assessments", "assessments", null, () => unlock("assessments")],
   // Coming soon: each leads to its one-pager and waitlist (space.js)
-  ["synergy", () => spaceDue("synergy"), "talent", () => "Synergy Intelligence is coming to Your Network: the people you’ve worked with, how you work together and who can open doors for you. Learn more and join the waitlist.", "Learn more", "synergy", () => onWaitlist("synergy")],
-  ["community", () => spaceDue("community"), "pgm", () => "Community Intelligence is coming to Your Knowledge Space: daily knowledge gains and an exchange of ideas with your peers. Learn more and join the waitlist.", "Learn more", "community", () => onWaitlist("community")],
+  ["synergy", () => spaceDue("synergy"), "unlocks", () => "Synergy Intelligence is coming to Your Network: the people you’ve worked with, how you work together and who can open doors for you. Learn more and join the waitlist.", "Learn more", "synergy", () => onWaitlist("synergy")],
+  ["community", () => spaceDue("community"), "unlocks", () => "Community Intelligence is coming to Your Knowledge Space: daily knowledge gains and an exchange of ideas with your peers. Learn more and join the waitlist.", "Learn more", "community", () => onWaitlist("community")],
   // A brand engagement gig (BRAND_GIG), whatever the user picked under Brand Engagement at sign-up
-  ["brand", () => spaceDue("brand"), "talent", () => BRAND_GIG.title, "View details", "brand", () => state.camp.brandInterested],
+  ["brand", () => spaceDue("brand"), "unlocks", () => BRAND_GIG.title, "View details", "brand", () => state.camp.brandInterested],
   // A client wants to work with them (offer.js): after a learner's first artefact
   ["recruiter", () => offerDue(), "talent", () => offerText(), "View offer", "recruiter", () => !!state.offer?.answer],
   // Passes (passes.js): a pod mentor's review, then graded Desk work
@@ -388,9 +392,9 @@ function openBrandGig() {
       </div>
       <footer class="pgm-modal__foot pgm-modal__foot--center"><button type="button" class="pgm-btn" data-close>Done</button></footer>`;
   const ov = openOverlay(`
-    <div class="pgm-modal pgm-modal--note" role="dialog" aria-modal="true" aria-label="Message from your Talent Manager">
+    <div class="pgm-modal pgm-modal--note" role="dialog" aria-modal="true" aria-label="Message from ${senderName(m.who)}">
       <header class="pgm-modal__head">
-        <span class="pgm-modal__from">${MANAGERS.talent[1]}${MANAGERS.talent[0]}<span class="camp-msg__time">${msgTime(m.at)}</span></span>
+        <span class="pgm-modal__from">${MANAGERS[m.who][1]}${MANAGERS[m.who][0]}<span class="camp-msg__time">${msgTime(m.at)}</span></span>
         <button type="button" class="pgm-modal__close" data-close aria-label="Close"><img src="${G}close-dark.svg" alt="" /></button>
       </header>
       ${state.camp.brandInterested ? thanks() : `
@@ -486,7 +490,7 @@ const msgDone = (m) => MESSAGE_DEFS.find(([id]) => id === m.id)?.[6]?.() || fals
 function notifyNew(n) {
   if (currentBase() === "camp") return;
   const latest = state.camp.inbox.reduce((a, b) => (b.at >= a.at ? b : a));
-  showToast(n > 1 ? `${n} new messages in Camp` : `New message from your ${MANAGERS[latest.who][0]}`, { label: "Go to Camp", onClick: () => go("camp") });
+  showToast(n > 1 ? `${n} new messages in Camp` : `New message from ${senderName(latest.who)}`, { label: "Go to Camp", onClick: () => go("camp") });
 }
 
 // [summary shown in Camp, the rest shown under Details]
@@ -500,7 +504,7 @@ function openMessage(m) {
   const tm = m.id === "tm-done";
   const done = msgDone(m);
   const ov = openOverlay(`
-    <div class="pgm-modal pgm-modal--note" role="dialog" aria-modal="true" aria-label="Message from your ${MANAGERS[m.who][0]}">
+    <div class="pgm-modal pgm-modal--note" role="dialog" aria-modal="true" aria-label="Message from ${senderName(m.who)}">
       <header class="pgm-modal__head">
         <span class="pgm-modal__from">${MANAGERS[m.who][1]}${MANAGERS[m.who][0]}<span class="camp-msg__time">${msgTime(m.at)}</span></span>
         <button type="button" class="pgm-modal__close" data-close aria-label="Close"><img src="${G}close-dark.svg" alt="" /></button>
@@ -557,9 +561,9 @@ function msgTime(t) {
   return new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 // Row (Figma 1408:19407): the manager's avatar, "Manager • time", the message on one line, the action.
-const MSG_AVATAR = { pgm: `<img src="${CA}pgm.png" alt="" />`, talent: `<img src="${CA}talent-manager.svg" alt="" />` };
+const MSG_AVATAR = { pgm: `<img src="${CA}pgm.png" alt="" />`, talent: `<img src="${CA}talent-manager.svg" alt="" />`, unlocks: `<img src="${CA}filter/unlocks.svg" alt="" />` };
 const msgRow = (m) => `
-  <article class="camp-msg${m.read ? "" : " is-new"}" data-msg="${m.id}" tabindex="0" aria-label="Open message from your ${MANAGERS[m.who][0]}">
+  <article class="camp-msg${m.read ? "" : " is-new"}" data-msg="${m.id}" tabindex="0" aria-label="Open message from ${senderName(m.who)}">
     <span class="camp-msg__avatar camp-msg__avatar--${m.who}">${MSG_AVATAR[m.who]}</span>
     <div class="camp-msg__body">
       <p class="camp-msg__from">${MANAGERS[m.who][0]}<span class="camp-msg__time">${msgTime(m.at)}</span>${m.read ? "" : `<span class="camp-msg__new">New</span>`}</p>
@@ -571,7 +575,7 @@ const msgRow = (m) => `
   </article>`;
 
 // Filter by sender (Figma IUmw1y1QTgEOQMSjjyF5AI 1501:38245, states 1501:38637, in Camp 1418:30649): the chosen chip
-// shows its label, the others just their icon. "New Unlocks" collects the messages that open something new.
+// shows its label, the others just their icon. Each filters by sender; "New Unlocks" sends what's newly open to try.
 const CF = `${CA}filter/`;
 const cfLayers = (layers) => layers.map(([file, inset]) => `<span style="inset:${inset}"><img src="${CF}${file}" alt="" /></span>`).join("");
 const CAMP_FILTERS = [
@@ -581,9 +585,8 @@ const CAMP_FILTERS = [
   ["brand", "Personal Brand Manager", cfLayers([["brand-1.svg", "3.13% 12.08% 3.12% 12.08%"], ["brand-2.svg", "26.66% 35.65% 45.5% 35.65%"], ["brand-3.svg", "1.59% 10.53% 1.58% 10.53%"]])],
   ["unlocks", "New Unlocks", cfLayers([["unlocks.svg", "0 0.86% 0 0.87%"]])],
 ];
-const UNLOCK_MSGS = ["proof", "tm-done", "assessments", "community", "synergy", "pass-learner", "pass-worker"];
 state.camp.filter = "all";
-const msgShown = (m, f = state.camp.filter) => f === "all" || (f === "unlocks" ? UNLOCK_MSGS.includes(m.id) : m.who === f);
+const msgShown = (m, f = state.camp.filter) => f === "all" || m.who === f;
 const campFilters = () => `
   <div class="camp-filter" role="radiogroup" aria-label="Filter messages by sender">${CAMP_FILTERS.map(([key, label, icon]) => `
     <button type="button" role="radio" class="camp-filter__chip camp-filter__chip--${key}${state.camp.filter === key ? " is-on" : ""}" aria-checked="${state.camp.filter === key}" data-camp-filter="${key}" title="${label}" aria-label="${label}">
