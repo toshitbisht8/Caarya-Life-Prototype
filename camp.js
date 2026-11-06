@@ -570,19 +570,47 @@ const msgRow = (m) => `
       : `<button type="button" class="camp-msg__cta" data-camp-action="${m.action}">${esc(m.cta)}<img src="${CA}navigate-next.svg" alt="" /></button>`}
   </article>`;
 
+// Filter by sender (Figma IUmw1y1QTgEOQMSjjyF5AI 1501:38245, states 1501:38637, in Camp 1418:30649): the chosen chip
+// shows its label, the others just their icon. "New Unlocks" collects the messages that open something new.
+const CF = `${CA}filter/`;
+const cfLayers = (layers) => layers.map(([file, inset]) => `<span style="inset:${inset}"><img src="${CF}${file}" alt="" /></span>`).join("");
+const CAMP_FILTERS = [
+  ["all", "All", cfLayers([["all.svg", "0"]])],
+  ["talent", "Talent Manager", cfLayers([["talent.svg", "4.05% 1.75% 4.05% 1.76%"]])],
+  ["pgm", "Professional Growth Manager", `<span style="inset:0"><img src="${CA}pgm.png" alt="" /></span>`],
+  ["brand", "Personal Brand Manager", cfLayers([["brand-1.svg", "3.13% 12.08% 3.12% 12.08%"], ["brand-2.svg", "26.66% 35.65% 45.5% 35.65%"], ["brand-3.svg", "1.59% 10.53% 1.58% 10.53%"]])],
+  ["unlocks", "New Unlocks", cfLayers([["unlocks.svg", "0 0.86% 0 0.87%"]])],
+];
+const UNLOCK_MSGS = ["proof", "tm-done", "assessments", "community", "synergy", "pass-learner", "pass-worker"];
+state.camp.filter = "all";
+const msgShown = (m, f = state.camp.filter) => f === "all" || (f === "unlocks" ? UNLOCK_MSGS.includes(m.id) : m.who === f);
+const campFilters = () => `
+  <div class="camp-filter" role="radiogroup" aria-label="Filter messages by sender">${CAMP_FILTERS.map(([key, label, icon]) => `
+    <button type="button" role="radio" class="camp-filter__chip camp-filter__chip--${key}${state.camp.filter === key ? " is-on" : ""}" aria-checked="${state.camp.filter === key}" data-camp-filter="${key}" title="${label}" aria-label="${label}">
+      <span class="camp-filter__icon" aria-hidden="true">${icon}</span><span class="camp-filter__label">${label}</span>
+    </button>`).join("")}
+  </div>`;
+function campList() {
+  const msgs = [...state.camp.inbox].sort((a, b) => b.at - a.at).filter((m) => msgShown(m)); // newest first
+  if (msgs.length) return `<div class="camp-msgs">${msgs.map(msgRow).join("")}</div>`;
+  if (!state.camp.inbox.length || state.camp.filter === "all") return `<p class="camp-empty">You’re all caught up.</p>`;
+  const label = CAMP_FILTERS.find(([k]) => k === state.camp.filter)[1];
+  return `<p class="camp-empty">${state.camp.filter === "unlocks" ? "Nothing new has been unlocked yet." : `No messages from your ${label} yet.`}</p>`;
+}
+
 const campPage = document.getElementById("camp-page");
 function renderCamp() {
   closeAllOverlays();
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
   const first = displayName().split(" ")[0];
-  const msgs = [...state.camp.inbox].sort((a, b) => b.at - a.at); // newest first
   campPage.innerHTML = `
     <div class="camp-head">
       <h1>${greeting}, ${esc(first)}</h1>
       <p>Here’s what you need to catch up with</p>
+      ${state.camp.inbox.length ? campFilters() : ""}
     </div>
-    ${msgs.length ? `<div class="camp-msgs">${msgs.map(msgRow).join("")}</div>` : `<p class="camp-empty">You’re all caught up.</p>`}`;
+    <div class="camp-list">${campList()}</div>`;
   // First visit after signing up: a short tour of Camp and Growth Track, then the PGM pops up (FigJam 339:990).
   if (state.camp.fresh && !state.camp.holdIntro) {
     if (!state.camp.toured) {
@@ -614,6 +642,13 @@ function openRow(row, e) {
 // achievement cards) open in full first, with the CTA to start.
 const FLOW_ACTIONS = ["pgm-flow", "transferable", "tools"];
 campPage.addEventListener("click", (e) => {
+  const f = e.target.closest("[data-camp-filter]");
+  if (f) {
+    state.camp.filter = f.dataset.campFilter;
+    campPage.querySelector(".camp-filter").outerHTML = campFilters();
+    campPage.querySelector(".camp-list").innerHTML = campList();
+    return campPage.querySelector(`[data-camp-filter="${state.camp.filter}"]`).focus();
+  }
   const row = e.target.closest("[data-msg]");
   if (row) openRow(row, e);
 });
@@ -989,6 +1024,7 @@ function applyProfile(p, fresh) {
     state.waitlist = new Set();
     state.camp.brandInterested = false;
     state.offer = null;
+    state.camp.filter = "all";
     state.camp.setupAt = 0;
   }
   state.camp.stepsSeen = null;
