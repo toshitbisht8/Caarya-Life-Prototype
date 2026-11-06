@@ -128,35 +128,50 @@ function sign() {
 }
 const param0 = () => location.hash.slice(1).split("/")[1] || "conduct";
 
-// ---------- Meet your managers (1:1422) ----------
+// ---------- Meet your managers (Figma IUmw1y1QTgEOQMSjjyF5AI 1496:37993) ----------
+// Each icon is layered from the frame's vectors (insets copied from Figma), centred in a tinted 32px circle.
+const layered = (layers) => layers.map(([file, inset]) => `<span style="inset:${inset}"><img src="${OB}${file}" alt="" /></span>`).join("");
+const MGR_ICONS = {
+  talent: layered([["tm-1.svg", "7.55% 5.15% 7.14% 5.15%"], ["tm-2.svg", "4.05% 1.76%"]]),
+  pgm: `<span style="inset:0"><img src="${CA}pgm.png" alt="" /></span>`,
+  brand: layered([
+    ["pbm-1.svg", "57.13% 16.57% 3.12% 50.27%"], ["pbm-2.svg", "57.13% 16.57% 3.12% 65.21%"],
+    ["pbm-3.svg", "57.13% 50.27% 3.12% 16.57%"], ["pbm-4.svg", "64.33% 50.27% 3.12% 16.57%"],
+    ["pbm-5.svg", "3.13% 12.08% 21.96% 12.08%"], ["pbm-6.svg", "3.13% 12.08% 21.96% 37.62%"],
+    ["pbm-7.svg", "15.95% 25.36% 34.78% 25.36%"], ["pbm-8.svg", "15.95% 48.05% 34.78% 25.37%"],
+    ["pbm-9.svg", "41.45% 35.65% 45.5% 35.65%"], ["pbm-10.svg", "41.45% 35.65% 45.5% 48.71%"],
+    ["pbm-11.svg", "26.67% 42.61% 58.55% 42.61%"], ["pbm-12.svg", "26.67% 42.61% 58.55% 48.97%"],
+    ["pbm-13.svg", "1.58% 10.53%"],
+  ]),
+};
 function renderTeam() {
-  const first = displayName().split(" ")[0];
+  const first = esc(displayName().split(" ")[0]);
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const mgr = (key, title, paras) => `
+      <section class="ob-mgr">
+        <div class="ob-mgr__head">
+          <span class="ob-mgr__icon ob-mgr__icon--${key}" aria-hidden="true"><span>${MGR_ICONS[key]}</span></span>
+          <h2>${title}</h2>
+        </div>
+        <div class="ob-mgr__text">${paras.map((t) => `<p>${t}</p>`).join("")}</div>
+      </section>`;
   introEl.innerHTML = `
     <div class="ob-team">
-      <section class="ob-mgr">
-        <h2>How’dy from the Ops Manager, ${esc(first)}!</h2>
-        <img class="ob-mgr__icon" src="${OB}handwave.svg" alt="" />
-        <p>${greeting}, ${esc(first)}. I’m your Operations Manager. I keep the day-to-day running smoothly: your schedules, your sessions and the resources you need to do your best work.</p>
-        <p>Check out this video about Caarya.</p>
-        <div class="ob-video" role="img" aria-label="Video: About Caarya"><img src="${OB}play.svg" alt="" /></div>
-        <p>You can find this video in your Caarya space, which holds all your important work resources.</p>
-      </section>
-      <section class="ob-mgr">
-        <h2>Hey ${esc(first)}, I am your Professional Growth Manager</h2>
-        <img class="ob-mgr__icon" src="${OB}tie.svg" alt="" />
-        <p>I’ll guide your growth: helping you pick up the right work, track the skills you build and turn it into proof that recruiters trust.</p>
-        <p>I have unlocked a couple of info cards that will help you understand career development better.</p>
-        <div class="ob-cards"><div class="ob-info">Future of Careers</div><div class="ob-info">Career Development Pathways</div></div>
-        <p>Check them out in your space.</p>
-      </section>
-      <section class="ob-mgr">
-        <h2>Yo ${esc(first)}! I am your Talent Manager.</h2>
-        <img class="ob-mgr__icon" src="${OB}cool.svg" alt="" />
-        <p>I represent you with startups and organisations looking for talent like you.</p>
-        <p>Keep checking your inbox for messages from me.</p>
-      </section>
+      <button type="button" class="ob-team__back" data-ob="back" aria-label="Back"><img src="${OB}back.svg" alt="" /></button>
+      ${mgr("talent", `How’dy from the Talent Manager, ${first}!`, [
+        `${greeting}, ${first}. I am your Talent Manager.`,
+        "I’m responsible for getting you the work you want. I guide you on what to do in order to land your desired jobs and inform you of ideal new opportunities.",
+      ])}
+      ${mgr("pgm", `Hey ${first}, I am your Professional Growth Manager`, [
+        "I’ll help you manage your career growth. My job is to understand your desired career growth trajectory and work preferences.",
+        "I use those to help you make choices that align to your career goals by recommending appropriate opportunities.",
+      ])}
+      ${mgr("brand", `Hello ${first}! I am your Personal Brand Manager.`, [
+        "I represent you with other startups.",
+        "I’m here to help you build your personal brand.",
+        "I’ll help you showcase your skills, work and talent to potential recruiters, so you can present yourself in the most appropriate manner.",
+      ])}
       <button type="button" class="ob-btn" data-ob="done">Get started with my Caarya Life</button>
     </div>`;
 }
@@ -170,6 +185,7 @@ introEl.addEventListener("click", (e) => {
       go(i < OB_ORDER.length - 1 ? `first-things/${OB_ORDER[i + 1]}` : "meet-team");
       break;
     }
+    case "back": go(`first-things/${OB_ORDER[OB_ORDER.length - 1]}`); break;
     case "done": go("confirm"); break; // app.js: the set-up loader, then Camp
   }
 });

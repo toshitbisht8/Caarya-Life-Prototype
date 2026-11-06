@@ -68,17 +68,23 @@
 .ob-btn img { width: 16px; height: 16px; }
 .ob-doc .ob-btn { margin-bottom: 40px; }
 
-/* ---------- Meet your managers (1:1422) ---------- */
-.intro--meet-team { background: #1f2426; background-image: radial-gradient(circle at 50% 22%, rgba(51, 214, 225, 0.1), transparent 34%), radial-gradient(circle at 50% 62%, rgba(51, 214, 225, 0.08), transparent 30%); }
+/* ---------- Meet your managers (Figma IUmw1y1QTgEOQMSjjyF5AI 1496:37993) ---------- */
+.intro--meet-team { background: #1f2426; background-image: radial-gradient(circle at 50% 280px, rgba(51, 214, 225, 0.12), transparent 320px); }
 .ob-team { width: 100%; max-width: 640px; display: flex; flex-direction: column; align-items: center; gap: 80px; padding: 48px 24px 64px; }
-.ob-mgr { width: 100%; display: flex; flex-direction: column; gap: 16px; }
-.ob-mgr h2 { margin: 0 0 8px; font-family: var(--font-lato); font-weight: 700; font-size: 20px; letter-spacing: 0.4px; line-height: 1.5; text-transform: capitalize; color: var(--neutral-50); }
-.ob-mgr__icon { width: 32px; height: 32px; }
-.ob-mgr p { font-family: var(--font-satoshi); font-size: 16px; letter-spacing: 0.64px; line-height: 1.5; color: var(--neutral-100); }
-.ob-video { height: 240px; display: flex; align-items: center; justify-content: center; margin: 8px 0; border-radius: 16px; background: #3a4042; }
-.ob-video img { width: 40px; height: 40px; }
-.ob-cards { display: flex; gap: 24px; margin: 8px 0; overflow-x: auto; scrollbar-width: none; }
-.ob-info { width: 200px; height: 240px; flex-shrink: 0; display: flex; align-items: flex-end; padding: 16px; border-radius: 16px; background: #3a4042; font-family: var(--font-lato); font-weight: 700; font-size: 16px; letter-spacing: 0.32px; line-height: 1.5; text-transform: capitalize; color: var(--neutral-50); }
+.ob-team__back { align-self: flex-start; display: flex; margin-bottom: -56px; padding: 0 !important; border: 0; background: none; cursor: pointer; }
+.ob-team__back img { width: 24px; height: 24px; }
+.ob-mgr { width: 100%; display: flex; flex-direction: column; gap: 24px; }
+.ob-mgr__head { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+.ob-mgr h2 { margin: 0; font-family: var(--font-lato); font-weight: 700; font-size: 20px; letter-spacing: 0.4px; line-height: 1.5; text-transform: capitalize; color: var(--neutral-50); }
+.ob-mgr__icon { position: relative; width: 32px; height: 32px; flex-shrink: 0; border-radius: 120px; }
+.ob-mgr__icon > span { position: absolute; top: 8px; left: 8px; width: 16px; height: 16px; overflow: hidden; }
+.ob-mgr__icon > span > span { position: absolute; }
+.ob-mgr__icon img { display: block; width: 100%; height: 100%; max-width: none; object-fit: cover; }
+.ob-mgr__icon--talent { background: #edffff; }
+.ob-mgr__icon--pgm { background: #ffe9e5; }
+.ob-mgr__icon--brand { background: #fdf7e9; }
+.ob-mgr__text { display: flex; flex-direction: column; gap: 24px; }
+.ob-mgr p { margin: 0; font-family: var(--font-satoshi); font-size: 16px; letter-spacing: 0.64px; line-height: 1.5; color: var(--neutral-100); }
 .ob-team .ob-btn { max-width: none; padding: 16px 24px !important; }
 
 @media (max-width: 900px) {
