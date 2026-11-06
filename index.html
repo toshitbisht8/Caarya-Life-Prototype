@@ -259,6 +259,11 @@
           <span data-crumb-section></span><span>/</span><span class="breadcrumb__current" data-crumb-page></span>
         </p>
         <!-- User profile (Figma 1353:12845): the ring round the avatar is the credit balance; the menu has the rest -->
+        <div class="navbar__end">
+        <!-- Instructions (Figma 1492:37664): hidden shortcuts and test accounts, in a drawer (instructions.js) -->
+        <button class="nav-instructions" type="button" data-instructions aria-label="Instructions" title="Instructions">
+          <span><img src="assets/instructions/instructions.svg" alt="" /></span>
+        </button>
         <div class="user-menu-wrap">
           <button class="user-chip" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="user-menu" data-user-chip>
             <span class="user-ring" aria-label="Credit balance" aria-valuemin="0">
@@ -293,6 +298,7 @@
               <button type="button" role="menuitem" data-user-action="logout"><img src="assets/menu/logout.svg" alt="" />Log out</button>
             </div>
           </div>
+        </div>
         </div>
       </header>
 
@@ -368,9 +374,11 @@
   <script src="camp.js"></script>
   <script src="passes.js"></script>
   <script src="space.js"></script>
+  <script src="offer.js"></script>
   <script src="onboarding.js"></script>
   <script src="demo-user.js"></script>
   <script src="pending-user.js"></script>
   <script src="mentor-sim.js"></script>
+  <script src="instructions.js"></script>
 </body>
 </html>

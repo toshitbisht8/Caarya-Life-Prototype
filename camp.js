@@ -6,8 +6,8 @@
 
 // Menu items a new user unlocks one by one; returning users see them all.
 const CAMP_ITEMS = ["growth", "domain-affinity", "industry-affinity", "desk", "session-logs", "achievements", "competencies", "proof", "journal", "profile", "assessments", "daily-gains", "exchange", "rolodex", "network-profile", "community-intelligence", "synergy-intelligence"];
-// Temporary menu items for new users: the coming-soon one-pagers, open once set-up is done. Returning users have the
-// sections themselves, so they don't get these.
+// Temporary menu items for new users: the coming-soon one-pagers, added to the menu when the user joins that waitlist
+// (space.js). Returning users have the sections themselves, so they don't get these.
 const SPACE_ITEMS = ["community-intelligence", "synergy-intelligence"];
 const ALL_UNLOCKED = () => new Set(CAMP_ITEMS.filter((i) => !SPACE_ITEMS.includes(i)));
 // A new user starts with Growth Track (the Road To Career Acceleration) and ends set-up with these (Figma 1365:42807).
@@ -29,10 +29,13 @@ state.camp = {
 
 // Pages that live under a menu item (Camp itself is always open).
 const ITEM_OF = { programs: "growth", explore: "growth", "explore-all": "growth", "work-order": "growth", "proof-asset": "proof" };
+// Can the page be opened? The coming-soon pages always can (Camp's messages lead there); only their menu items wait.
 const isUnlocked = (route) => {
   const item = ITEM_OF[route] || route;
-  return !CAMP_ITEMS.includes(item) || state.camp.unlocked.has(item);
+  return !CAMP_ITEMS.includes(item) || SPACE_ITEMS.includes(item) || state.camp.unlocked.has(item);
 };
+// Is the item in the menu?
+const inMenu = (route) => (SPACE_ITEMS.includes(route) ? state.camp.unlocked.has(route) : isUnlocked(route));
 const unlock = (...items) => items.forEach((i) => state.camp.unlocked.add(i));
 
 // Shows only unlocked menu items, and only the section headers that still have one.
@@ -40,7 +43,7 @@ function syncMenuLocks() {
   document.querySelectorAll("[data-menu-section]").forEach((sec) => {
     let any = false;
     sec.querySelectorAll(".menu-item[data-route]").forEach((item) => {
-      item.hidden = !isUnlocked(item.dataset.route);
+      item.hidden = !inMenu(item.dataset.route);
       any ||= !item.hidden;
     });
     sec.hidden = !any;
@@ -51,7 +54,11 @@ const CA = "assets/camp/";
 const MANAGERS = {
   pgm: ["Professional Growth Manager", `<span class="camp-avatar camp-avatar--pgm"><img src="${CA}pgm.png" alt="" /></span>`],
   talent: ["Talent Manager", `<span class="camp-avatar camp-avatar--talent"><img src="assets/camp/talent-manager.svg" alt="" /></span>`],
+  // Not a manager: what's newly open to try (Community / Synergy Intelligence, brand engagement)
+  unlocks: ["New Unlocks", `<span class="camp-avatar camp-avatar--unlocks"><img src="assets/camp/filter/unlocks.svg" alt="" /></span>`],
 };
+// "your Talent Manager", but just "New Unlocks"
+const senderName = (who) => who === "unlocks" ? MANAGERS.unlocks[0] : `your ${MANAGERS[who][0]}`;
 
 // ---------- Experience claims ----------
 const EXPERIENCE = [
@@ -207,6 +214,8 @@ const TOUR = [
     text: "Your Growth Manager and Talent Manager post updates here, each with the next thing to do. A red badge tells you when something new arrives." },
   { target: () => menuItem("growth"), title: "This is your Growth Track",
     text: "Your Road to Career Acceleration lives here: the steps to finish before you can start picking up work." },
+  { target: () => document.querySelector("[data-instructions]"), title: "Instructions, whenever you need them",
+    text: "Open this any time for the shortcuts and features that aren’t visible elsewhere in the app." },
 ];
 // Keyed by the menu item whose unlock shows it; `items` when it covers a whole section.
 const SPOTS = {
@@ -217,8 +226,6 @@ const SPOTS = {
   assessments: { title: "Assessments are open", text: "Optional assessments that help enhance your ME profile while your career report is being generated." },
   synergy: { items: SYNERGY, who: "talent", section: true, title: "Synergy Intelligence is unlocked",
     text: "Your Network: the people you’ve worked with, how you work together and who can open doors for you." },
-  "community-intelligence": { title: "Community Intelligence is coming", text: "See what’s coming to Your Knowledge Space, and join the waitlist to try it first." },
-  "synergy-intelligence": { who: "talent", title: "Synergy Intelligence is coming", text: "See what’s coming to Your Network, and join the waitlist to try it first." },
   work: { items: ["desk", "session-logs"], section: true, title: "Your Work is unlocked",
     text: "Your Desk is where you work on the work orders you pick up. Session Logs keeps a record of every session." },
   credits: { items: ["credits"], who: "talent", target: () => document.querySelector("[data-user-chip]"), title: "Your credits",
@@ -334,8 +341,12 @@ const MESSAGE_DEFS = [
   ["tm-done", () => isFresh() && setupDone(), "talent", () => TM_DONE[0], "Details", "talent-details"],
   ["assessments", () => isFresh() && setupDone(), "pgm", () => "While your career report is being generated, you can take a few basic assessments if you like. They’re optional, and they help enhance your ME profile.", "Explore assessments", "assessments", null, () => unlock("assessments")],
   // Coming soon: each leads to its one-pager and waitlist (space.js)
-  ["synergy", () => isFresh() && setupDone(), "talent", () => "Synergy Intelligence is coming to Your Network: the people you’ve worked with, how you work together and who can open doors for you. Learn more and join the waitlist.", "Learn more", "synergy", () => onWaitlist("synergy")],
-  ["community", () => isFresh() && setupDone(), "pgm", () => "Community Intelligence is coming to Your Knowledge Space: daily knowledge gains and an exchange of ideas with your peers. Learn more and join the waitlist.", "Learn more", "community", () => onWaitlist("community")],
+  ["synergy", () => spaceDue("synergy"), "unlocks", () => "Synergy Intelligence is coming to Your Network: the people you’ve worked with, how you work together and who can open doors for you. Learn more and join the waitlist.", "Learn more", "synergy", () => onWaitlist("synergy")],
+  ["community", () => spaceDue("community"), "unlocks", () => "Community Intelligence is coming to Your Knowledge Space: daily knowledge gains and an exchange of ideas with your peers. Learn more and join the waitlist.", "Learn more", "community", () => onWaitlist("community")],
+  // A brand engagement gig (BRAND_GIG), whatever the user picked under Brand Engagement at sign-up
+  ["brand", () => spaceDue("brand"), "unlocks", () => BRAND_GIG.title, "View details", "brand", () => state.camp.brandInterested],
+  // A client wants to work with them (offer.js): after a learner's first artefact
+  ["recruiter", () => offerDue(), "talent", () => offerText(), "View offer", "recruiter", () => !!state.offer?.answer],
   // Passes (passes.js): a pod mentor's review, then graded Desk work
   ["pass-learner", () => passesOpen(), "talent", () => `Good news, ${firstName()}! A pod mentor has reviewed your profile, and you’re eligible for our learner programs. Enroll in a program to unlock your Growth Track: Experience Studio work, your Desk and credits to get started.`, "View programs", "passes", () => hasPass()],
   ["pass-worker", () => isFresh() && workerEligible(), "talent", () => owns("integrated")
@@ -349,6 +360,82 @@ const MESSAGE_DEFS = [
       : "You’ve picked up every work order recommended for your roles so far. Explore all work to find more.";
   }, "Explore work", "explore"],
 ];
+
+// The Community Intelligence, brand engagement and Synergy Intelligence messages arrive a while after set-up is done,
+// 25s apart, each announced with its own toast (SPACE_ARRIVAL).
+const SPACE_DELAYS = { community: 25000, brand: 50000, synergy: 75000 }; // ms after set-up is done
+const SPACE_ARRIVAL = {
+  community: "Community Intelligence Is Here 🎊\nCheck your inbox in Camp to find out more",
+  brand: "A New Brand Engagement Opportunity Is Available",
+  synergy: "Synergy Intelligence Is Here 🎊\nCheck your inbox in Camp to find out more",
+};
+
+// The brand engagement gig: a market research survey for a (made-up) beverage brand.
+const BRAND_GIG = {
+  company: "Sipwell Beverages",
+  title: "Check out this market research survey opportunity at Sipwell Beverages",
+  about: [
+    "Sipwell Beverages is launching a range of ready-to-drink cold coffees on college campuses, and wants to hear from students before it does.",
+    "The survey takes about 20 minutes online. You’ll share how and when you buy drinks on campus, rate a few flavour and packaging ideas, and tell them what would make you pick one brand over another.",
+  ],
+  details: [["Format", "Online survey"], ["Time", "About 20 minutes"], ["Open for", "7 days"]],
+  reward: 500,
+};
+function openBrandGig() {
+  const m = state.camp.inbox.find((x) => x.id === "brand");
+  m.read = true;
+  const thanks = () => `
+      <div class="pgm-modal__body brand-gig">
+        <img class="brand-gig__done" src="${CA}done.svg" alt="" />
+        <h2>Thanks for your interest!</h2>
+        <p>We’ve mailed the details of this engagement to ${esc(state.email || "your email")}. Your ${BRAND_GIG.reward} credits will reflect once you complete it.</p>
+      </div>
+      <footer class="pgm-modal__foot pgm-modal__foot--center"><button type="button" class="pgm-btn" data-close>Done</button></footer>`;
+  const ov = openOverlay(`
+    <div class="pgm-modal pgm-modal--note" role="dialog" aria-modal="true" aria-label="Message from ${senderName(m.who)}">
+      <header class="pgm-modal__head">
+        <span class="pgm-modal__from">${MANAGERS[m.who][1]}${MANAGERS[m.who][0]}<span class="camp-msg__time">${msgTime(m.at)}</span></span>
+        <button type="button" class="pgm-modal__close" data-close aria-label="Close"><img src="${G}close-dark.svg" alt="" /></button>
+      </header>
+      ${state.camp.brandInterested ? thanks() : `
+      <div class="pgm-modal__body brand-gig">
+        <p class="pgm-modal__kicker">Brand Engagement · Market Research</p>
+        <h2>${esc(BRAND_GIG.title)}</h2>
+        ${BRAND_GIG.about.map((p) => `<p>${esc(p)}</p>`).join("")}
+        <dl class="brand-gig__facts">${BRAND_GIG.details.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>
+        <div class="brand-gig__reward">
+          <p class="brand-gig__label">What you get</p>
+          <p class="brand-gig__amount"><img src="${G}coins-dark.svg" alt="" />${BRAND_GIG.reward} credits</p>
+          <p>Added to your balance once you complete the survey.</p>
+        </div>
+      </div>
+      <footer class="pgm-modal__foot pgm-modal__foot--center">
+        <button type="button" class="pgm-btn" data-brand-yes>I’m Interested <span aria-hidden="true">→</span></button>
+      </footer>`}
+    </div>`, "modal");
+  ov.querySelector("[data-brand-yes]")?.addEventListener("click", () => {
+    state.camp.brandInterested = true;
+    const box = ov.querySelector(".pgm-modal");
+    box.querySelector(".pgm-modal__body").remove();
+    box.querySelector(".pgm-modal__foot").remove();
+    box.insertAdjacentHTML("beforeend", thanks());
+    syncInbox();
+    if (currentBase() === "camp") campPage.querySelector('[data-msg="brand"]')?.replaceWith(htmlEl(msgRow(m)));
+  });
+}
+const htmlEl = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstChild; };
+state.camp.setupAt = 0;
+const spaceDue = (k) => isFresh() && !!state.camp.setupAt && Date.now() - state.camp.setupAt >= SPACE_DELAYS[k];
+function scheduleSpaceMessages() {
+  const at = state.camp.setupAt;
+  Object.values(SPACE_DELAYS).forEach((ms) => setTimeout(() => {
+    if (state.camp.setupAt !== at || !isFresh()) return; // signed out or someone else since
+    syncMessages();
+    // Show the new row if Camp is open and nothing is on top of it; otherwise it's there on the next visit.
+    if (currentBase() === "camp" && !overlays.length) render();
+    else syncInbox();
+  }, Math.max(0, at + ms - Date.now()) + 50));
+}
 
 // Activity from the desk becomes a message each time something new happens.
 function deskEvents() {
@@ -370,9 +457,11 @@ function postMessage(id, who, text, cta, action, quiet) {
 // Posts whatever is now due. `quiet` posts as already read, with no toast (used when seeding the demo's history).
 function syncMessages(quiet = false) {
   let posted = 0;
+  const arrived = [];
   MESSAGE_DEFS.forEach(([id, when, who, text, cta, action, , onPost]) => {
     if (!when() || !postMessage(id, who, text(), cta, action, quiet)) return;
     posted++;
+    if (SPACE_ARRIVAL[id]) arrived.push(id);
     onPost?.();
   });
   deskEvents().forEach(([id, who, text, cta, action]) => postMessage(id, who, text, cta, action, quiet) && posted++);
@@ -385,7 +474,13 @@ function syncMessages(quiet = false) {
     tm.read = true;
     return whenClear(() => { openMessage(tm); syncInbox(); });
   }
-  notifyNew(posted);
+  // Synergy / Community Intelligence: their own announcement, pointing to Camp.
+  if (arrived.length) {
+    arrived.forEach((id) => showToast(SPACE_ARRIVAL[id],
+      currentBase() === "camp" ? undefined : { label: "Go to Camp", onClick: () => go("camp") }, undefined, id === "brand" ? "coins" : ""));
+    if (posted === arrived.length) return;
+  }
+  notifyNew(posted - arrived.length);
 }
 let tmShown = false;
 const unreadCount = () => state.camp.inbox.filter((m) => !m.read).length;
@@ -395,7 +490,7 @@ const msgDone = (m) => MESSAGE_DEFS.find(([id]) => id === m.id)?.[6]?.() || fals
 function notifyNew(n) {
   if (currentBase() === "camp") return;
   const latest = state.camp.inbox.reduce((a, b) => (b.at >= a.at ? b : a));
-  showToast(n > 1 ? `${n} new messages in Camp` : `New message from your ${MANAGERS[latest.who][0]}`, { label: "Go to Camp", onClick: () => go("camp") });
+  showToast(n > 1 ? `${n} new messages in Camp` : `New message from ${senderName(latest.who)}`, { label: "Go to Camp", onClick: () => go("camp") });
 }
 
 // [summary shown in Camp, the rest shown under Details]
@@ -409,7 +504,7 @@ function openMessage(m) {
   const tm = m.id === "tm-done";
   const done = msgDone(m);
   const ov = openOverlay(`
-    <div class="pgm-modal pgm-modal--note" role="dialog" aria-modal="true" aria-label="Message from your ${MANAGERS[m.who][0]}">
+    <div class="pgm-modal pgm-modal--note" role="dialog" aria-modal="true" aria-label="Message from ${senderName(m.who)}">
       <header class="pgm-modal__head">
         <span class="pgm-modal__from">${MANAGERS[m.who][1]}${MANAGERS[m.who][0]}<span class="camp-msg__time">${msgTime(m.at)}</span></span>
         <button type="button" class="pgm-modal__close" data-close aria-label="Close"><img src="${G}close-dark.svg" alt="" /></button>
@@ -438,13 +533,20 @@ const CAMP_ACTIONS = {
   assessments: () => go("assessments"),
   synergy: () => go("synergy-intelligence"), // space.js
   community: () => go("community-intelligence"),
+  brand: () => openBrandGig(),
+  recruiter: () => openOffer(), // offer.js
   explore: () => go("explore"),
   desk: () => go("desk"),
 };
 
 // Measured Excellence opens once set-up is done; Achievements once the first card exists.
 function syncCampUnlocks() {
-  if (setupDone()) unlock("profile", ...(isFresh() ? SPACE_ITEMS : []));
+  if (setupDone()) unlock("profile");
+  // Set-up done: remember when, for the messages that follow a little later (SPACE_DELAYS).
+  if (isFresh() && setupDone() && !state.camp.setupAt) {
+    state.camp.setupAt = Date.now();
+    scheduleSpaceMessages();
+  }
   if (state.achievements.length) unlock("achievements");
 }
 
@@ -459,9 +561,9 @@ function msgTime(t) {
   return new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 // Row (Figma 1408:19407): the manager's avatar, "Manager • time", the message on one line, the action.
-const MSG_AVATAR = { pgm: `<img src="${CA}pgm.png" alt="" />`, talent: `<img src="${CA}talent-manager.svg" alt="" />` };
+const MSG_AVATAR = { pgm: `<img src="${CA}pgm.png" alt="" />`, talent: `<img src="${CA}talent-manager.svg" alt="" />`, unlocks: `<img src="${CA}filter/unlocks.svg" alt="" />` };
 const msgRow = (m) => `
-  <article class="camp-msg${m.read ? "" : " is-new"}" data-msg="${m.id}" tabindex="0" aria-label="Open message from your ${MANAGERS[m.who][0]}">
+  <article class="camp-msg${m.read ? "" : " is-new"}" data-msg="${m.id}" tabindex="0" aria-label="Open message from ${senderName(m.who)}">
     <span class="camp-msg__avatar camp-msg__avatar--${m.who}">${MSG_AVATAR[m.who]}</span>
     <div class="camp-msg__body">
       <p class="camp-msg__from">${MANAGERS[m.who][0]}<span class="camp-msg__time">${msgTime(m.at)}</span>${m.read ? "" : `<span class="camp-msg__new">New</span>`}</p>
@@ -472,19 +574,46 @@ const msgRow = (m) => `
       : `<button type="button" class="camp-msg__cta" data-camp-action="${m.action}">${esc(m.cta)}<img src="${CA}navigate-next.svg" alt="" /></button>`}
   </article>`;
 
+// Filter by sender (Figma IUmw1y1QTgEOQMSjjyF5AI 1501:38245, states 1501:38637, in Camp 1418:30649): the chosen chip
+// shows its label, the others just their icon. Each filters by sender; "New Unlocks" sends what's newly open to try.
+const CF = `${CA}filter/`;
+const cfLayers = (layers) => layers.map(([file, inset]) => `<span style="inset:${inset}"><img src="${CF}${file}" alt="" /></span>`).join("");
+const CAMP_FILTERS = [
+  ["all", "All", cfLayers([["all.svg", "0"]])],
+  ["talent", "Talent Manager", cfLayers([["talent.svg", "4.05% 1.75% 4.05% 1.76%"]])],
+  ["pgm", "Professional Growth Manager", `<span style="inset:0"><img src="${CA}pgm.png" alt="" /></span>`],
+  ["brand", "Personal Brand Manager", cfLayers([["brand-1.svg", "3.13% 12.08% 3.12% 12.08%"], ["brand-2.svg", "26.66% 35.65% 45.5% 35.65%"], ["brand-3.svg", "1.59% 10.53% 1.58% 10.53%"]])],
+  ["unlocks", "New Unlocks", cfLayers([["unlocks.svg", "0 0.86% 0 0.87%"]])],
+];
+state.camp.filter = "all";
+const msgShown = (m, f = state.camp.filter) => f === "all" || m.who === f;
+const campFilters = () => `
+  <div class="camp-filter" role="radiogroup" aria-label="Filter messages by sender">${CAMP_FILTERS.map(([key, label, icon]) => `
+    <button type="button" role="radio" class="camp-filter__chip camp-filter__chip--${key}${state.camp.filter === key ? " is-on" : ""}" aria-checked="${state.camp.filter === key}" data-camp-filter="${key}" title="${label}" aria-label="${label}">
+      <span class="camp-filter__icon" aria-hidden="true">${icon}</span><span class="camp-filter__label">${label}</span>
+    </button>`).join("")}
+  </div>`;
+function campList() {
+  const msgs = [...state.camp.inbox].sort((a, b) => b.at - a.at).filter((m) => msgShown(m)); // newest first
+  if (msgs.length) return `<div class="camp-msgs">${msgs.map(msgRow).join("")}</div>`;
+  if (!state.camp.inbox.length || state.camp.filter === "all") return `<p class="camp-empty">You’re all caught up.</p>`;
+  const label = CAMP_FILTERS.find(([k]) => k === state.camp.filter)[1];
+  return `<p class="camp-empty">${state.camp.filter === "unlocks" ? "Nothing new has been unlocked yet." : `No messages from your ${label} yet.`}</p>`;
+}
+
 const campPage = document.getElementById("camp-page");
 function renderCamp() {
   closeAllOverlays();
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
   const first = displayName().split(" ")[0];
-  const msgs = [...state.camp.inbox].sort((a, b) => b.at - a.at); // newest first
   campPage.innerHTML = `
     <div class="camp-head">
       <h1>${greeting}, ${esc(first)}</h1>
       <p>Here’s what you need to catch up with</p>
+      ${state.camp.inbox.length ? campFilters() : ""}
     </div>
-    ${msgs.length ? `<div class="camp-msgs">${msgs.map(msgRow).join("")}</div>` : `<p class="camp-empty">You’re all caught up.</p>`}`;
+    <div class="camp-list">${campList()}</div>`;
   // First visit after signing up: a short tour of Camp and Growth Track, then the PGM pops up (FigJam 339:990).
   if (state.camp.fresh && !state.camp.holdIntro) {
     if (!state.camp.toured) {
@@ -508,12 +637,21 @@ function openRow(row, e) {
   }
   const a = e.target.closest("[data-camp-action]");
   if (a || (FLOW_ACTIONS.includes(m.action) && !msgDone(m))) return CAMP_ACTIONS[m.action]();
+  if (m.id === "brand") return openBrandGig(); // its own layout, Done or not
+  if (m.id === "recruiter") return openOffer();
   openMessage(m);
 }
 // Messages whose flow starts with its own intro (the PGM's): no extra modal before it. The others (proof of work,
 // achievement cards) open in full first, with the CTA to start.
 const FLOW_ACTIONS = ["pgm-flow", "transferable", "tools"];
 campPage.addEventListener("click", (e) => {
+  const f = e.target.closest("[data-camp-filter]");
+  if (f) {
+    state.camp.filter = f.dataset.campFilter;
+    campPage.querySelector(".camp-filter").outerHTML = campFilters();
+    campPage.querySelector(".camp-list").innerHTML = campList();
+    return campPage.querySelector(`[data-camp-filter="${state.camp.filter}"]`).focus();
+  }
   const row = e.target.closest("[data-msg]");
   if (row) openRow(row, e);
 });
@@ -887,6 +1025,10 @@ function applyProfile(p, fresh) {
     Object.assign(state, { coins: 0, coinsMax: 0 }); // credits come with a pass or when they unlock (passes.js)
     state.pass = { eligible: new Set(), owned: new Set(), programs: new Set() };
     state.waitlist = new Set();
+    state.camp.brandInterested = false;
+    state.offer = null;
+    state.camp.filter = "all";
+    state.camp.setupAt = 0;
   }
   state.camp.stepsSeen = null;
   state.camp.spotSeen = null;

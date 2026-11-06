@@ -138,3 +138,23 @@
 
 /* A section set apart by a divider (Coming Soon, Figma 1458:13848) */
 .menu-section__divider { width: auto; margin: 0 -16px; }
+
+/* Instructions button (Figma 1492:37664) and its drawer (instructions.js) */
+.navbar__end { display: flex; align-items: center; gap: 12px; }
+.nav-instructions { display: flex; align-items: center; padding: 10px; border: 0; cursor: pointer; border-radius: 136px; background: var(--neutral-100, #f3f2f2); }
+.nav-instructions:hover { background: #ebe9e9; }
+.nav-instructions span { display: block; position: relative; width: 18px; height: 18px; overflow: hidden; }
+.nav-instructions img { position: absolute; inset: 4.17% 8.33%; width: 15px; height: 16.5px; display: block; }
+.instructions .drawer__body { gap: 32px; }
+.instructions__section { display: flex; flex-direction: column; gap: 12px; }
+.instructions__section h3 { font-family: var(--font-lato); font-weight: 700; font-size: 16px; letter-spacing: 0.32px; line-height: 1.5; color: var(--neutral-900); }
+.instructions__intro { margin-top: -8px; font-family: var(--font-satoshi); font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; color: var(--neutral-500); }
+.instructions__list { display: flex; flex-direction: column; border: 1px solid var(--neutral-100); border-radius: 12px; overflow: hidden; }
+.instructions__row { display: grid; grid-template-columns: 136px 1fr; gap: 16px; align-items: start; padding: 12px 16px; }
+.instructions__row + .instructions__row { border-top: 1px solid var(--neutral-100); }
+.instructions__row dt { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 12px; color: var(--neutral-400); }
+.instructions__row dd { margin: 0; font-family: var(--font-satoshi); font-size: 13px; letter-spacing: 0.26px; line-height: 1.5; color: var(--neutral-800); }
+.instructions kbd {
+  display: inline-block; min-width: 24px; padding: 2px 8px; border: 1px solid #e3e1e1; border-bottom-width: 2px; border-radius: 6px;
+  background: var(--neutral-50); font-family: var(--font-satoshi); font-weight: 700; font-size: 12px; line-height: 1.5; text-align: center; color: var(--neutral-900);
+}

@@ -1,6 +1,7 @@
 // One-pagers for what's coming next (Figma 4QrfNXX0SjTt7aug0ZjQ8z 1881:12998, adapted for desktop): Community
 // Intelligence (Your Knowledge Space) and Synergy Intelligence (Your Network). Each explains the section, says what it
-// will cost, and takes a place on the waitlist. The PGM's and Talent Manager's Camp messages lead here (camp.js).
+// will cost, and takes a place on the waitlist. The PGM's and Talent Manager's Camp messages lead here (camp.js), and
+// joining a waitlist adds that page to the menu under Coming Soon.
 
 const SP = "assets/space/";
 const SPACE_PRICE = 149; // credits per month, each
@@ -107,8 +108,9 @@ function renderSpace(route) {
 spacePage.addEventListener("click", (e) => {
   const b = e.target.closest("[data-waitlist]");
   if (!b) return;
-  const s = Object.values(SPACES).find((x) => x.key === b.dataset.waitlist);
+  const [route, s] = Object.entries(SPACES).find(([, x]) => x.key === b.dataset.waitlist);
   state.waitlist.add(s.key);
+  if (isFresh()) unlock(route); // camp.js: it joins the menu, under Coming Soon
   render();
-  showToast(`You’re on the waitlist for ${s.title}\nWe’ll let you know as soon as it opens`, undefined, 300);
+  showToast(`You’re on the waitlist for ${s.title}\nFind it in your menu under Coming Soon`, undefined, 300);
 });
