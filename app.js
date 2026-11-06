@@ -269,9 +269,32 @@ $('[data-view="otp"]').addEventListener("submit", (e) => {
   // Logging in lands in Camp; a returning user's saved profile is picked up when it's theirs.
   const saved = savedProfile();
   const who = (state.name || state.email).toLowerCase();
-  if (saved && [saved.about?.name, saved.contact?.email].some((v) => v && v.toLowerCase() === who)) applyProfile(saved, false);
-  loggingIn(() => go("camp"));
+  if (saved && [saved.about?.name, saved.contact?.email].some((v) => v && v.toLowerCase() === who)) {
+    applyProfile(saved, false);
+    return loggingIn(() => go("camp"));
+  }
+  // Anyone else: just signed up. Onboarding (onboarding.js), then Camp with the first-login tour.
+  applyProfile(newUserProfile(state.name || state.email), true); // camp.js
+  go("welcome");
 });
+
+// A just-signed-up profile for any other username: the name from the username ("rahul.verma" → "Rahul Verma"),
+// with the role preferences a sign-up would have set.
+function newUserProfile(username) {
+  const handle = username.split("@")[0];
+  const name = handle.split(/[._\-\s]+/).filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1).toLowerCase()).join(" ") || "New User";
+  const services = (role, n) => (ROLE_SERVICES[role] || []).slice(0, n).map(([title]) => ({ title }));
+  return {
+    about: { name },
+    contact: { email: username.includes("@") ? username : `${handle.toLowerCase()}@example.com` },
+    roles: [
+      { role: "Content Creator", businessServices: services("Content Creator", 2), skills: ["Short-form video editing", "Copywriting"] },
+      { role: "Brand Strategist", businessServices: services("Brand Strategist", 1), skills: ["Audience research"] },
+    ],
+    industries: ["EduTech & Talent"],
+    careerPriority: "Industrial work",
+  };
+}
 
 // "Logging in" loader after a successful sign-in: the logo pulses while a bar fills, then `next` runs.
 const LOGIN_LOADER_MS = 1600;
