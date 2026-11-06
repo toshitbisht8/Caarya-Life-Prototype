@@ -6,8 +6,8 @@
 
 // Menu items a new user unlocks one by one; returning users see them all.
 const CAMP_ITEMS = ["growth", "domain-affinity", "industry-affinity", "desk", "session-logs", "achievements", "competencies", "proof", "journal", "profile", "assessments", "daily-gains", "exchange", "rolodex", "network-profile", "community-intelligence", "synergy-intelligence"];
-// Temporary menu items for new users: the coming-soon one-pagers, open once set-up is done. Returning users have the
-// sections themselves, so they don't get these.
+// Temporary menu items for new users: the coming-soon one-pagers, added to the menu when the user joins that waitlist
+// (space.js). Returning users have the sections themselves, so they don't get these.
 const SPACE_ITEMS = ["community-intelligence", "synergy-intelligence"];
 const ALL_UNLOCKED = () => new Set(CAMP_ITEMS.filter((i) => !SPACE_ITEMS.includes(i)));
 // A new user starts with Growth Track (the Road To Career Acceleration) and ends set-up with these (Figma 1365:42807).
@@ -29,10 +29,13 @@ state.camp = {
 
 // Pages that live under a menu item (Camp itself is always open).
 const ITEM_OF = { programs: "growth", explore: "growth", "explore-all": "growth", "work-order": "growth", "proof-asset": "proof" };
+// Can the page be opened? The coming-soon pages always can (Camp's messages lead there); only their menu items wait.
 const isUnlocked = (route) => {
   const item = ITEM_OF[route] || route;
-  return !CAMP_ITEMS.includes(item) || state.camp.unlocked.has(item);
+  return !CAMP_ITEMS.includes(item) || SPACE_ITEMS.includes(item) || state.camp.unlocked.has(item);
 };
+// Is the item in the menu?
+const inMenu = (route) => (SPACE_ITEMS.includes(route) ? state.camp.unlocked.has(route) : isUnlocked(route));
 const unlock = (...items) => items.forEach((i) => state.camp.unlocked.add(i));
 
 // Shows only unlocked menu items, and only the section headers that still have one.
@@ -40,7 +43,7 @@ function syncMenuLocks() {
   document.querySelectorAll("[data-menu-section]").forEach((sec) => {
     let any = false;
     sec.querySelectorAll(".menu-item[data-route]").forEach((item) => {
-      item.hidden = !isUnlocked(item.dataset.route);
+      item.hidden = !inMenu(item.dataset.route);
       any ||= !item.hidden;
     });
     sec.hidden = !any;
@@ -217,8 +220,6 @@ const SPOTS = {
   assessments: { title: "Assessments are open", text: "Optional assessments that help enhance your ME profile while your career report is being generated." },
   synergy: { items: SYNERGY, who: "talent", section: true, title: "Synergy Intelligence is unlocked",
     text: "Your Network: the people you’ve worked with, how you work together and who can open doors for you." },
-  "community-intelligence": { title: "Community Intelligence is coming", text: "See what’s coming to Your Knowledge Space, and join the waitlist to try it first." },
-  "synergy-intelligence": { who: "talent", title: "Synergy Intelligence is coming", text: "See what’s coming to Your Network, and join the waitlist to try it first." },
   work: { items: ["desk", "session-logs"], section: true, title: "Your Work is unlocked",
     text: "Your Desk is where you work on the work orders you pick up. Session Logs keeps a record of every session." },
   credits: { items: ["credits"], who: "talent", target: () => document.querySelector("[data-user-chip]"), title: "Your credits",
@@ -334,8 +335,8 @@ const MESSAGE_DEFS = [
   ["tm-done", () => isFresh() && setupDone(), "talent", () => TM_DONE[0], "Details", "talent-details"],
   ["assessments", () => isFresh() && setupDone(), "pgm", () => "While your career report is being generated, you can take a few basic assessments if you like. They’re optional, and they help enhance your ME profile.", "Explore assessments", "assessments", null, () => unlock("assessments")],
   // Coming soon: each leads to its one-pager and waitlist (space.js)
-  ["synergy", () => isFresh() && setupDone(), "talent", () => "Synergy Intelligence is coming to Your Network: the people you’ve worked with, how you work together and who can open doors for you. Learn more and join the waitlist.", "Learn more", "synergy", () => onWaitlist("synergy")],
-  ["community", () => isFresh() && setupDone(), "pgm", () => "Community Intelligence is coming to Your Knowledge Space: daily knowledge gains and an exchange of ideas with your peers. Learn more and join the waitlist.", "Learn more", "community", () => onWaitlist("community")],
+  ["synergy", () => spaceDue("synergy"), "talent", () => "Synergy Intelligence is coming to Your Network: the people you’ve worked with, how you work together and who can open doors for you. Learn more and join the waitlist.", "Learn more", "synergy", () => onWaitlist("synergy")],
+  ["community", () => spaceDue("community"), "pgm", () => "Community Intelligence is coming to Your Knowledge Space: daily knowledge gains and an exchange of ideas with your peers. Learn more and join the waitlist.", "Learn more", "community", () => onWaitlist("community")],
   // Passes (passes.js): a pod mentor's review, then graded Desk work
   ["pass-learner", () => passesOpen(), "talent", () => `Good news, ${firstName()}! A pod mentor has reviewed your profile, and you’re eligible for our learner programs. Enroll in a program to unlock your Growth Track: Experience Studio work, your Desk and credits to get started.`, "View programs", "passes", () => hasPass()],
   ["pass-worker", () => isFresh() && workerEligible(), "talent", () => owns("integrated")
@@ -349,6 +350,23 @@ const MESSAGE_DEFS = [
       : "You’ve picked up every work order recommended for your roles so far. Explore all work to find more.";
   }, "Explore work", "explore"],
 ];
+
+// The Synergy and Community Intelligence messages arrive a while after set-up is done, each announced with its own
+// toast (SPACE_ARRIVAL).
+const SPACE_DELAYS = { synergy: 60000, community: 120000 }; // ms after set-up is done
+const SPACE_ARRIVAL = { synergy: "Synergy Intelligence Is Here 🎊", community: "Community Intelligence Is Here 🎊" };
+state.camp.setupAt = 0;
+const spaceDue = (k) => isFresh() && !!state.camp.setupAt && Date.now() - state.camp.setupAt >= SPACE_DELAYS[k];
+function scheduleSpaceMessages() {
+  const at = state.camp.setupAt;
+  Object.values(SPACE_DELAYS).forEach((ms) => setTimeout(() => {
+    if (state.camp.setupAt !== at || !isFresh()) return; // signed out or someone else since
+    syncMessages();
+    // Show the new row if Camp is open and nothing is on top of it; otherwise it's there on the next visit.
+    if (currentBase() === "camp" && !overlays.length) render();
+    else syncInbox();
+  }, Math.max(0, at + ms - Date.now()) + 50));
+}
 
 // Activity from the desk becomes a message each time something new happens.
 function deskEvents() {
@@ -370,9 +388,11 @@ function postMessage(id, who, text, cta, action, quiet) {
 // Posts whatever is now due. `quiet` posts as already read, with no toast (used when seeding the demo's history).
 function syncMessages(quiet = false) {
   let posted = 0;
+  const arrived = [];
   MESSAGE_DEFS.forEach(([id, when, who, text, cta, action, , onPost]) => {
     if (!when() || !postMessage(id, who, text(), cta, action, quiet)) return;
     posted++;
+    if (SPACE_ARRIVAL[id]) arrived.push(id);
     onPost?.();
   });
   deskEvents().forEach(([id, who, text, cta, action]) => postMessage(id, who, text, cta, action, quiet) && posted++);
@@ -385,7 +405,13 @@ function syncMessages(quiet = false) {
     tm.read = true;
     return whenClear(() => { openMessage(tm); syncInbox(); });
   }
-  notifyNew(posted);
+  // Synergy / Community Intelligence: their own announcement, pointing to Camp.
+  if (arrived.length) {
+    arrived.forEach((id) => showToast(`${SPACE_ARRIVAL[id]}\nCheck your inbox in Camp to find out more`,
+      currentBase() === "camp" ? undefined : { label: "Go to Camp", onClick: () => go("camp") }));
+    if (posted === arrived.length) return;
+  }
+  notifyNew(posted - arrived.length);
 }
 let tmShown = false;
 const unreadCount = () => state.camp.inbox.filter((m) => !m.read).length;
@@ -444,7 +470,12 @@ const CAMP_ACTIONS = {
 
 // Measured Excellence opens once set-up is done; Achievements once the first card exists.
 function syncCampUnlocks() {
-  if (setupDone()) unlock("profile", ...(isFresh() ? SPACE_ITEMS : []));
+  if (setupDone()) unlock("profile");
+  // Set-up done: remember when, for the messages that follow a little later (SPACE_DELAYS).
+  if (isFresh() && setupDone() && !state.camp.setupAt) {
+    state.camp.setupAt = Date.now();
+    scheduleSpaceMessages();
+  }
   if (state.achievements.length) unlock("achievements");
 }
 
@@ -887,6 +918,7 @@ function applyProfile(p, fresh) {
     Object.assign(state, { coins: 0, coinsMax: 0 }); // credits come with a pass or when they unlock (passes.js)
     state.pass = { eligible: new Set(), owned: new Set(), programs: new Set() };
     state.waitlist = new Set();
+    state.camp.setupAt = 0;
   }
   state.camp.stepsSeen = null;
   state.camp.spotSeen = null;
