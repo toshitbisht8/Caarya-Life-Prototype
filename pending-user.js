@@ -44,7 +44,7 @@ function loadPendingUser() {
   // ---------- Camp: the set-up history, then what's current ----------
   state.camp.inbox = [];
   syncMessages(true); // posts everything due so far, as read
-  const when = { exp: ago(9), proof: ago(8), transferable: ago(8, 2), tools: ago(8, 1), "first-asset": ago(6), "tm-done": ago(1, 3), assessments: ago(1, 2), synergy: ago(0, 5), community: ago(0, 4) };
+  const when = { exp: ago(9), proof: ago(8), transferable: ago(8, 2), tools: ago(8, 1), "first-asset": ago(6), "tm-done": ago(1, 3), assessments: ago(1, 2), community: ago(0, 5), synergy: ago(0, 4) }; // Community arrives first
   state.camp.inbox.forEach((m) => { m.at = when[m.id] ?? m.at; });
   ["assessments", "synergy", "community"].forEach((id) => { const m = state.camp.inbox.find((x) => x.id === id); if (m) m.read = false; });
   tmShown = true; // camp.js: the Talent Manager's congratulations has been seen

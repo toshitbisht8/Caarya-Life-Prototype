@@ -353,7 +353,7 @@ const MESSAGE_DEFS = [
 
 // The Synergy and Community Intelligence messages arrive a while after set-up is done, each announced with its own
 // toast (SPACE_ARRIVAL).
-const SPACE_DELAYS = { synergy: 60000, community: 120000 }; // ms after set-up is done
+const SPACE_DELAYS = { community: 25000, synergy: 55000 }; // ms after set-up is done: Community first
 const SPACE_ARRIVAL = { synergy: "Synergy Intelligence Is Here 🎊", community: "Community Intelligence Is Here 🎊" };
 state.camp.setupAt = 0;
 const spaceDue = (k) => isFresh() && !!state.camp.setupAt && Date.now() - state.camp.setupAt >= SPACE_DELAYS[k];
