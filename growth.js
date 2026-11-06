@@ -196,7 +196,7 @@ function woCard(id, variant) {
       ${footer}
     </article>`;
   // Functional work orders carry the "Recommended" banner (Figma 843:20427) on the explore screens.
-  return !dummy && w.real && variant !== "track"
+  return !dummy && w.real && variant !== "track" && !isOfferWo(id) // offer.js: the client's gig carries "Sent to you by" instead
     ? `<div class="vc-rec wo-rec"><p class="vc-rec__head"><img src="${G}career-progression.png" alt="" />Recommended<span class="vc-rec__help" title="Picked for this role by your growth manager">${helpDot(16)}</span></p>${card}</div>`
     : card;
 }
@@ -240,7 +240,7 @@ function pageHome() {
 // The role's functional work orders, spread every `gap` cards (starting with the first) among
 // card-only dummies ("d1", "d2", …) that fill the stack / grid to `count`.
 function workOrderIds(count, gap) {
-  const real = catalogFor(activeRole()); // work-orders.js
+  const real = catalogFor(activeRole()).filter(notOffered); // work-orders.js; offer.js
   let d = 0;
   return Array.from({ length: Math.max(count, (real.length - 1) * gap + 1) }, (_, i) =>
     i % gap === 0 && i / gap < real.length ? real[i / gap] : `d${++d}`);
@@ -249,7 +249,7 @@ function workOrderIds(count, gap) {
 // The Recommended stack holds only the role's functional work orders; once they've all been skipped
 // (or the role has none) it says so and points to Explore All Work.
 function pageRecommended() {
-  const ids = catalogFor(activeRole()); // work-orders.js
+  const ids = catalogFor(activeRole()).filter(notOffered); // work-orders.js; offer.js
   const i = state.growth.recIndex;
   const role = activeRole() ? esc(roleName(activeRole())) : "this role";
   const stack = i < ids.length
@@ -299,7 +299,8 @@ function pageExploreAll() {
   const tab = state.growth.exploreTab;
   // A tab is closed by the user's passes (passes.js) or, for gigs and jobs, by their career stage in the role.
   const lockText = (key) => passLock(key) || (key !== "studio" && stageOf(role) < UNLOCK_AT[key] ? LOCKED_TABS[key][2] : "");
-  const isLocked = (key) => !!lockText(key);
+  const isLocked = (key) => !!lockText(key) && !(key === "paid" && state.offer?.answer === "yes"); // offer.js
+
   const buyable = programsOpenToEnroll(); // passes.js
   // Unlocked gig tabs have no designed listings yet, so they say so instead of showing the lock.
   const content = tab === "studio" && passLock("studio") ? `
@@ -310,6 +311,9 @@ function pageExploreAll() {
         </div>`
     : tab === "studio"
     ? `${filterChips()}<div class="gt-grid">${workOrderIds(EXPLORE_COUNT, 4).map((id) => woCard(id, "explore")).join("")}</div>`
+    : tab === "paid" && state.offer?.answer === "yes"
+    ? `<div class="gt-grid">${offerCard()}</div>
+       ${lockText("paid") ? `<p class="locked__pill offer-gig__more"><img src="${G}lock-small.svg" alt="" />More paid gigs: ${lockText("paid")}</p>` : ""}`
     : (([name, text, unlock]) => `
         <div class="locked">
           <span class="locked__icon"><span style="inset:9.31% 0"><img src="${G}briefcase.svg" alt="" /></span></span>
@@ -347,14 +351,18 @@ function brandBlocks(d) {
 function pageDetails(id) {
   const d = woContent(id); // work-orders.js
   const g = state.growth;
-  const added = isTracked(id);
-  const broke = state.coins < WO_COST;
-  const addBtn = added
+  const offer = isOfferWo(id); // offer.js: a client's paid gig, free to pick up
+  const added = offer ? anyTracked(id) : isTracked(id);
+  const broke = !offer && state.coins < WO_COST;
+  const addBtn = offer && !added
+    ? `<button type="button" class="add-track" data-action="pick-up-offer">Pick up this gig</button>`
+    : added
     ? `<span class="add-track is-done">Added to growth track</span>`
     : `<button type="button" class="add-track" data-action="add-to-track" data-id="${id}" ${broke ? "disabled" : ""}>
          Add to growth track <span class="add-track__cost"><img src="${G}coins-light.svg" alt="" />${WO_COST}</span>
        </button>`;
   const back = g.from === "growth" ? backLink("Back to Growth Track", "growth") : backLink("Back to Explore Work", g.from);
+  const sentBy = offer ? `<p class="offer-gig__head offer-gig__head--page"><span class="offer-gig__avatar">${MSG_AVATAR.talent}</span>Paid gig sent to you by ${esc(OFFER_RECRUITER.name)}, ${esc(d.venture)} · ${rupees(OFFER_PAY)}</p>` : "";
   let body = "";
   if (g.woTab === "overview") {
     body = `
@@ -401,6 +409,7 @@ function pageDetails(id) {
   }
   return `
     <div class="gt-head">${back}</div>
+    ${sentBy}
     <section class="gt-panel gt-panel--details">
       <div class="wo-header">
         <div class="wo-header__text">
@@ -482,6 +491,7 @@ page.addEventListener("click", (e) => {
       break;
     }
     case "add-to-desk": addToDesk(id); break;
+    case "pick-up-offer": pickUpOffer(); break; // offer.js
     case "passes": openPasses(); break; // passes.js
     case "top-up": openTopUp(); break;
     case "judged": openJudgedDrawer(g.lastWo, Number(el.dataset.vc)); break;

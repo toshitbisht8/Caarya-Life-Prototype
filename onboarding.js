@@ -159,9 +159,9 @@ function renderTeam() {
   introEl.innerHTML = `
     <div class="ob-team">
       <button type="button" class="ob-team__back" data-ob="back" aria-label="Back"><img src="${OB}back.svg" alt="" /></button>
-      ${mgr("talent", `How’dy from the Talent Manager, ${first}!`, [
-        `${greeting}, ${first}. I am your Talent Manager.`,
-        "I’m responsible for getting you the work you want. I guide you on what to do in order to land your desired jobs and inform you of ideal new opportunities.",
+      ${mgr("talent", `${greeting} ${first}. I am your Talent Manager.`, [
+        "I’m responsible for getting you the work you want.",
+        "I guide you on what to do in order to land your desired jobs and inform you of ideal new opportunities.",
       ])}
       ${mgr("pgm", `Hey ${first}, I am your Professional Growth Manager`, [
         "I’ll help you manage your career growth. My job is to understand your desired career growth trajectory and work preferences.",

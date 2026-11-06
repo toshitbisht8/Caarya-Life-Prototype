@@ -341,6 +341,8 @@ const MESSAGE_DEFS = [
   ["community", () => spaceDue("community"), "pgm", () => "Community Intelligence is coming to Your Knowledge Space: daily knowledge gains and an exchange of ideas with your peers. Learn more and join the waitlist.", "Learn more", "community", () => onWaitlist("community")],
   // A brand engagement gig (BRAND_GIG), whatever the user picked under Brand Engagement at sign-up
   ["brand", () => spaceDue("brand"), "talent", () => BRAND_GIG.title, "View details", "brand", () => state.camp.brandInterested],
+  // A client wants to work with them (offer.js): after a learner's first artefact
+  ["recruiter", () => offerDue(), "talent", () => offerText(), "View offer", "recruiter", () => !!state.offer?.answer],
   // Passes (passes.js): a pod mentor's review, then graded Desk work
   ["pass-learner", () => passesOpen(), "talent", () => `Good news, ${firstName()}! A pod mentor has reviewed your profile, and you’re eligible for our learner programs. Enroll in a program to unlock your Growth Track: Experience Studio work, your Desk and credits to get started.`, "View programs", "passes", () => hasPass()],
   ["pass-worker", () => isFresh() && workerEligible(), "talent", () => owns("integrated")
@@ -528,6 +530,7 @@ const CAMP_ACTIONS = {
   synergy: () => go("synergy-intelligence"), // space.js
   community: () => go("community-intelligence"),
   brand: () => openBrandGig(),
+  recruiter: () => openOffer(), // offer.js
   explore: () => go("explore"),
   desk: () => go("desk"),
 };
@@ -604,6 +607,7 @@ function openRow(row, e) {
   const a = e.target.closest("[data-camp-action]");
   if (a || (FLOW_ACTIONS.includes(m.action) && !msgDone(m))) return CAMP_ACTIONS[m.action]();
   if (m.id === "brand") return openBrandGig(); // its own layout, Done or not
+  if (m.id === "recruiter") return openOffer();
   openMessage(m);
 }
 // Messages whose flow starts with its own intro (the PGM's): no extra modal before it. The others (proof of work,
@@ -984,6 +988,7 @@ function applyProfile(p, fresh) {
     state.pass = { eligible: new Set(), owned: new Set(), programs: new Set() };
     state.waitlist = new Set();
     state.camp.brandInterested = false;
+    state.offer = null;
     state.camp.setupAt = 0;
   }
   state.camp.stepsSeen = null;

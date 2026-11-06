@@ -25,6 +25,12 @@ const INSTRUCTIONS = [
     ],
   },
   {
+    title: "Other messages",
+    rows: [
+      [["First artefact"], "With a Learner Pass or the Integrated Program, submitting your first artefact brings a paid gig offer from a client. Say yes and it waits for you under Paid Gigs, free to pick up."],
+    ],
+  },
+  {
     title: "Checkout",
     intro: "No money changes hands. Payment details are only checked for shape and never kept.",
     rows: [

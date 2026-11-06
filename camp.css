@@ -480,3 +480,16 @@
 .brand-gig__amount img { width: 24px; height: 24px; }
 .brand-gig__done { width: 48px; height: 48px; align-self: center; }
 .brand-gig:has(.brand-gig__done) { align-items: center; text-align: center; }
+
+/* A client's paid gig (offer.js) */
+.offer__wo { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; padding: 16px; border-radius: 16px; background: var(--neutral-50); border: 1px solid var(--neutral-100); }
+.offer__wo p { font-family: var(--font-satoshi); font-size: 13px; letter-spacing: 0.26px; line-height: 1.5; color: var(--neutral-700, #5a5a5a); }
+.offer__wo .offer__service { font-size: 12px; color: var(--neutral-500); }
+.offer__wo .offer__title { font-family: var(--font-lato); font-weight: 700; font-size: 16px; letter-spacing: 0.32px; color: var(--neutral-900); }
+.offer__answer { margin-top: 8px; font-weight: 500; color: var(--neutral-900) !important; }
+.offer-gig { display: flex; flex-direction: column; gap: 8px; }
+.offer-gig__head { display: flex; align-items: center; gap: 8px; font-family: var(--font-satoshi); font-weight: 500; font-size: 12px; letter-spacing: 0.24px; line-height: 1.5; color: var(--neutral-800); }
+.offer-gig__head--page { margin: 0 0 12px; font-size: 14px; }
+.offer-gig__avatar { display: flex; width: 24px; height: 24px; border-radius: 50%; overflow: hidden; background: #edffff; align-items: center; justify-content: center; flex-shrink: 0; }
+.offer-gig__avatar img { width: 14px; height: 14px; }
+.offer-gig__more { margin-top: 16px; align-self: flex-start; }
