@@ -563,7 +563,8 @@ const toastQueue = []; // ready, waiting for the one on screen
 let toastTimer, toastShownAt = 0, stepToastAt = -Infinity;
 const toastOnScreen = () => document.querySelector(".toast:not(.is-leaving)");
 
-// kind: "" (a plain toast) | "step" (a Road step done: replaces the plain toasts of the same action)
+// kind: "" (a plain toast) | "step" (a Road step done: replaces the plain toasts of the same action) | "coins" (a coins
+// icon after the title)
 function showToast(text, action, delay = POPUP_DELAY_MS, kind = "") {
   const t = { text, action, kind };
   if (kind === "step") {
@@ -587,6 +588,7 @@ function drawToast({ text, action, kind }) {
   const [title, sub] = text.split("\n");
   t.innerHTML = `${kind === "step" ? `<img class="toast__icon" src="assets/camp/done.svg" alt="" />` : ""}<p class="toast__text"><span></span>${sub ? "<small></small>" : ""}</p>${action ? `<span class="toast__divider"></span><button type="button" class="toast__action">${action.icon ? `<img src="${action.icon}" alt="" />` : ""}<span></span></button>` : ""}`;
   t.querySelector(".toast__text span").textContent = title;
+  if (kind === "coins") t.querySelector(".toast__text span").insertAdjacentHTML("beforeend", ` <img class="toast__coins" src="${G}coins-light.svg" alt="" />`);
   if (sub) t.querySelector(".toast__text small").textContent = sub;
   if (action) {
     t.querySelector(".toast__action span").textContent = action.label;

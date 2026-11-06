@@ -337,6 +337,8 @@ const MESSAGE_DEFS = [
   // Coming soon: each leads to its one-pager and waitlist (space.js)
   ["synergy", () => spaceDue("synergy"), "talent", () => "Synergy Intelligence is coming to Your Network: the people you’ve worked with, how you work together and who can open doors for you. Learn more and join the waitlist.", "Learn more", "synergy", () => onWaitlist("synergy")],
   ["community", () => spaceDue("community"), "pgm", () => "Community Intelligence is coming to Your Knowledge Space: daily knowledge gains and an exchange of ideas with your peers. Learn more and join the waitlist.", "Learn more", "community", () => onWaitlist("community")],
+  // A brand engagement gig (BRAND_GIG), whatever the user picked under Brand Engagement at sign-up
+  ["brand", () => spaceDue("brand"), "talent", () => BRAND_GIG.title, "View details", "brand", () => state.camp.brandInterested],
   // Passes (passes.js): a pod mentor's review, then graded Desk work
   ["pass-learner", () => passesOpen(), "talent", () => `Good news, ${firstName()}! A pod mentor has reviewed your profile, and you’re eligible for our learner programs. Enroll in a program to unlock your Growth Track: Experience Studio work, your Desk and credits to get started.`, "View programs", "passes", () => hasPass()],
   ["pass-worker", () => isFresh() && workerEligible(), "talent", () => owns("integrated")
@@ -351,10 +353,69 @@ const MESSAGE_DEFS = [
   }, "Explore work", "explore"],
 ];
 
-// The Synergy and Community Intelligence messages arrive a while after set-up is done, each announced with its own
-// toast (SPACE_ARRIVAL).
-const SPACE_DELAYS = { community: 25000, synergy: 55000 }; // ms after set-up is done: Community first
-const SPACE_ARRIVAL = { synergy: "Synergy Intelligence Is Here 🎊", community: "Community Intelligence Is Here 🎊" };
+// The Community Intelligence, brand engagement and Synergy Intelligence messages arrive a while after set-up is done,
+// 25s apart, each announced with its own toast (SPACE_ARRIVAL).
+const SPACE_DELAYS = { community: 25000, brand: 50000, synergy: 75000 }; // ms after set-up is done
+const SPACE_ARRIVAL = {
+  community: "Community Intelligence Is Here 🎊\nCheck your inbox in Camp to find out more",
+  brand: "A New Brand Engagement Opportunity Is Available",
+  synergy: "Synergy Intelligence Is Here 🎊\nCheck your inbox in Camp to find out more",
+};
+
+// The brand engagement gig: a market research survey for a (made-up) beverage brand.
+const BRAND_GIG = {
+  company: "Sipwell Beverages",
+  title: "Check out this market research survey opportunity at Sipwell Beverages",
+  about: [
+    "Sipwell Beverages is launching a range of ready-to-drink cold coffees on college campuses, and wants to hear from students before it does.",
+    "The survey takes about 20 minutes online. You’ll share how and when you buy drinks on campus, rate a few flavour and packaging ideas, and tell them what would make you pick one brand over another.",
+  ],
+  details: [["Format", "Online survey"], ["Time", "About 20 minutes"], ["Open for", "7 days"]],
+  reward: 500,
+};
+function openBrandGig() {
+  const m = state.camp.inbox.find((x) => x.id === "brand");
+  m.read = true;
+  const thanks = () => `
+      <div class="pgm-modal__body brand-gig">
+        <img class="brand-gig__done" src="${CA}done.svg" alt="" />
+        <h2>Thanks for your interest!</h2>
+        <p>We’ve mailed the details of this engagement to ${esc(state.email || "your email")}. Your ${BRAND_GIG.reward} credits will reflect once you complete it.</p>
+      </div>
+      <footer class="pgm-modal__foot pgm-modal__foot--center"><button type="button" class="pgm-btn" data-close>Done</button></footer>`;
+  const ov = openOverlay(`
+    <div class="pgm-modal pgm-modal--note" role="dialog" aria-modal="true" aria-label="Message from your Talent Manager">
+      <header class="pgm-modal__head">
+        <span class="pgm-modal__from">${MANAGERS.talent[1]}${MANAGERS.talent[0]}<span class="camp-msg__time">${msgTime(m.at)}</span></span>
+        <button type="button" class="pgm-modal__close" data-close aria-label="Close"><img src="${G}close-dark.svg" alt="" /></button>
+      </header>
+      ${state.camp.brandInterested ? thanks() : `
+      <div class="pgm-modal__body brand-gig">
+        <p class="pgm-modal__kicker">Brand Engagement · Market Research</p>
+        <h2>${esc(BRAND_GIG.title)}</h2>
+        ${BRAND_GIG.about.map((p) => `<p>${esc(p)}</p>`).join("")}
+        <dl class="brand-gig__facts">${BRAND_GIG.details.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>
+        <div class="brand-gig__reward">
+          <p class="brand-gig__label">What you get</p>
+          <p class="brand-gig__amount"><img src="${G}coins-dark.svg" alt="" />${BRAND_GIG.reward} credits</p>
+          <p>Added to your balance once you complete the survey.</p>
+        </div>
+      </div>
+      <footer class="pgm-modal__foot pgm-modal__foot--center">
+        <button type="button" class="pgm-btn" data-brand-yes>I’m Interested <span aria-hidden="true">→</span></button>
+      </footer>`}
+    </div>`, "modal");
+  ov.querySelector("[data-brand-yes]")?.addEventListener("click", () => {
+    state.camp.brandInterested = true;
+    const box = ov.querySelector(".pgm-modal");
+    box.querySelector(".pgm-modal__body").remove();
+    box.querySelector(".pgm-modal__foot").remove();
+    box.insertAdjacentHTML("beforeend", thanks());
+    syncInbox();
+    if (currentBase() === "camp") campPage.querySelector('[data-msg="brand"]')?.replaceWith(htmlEl(msgRow(m)));
+  });
+}
+const htmlEl = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstChild; };
 state.camp.setupAt = 0;
 const spaceDue = (k) => isFresh() && !!state.camp.setupAt && Date.now() - state.camp.setupAt >= SPACE_DELAYS[k];
 function scheduleSpaceMessages() {
@@ -407,8 +468,8 @@ function syncMessages(quiet = false) {
   }
   // Synergy / Community Intelligence: their own announcement, pointing to Camp.
   if (arrived.length) {
-    arrived.forEach((id) => showToast(`${SPACE_ARRIVAL[id]}\nCheck your inbox in Camp to find out more`,
-      currentBase() === "camp" ? undefined : { label: "Go to Camp", onClick: () => go("camp") }));
+    arrived.forEach((id) => showToast(SPACE_ARRIVAL[id],
+      currentBase() === "camp" ? undefined : { label: "Go to Camp", onClick: () => go("camp") }, undefined, id === "brand" ? "coins" : ""));
     if (posted === arrived.length) return;
   }
   notifyNew(posted - arrived.length);
@@ -464,6 +525,7 @@ const CAMP_ACTIONS = {
   assessments: () => go("assessments"),
   synergy: () => go("synergy-intelligence"), // space.js
   community: () => go("community-intelligence"),
+  brand: () => openBrandGig(),
   explore: () => go("explore"),
   desk: () => go("desk"),
 };
@@ -539,6 +601,7 @@ function openRow(row, e) {
   }
   const a = e.target.closest("[data-camp-action]");
   if (a || (FLOW_ACTIONS.includes(m.action) && !msgDone(m))) return CAMP_ACTIONS[m.action]();
+  if (m.id === "brand") return openBrandGig(); // its own layout, Done or not
   openMessage(m);
 }
 // Messages whose flow starts with its own intro (the PGM's): no extra modal before it. The others (proof of work,
@@ -918,6 +981,7 @@ function applyProfile(p, fresh) {
     Object.assign(state, { coins: 0, coinsMax: 0 }); // credits come with a pass or when they unlock (passes.js)
     state.pass = { eligible: new Set(), owned: new Set(), programs: new Set() };
     state.waitlist = new Set();
+    state.camp.brandInterested = false;
     state.camp.setupAt = 0;
   }
   state.camp.stepsSeen = null;

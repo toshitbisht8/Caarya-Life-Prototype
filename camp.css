@@ -464,3 +464,19 @@
 /* Transferable skills empty state (Figma 1459:26113): the icon sits in an 80px box */
 .cp-empty__art--transferable { position: relative; display: block; }
 .cp-empty__art--transferable img { position: absolute; inset: 0.2% 10.27% 0.2% 10.23%; width: 79.5%; height: 99.6%; }
+
+/* Brand engagement gig (camp.js openBrandGig) */
+.toast__coins { width: 18px; height: 18px; vertical-align: -3px; }
+.brand-gig { gap: 12px; }
+.brand-gig h2 { margin-bottom: 4px; }
+.brand-gig__facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+.brand-gig__facts div { padding: 10px 12px; border: 1px solid var(--neutral-200, #e7e7e7); border-radius: 12px; }
+.brand-gig__facts dt { font-family: var(--font-satoshi); font-size: 12px; letter-spacing: 0.24px; color: var(--neutral-500, #8d8d8d); }
+.brand-gig__facts dd { margin: 2px 0 0; font-family: var(--font-satoshi); font-weight: 500; font-size: 14px; color: var(--neutral-900); }
+.brand-gig__reward { margin-top: 8px; padding: 16px; border-radius: 16px; background: #fff7e6; display: flex; flex-direction: column; gap: 4px; }
+.brand-gig__reward p { font-family: var(--font-satoshi); font-size: 13px; letter-spacing: 0.4px; color: var(--neutral-700, #5a5a5a); }
+.brand-gig__reward .brand-gig__label { font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--neutral-500, #8d8d8d); }
+.brand-gig__reward .brand-gig__amount { display: flex; align-items: center; gap: 8px; font-family: var(--font-lato); font-weight: 700; font-size: 22px; color: var(--neutral-900); }
+.brand-gig__amount img { width: 24px; height: 24px; }
+.brand-gig__done { width: 48px; height: 48px; align-self: center; }
+.brand-gig:has(.brand-gig__done) { align-items: center; text-align: center; }

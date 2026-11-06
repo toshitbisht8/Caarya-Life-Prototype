@@ -39,14 +39,14 @@ function loadPendingUser() {
   };
   state.tools = ["Canva", "Photoshop", "Google Analytics", "Microsoft Office"];
   unlock("proof", "competencies", "profile", "assessments"); // what set-up opens (Figma 1365:42807)
-  state.camp.setupAt = ago(1, 3); // camp.js: so the Synergy / Community messages have already arrived
+  state.camp.setupAt = ago(1, 3); // camp.js: so the messages that follow set-up have already arrived
 
   // ---------- Camp: the set-up history, then what's current ----------
   state.camp.inbox = [];
   syncMessages(true); // posts everything due so far, as read
-  const when = { exp: ago(9), proof: ago(8), transferable: ago(8, 2), tools: ago(8, 1), "first-asset": ago(6), "tm-done": ago(1, 3), assessments: ago(1, 2), community: ago(0, 5), synergy: ago(0, 4) }; // Community arrives first
+  const when = { exp: ago(9), proof: ago(8), transferable: ago(8, 2), tools: ago(8, 1), "first-asset": ago(6), "tm-done": ago(1, 3), assessments: ago(1, 2), community: ago(0, 5), brand: ago(0, 4), synergy: ago(0, 3) }; // Community, then the brand gig, then Synergy
   state.camp.inbox.forEach((m) => { m.at = when[m.id] ?? m.at; });
-  ["assessments", "synergy", "community"].forEach((id) => { const m = state.camp.inbox.find((x) => x.id === id); if (m) m.read = false; });
+  ["assessments", "synergy", "brand", "community"].forEach((id) => { const m = state.camp.inbox.find((x) => x.id === id); if (m) m.read = false; });
   tmShown = true; // camp.js: the Talent Manager's congratulations has been seen
 
   // Nothing new to announce on sign-in: steps and sections are all accounted for.
