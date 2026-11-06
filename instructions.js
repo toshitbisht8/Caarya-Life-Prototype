@@ -1,17 +1,8 @@
 // Instructions: the round button by the user profile in the nav bar (Figma IUmw1y1QTgEOQMSjjyF5AI 1492:37664) opens a
-// drawer from the right listing the app's hidden shortcuts and test accounts. Keep it in step with mentor-sim.js,
-// app.js (logins), camp.js (SPACE_DELAYS) and passes.js (checkout).
+// drawer from the right listing the app's hidden shortcuts. Keep it in step with mentor-sim.js, camp.js
+// (SPACE_DELAYS) and passes.js (checkout). The first-login tour (camp.js TOUR) introduces the button.
 
 const INSTRUCTIONS = [
-  {
-    title: "Test accounts",
-    intro: "Sign in with any of these usernames and any password.",
-    rows: [
-      [["arjun.mehta"], "A returning user with the full product: work history, Desk, achievements and credits. Skips the code step."],
-      [["priya.sharma"], "A new user who has finished profiling and set-up, waiting on a pod mentor to approve her for the Learner Pass."],
-      [["Any other username"], "Starts as a new user. Any 6-digit code works on the code step."],
-    ],
-  },
   {
     title: "Keyboard shortcuts",
     intro: "These stand in for the mentors who review your work. They don’t work while you’re typing in a field.",

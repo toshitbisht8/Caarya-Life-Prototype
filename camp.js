@@ -210,6 +210,8 @@ const TOUR = [
     text: "Your Growth Manager and Talent Manager post updates here, each with the next thing to do. A red badge tells you when something new arrives." },
   { target: () => menuItem("growth"), title: "This is your Growth Track",
     text: "Your Road to Career Acceleration lives here: the steps to finish before you can start picking up work." },
+  { target: () => document.querySelector("[data-instructions]"), title: "Instructions, whenever you need them",
+    text: "Open this any time for the shortcuts and features that aren’t visible elsewhere in the app." },
 ];
 // Keyed by the menu item whose unlock shows it; `items` when it covers a whole section.
 const SPOTS = {
